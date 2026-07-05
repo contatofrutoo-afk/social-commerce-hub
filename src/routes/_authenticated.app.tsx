@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BarChart3,
@@ -12,6 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ensureUserRole } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
@@ -20,8 +22,9 @@ export const Route = createFileRoute("/_authenticated/app")({
 function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { data: role } = useQuery({
+  const { data: role, refetch: refetchRole } = useQuery({
     queryKey: ["my-role"],
     queryFn: async () => {
       const { data } = await supabase
@@ -32,6 +35,17 @@ function AppLayout() {
       return data;
     },
   });
+
+  useEffect(() => {
+    if (role === null) {
+      ensureUserRole().then((result) => {
+        if (result.ok) {
+          refetchRole();
+          queryClient.invalidateQueries({ queryKey: ["my-company-id"] });
+        }
+      });
+    }
+  }, [role, refetchRole, queryClient]);
 
   const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },

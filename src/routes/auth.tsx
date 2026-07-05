@@ -45,8 +45,10 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      // Vincula à empresa demo se necessário
-      await ensureUserRole();
+      const result = await ensureUserRole();
+      if (!result.ok) {
+        toast.warning("Conta criada, mas não foi possível vincular a uma empresa.");
+      }
       toast.success("Bem-vindo!");
       navigate({ to: "/app" });
     } catch (err: any) {
