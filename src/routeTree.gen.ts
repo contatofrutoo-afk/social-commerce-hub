@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
+import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.sacola'
+import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
+import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.perfil'
+import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
 import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +33,26 @@ const CCompanySlugIndexRoute = CCompanySlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
+const CCompanySlugSacolaRoute = CCompanySlugSacolaRouteImport.update({
+  id: '/sacola',
+  path: '/sacola',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugPublicarRoute = CCompanySlugPublicarRouteImport.update({
+  id: '/publicar',
+  path: '/publicar',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugPerfilRoute = CCompanySlugPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugFeedRoute = CCompanySlugFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
 const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
   id: '/m/$tableSlug',
   path: '/m/$tableSlug',
@@ -38,11 +62,19 @@ const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
+  '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
+  '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
+  '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
+  '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
   '/c/$companySlug': typeof CCompanySlugIndexRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
@@ -50,6 +82,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
+  '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
+  '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
@@ -58,14 +94,29 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/c/$companySlug'
+    | '/c/$companySlug/feed'
+    | '/c/$companySlug/perfil'
+    | '/c/$companySlug/publicar'
+    | '/c/$companySlug/sacola'
     | '/c/$companySlug/'
     | '/c/$companySlug/m/$tableSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/c/$companySlug' | '/c/$companySlug/m/$tableSlug'
+  to:
+    | '/'
+    | '/c/$companySlug/feed'
+    | '/c/$companySlug/perfil'
+    | '/c/$companySlug/publicar'
+    | '/c/$companySlug/sacola'
+    | '/c/$companySlug'
+    | '/c/$companySlug/m/$tableSlug'
   id:
     | '__root__'
     | '/'
     | '/c/$companySlug'
+    | '/c/$companySlug/feed'
+    | '/c/$companySlug/perfil'
+    | '/c/$companySlug/publicar'
+    | '/c/$companySlug/sacola'
     | '/c/$companySlug/'
     | '/c/$companySlug/m/$tableSlug'
   fileRoutesById: FileRoutesById
@@ -98,6 +149,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCompanySlugIndexRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
+    '/c/$companySlug/sacola': {
+      id: '/c/$companySlug/sacola'
+      path: '/sacola'
+      fullPath: '/c/$companySlug/sacola'
+      preLoaderRoute: typeof CCompanySlugSacolaRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/publicar': {
+      id: '/c/$companySlug/publicar'
+      path: '/publicar'
+      fullPath: '/c/$companySlug/publicar'
+      preLoaderRoute: typeof CCompanySlugPublicarRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/perfil': {
+      id: '/c/$companySlug/perfil'
+      path: '/perfil'
+      fullPath: '/c/$companySlug/perfil'
+      preLoaderRoute: typeof CCompanySlugPerfilRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/feed': {
+      id: '/c/$companySlug/feed'
+      path: '/feed'
+      fullPath: '/c/$companySlug/feed'
+      preLoaderRoute: typeof CCompanySlugFeedRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
     '/c/$companySlug/m/$tableSlug': {
       id: '/c/$companySlug/m/$tableSlug'
       path: '/m/$tableSlug'
@@ -109,11 +188,19 @@ declare module '@tanstack/react-router' {
 }
 
 interface CCompanySlugRouteChildren {
+  CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
+  CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
+  CCompanySlugPublicarRoute: typeof CCompanySlugPublicarRoute
+  CCompanySlugSacolaRoute: typeof CCompanySlugSacolaRoute
   CCompanySlugIndexRoute: typeof CCompanySlugIndexRoute
   CCompanySlugMTableSlugRoute: typeof CCompanySlugMTableSlugRoute
 }
 
 const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
+  CCompanySlugFeedRoute: CCompanySlugFeedRoute,
+  CCompanySlugPerfilRoute: CCompanySlugPerfilRoute,
+  CCompanySlugPublicarRoute: CCompanySlugPublicarRoute,
+  CCompanySlugSacolaRoute: CCompanySlugSacolaRoute,
   CCompanySlugIndexRoute: CCompanySlugIndexRoute,
   CCompanySlugMTableSlugRoute: CCompanySlugMTableSlugRoute,
 }
