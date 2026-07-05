@@ -83,13 +83,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento.",
       },
-      { property: "og:title", content: "WEAZE — Social Commerce" },
+      { property: "og:title", content: "WEAZE — Social Commerce para negócios físicos" },
       {
         property: "og:description",
         content: "Identifique, conheça e crie relacionamento com quem entra no seu estabelecimento.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "WEAZE — Social Commerce para negócios físicos" },
+      { name: "description", content: "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento." },
+      { property: "og:description", content: "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento." },
+      { name: "twitter:description", content: "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7e7d6504-1f19-44a8-b979-25466b66c704/id-preview-e99893fd--7e6811d8-8d08-4231-8b1a-581f3d6721fa.lovable.app-1783229833085.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7e7d6504-1f19-44a8-b979-25466b66c704/id-preview-e99893fd--7e6811d8-8d08-4231-8b1a-581f3d6721fa.lovable.app-1783229833085.png" },
     ],
     links: [
       {
