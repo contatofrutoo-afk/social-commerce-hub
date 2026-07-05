@@ -10,33 +10,69 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
+import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
+import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CCompanySlugRoute = CCompanySlugRouteImport.update({
+  id: '/c/$companySlug',
+  path: '/c/$companySlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CCompanySlugIndexRoute = CCompanySlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
+  id: '/m/$tableSlug',
+  path: '/m/$tableSlug',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/c/$companySlug/': typeof CCompanySlugIndexRoute
+  '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/c/$companySlug': typeof CCompanySlugIndexRoute
+  '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/c/$companySlug/': typeof CCompanySlugIndexRoute
+  '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/c/$companySlug'
+    | '/c/$companySlug/'
+    | '/c/$companySlug/m/$tableSlug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/c/$companySlug' | '/c/$companySlug/m/$tableSlug'
+  id:
+    | '__root__'
+    | '/'
+    | '/c/$companySlug'
+    | '/c/$companySlug/'
+    | '/c/$companySlug/m/$tableSlug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CCompanySlugRoute: typeof CCompanySlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +84,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/c/$companySlug': {
+      id: '/c/$companySlug'
+      path: '/c/$companySlug'
+      fullPath: '/c/$companySlug'
+      preLoaderRoute: typeof CCompanySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$companySlug/': {
+      id: '/c/$companySlug/'
+      path: '/'
+      fullPath: '/c/$companySlug/'
+      preLoaderRoute: typeof CCompanySlugIndexRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/m/$tableSlug': {
+      id: '/c/$companySlug/m/$tableSlug'
+      path: '/m/$tableSlug'
+      fullPath: '/c/$companySlug/m/$tableSlug'
+      preLoaderRoute: typeof CCompanySlugMTableSlugRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
   }
 }
 
+interface CCompanySlugRouteChildren {
+  CCompanySlugIndexRoute: typeof CCompanySlugIndexRoute
+  CCompanySlugMTableSlugRoute: typeof CCompanySlugMTableSlugRoute
+}
+
+const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
+  CCompanySlugIndexRoute: CCompanySlugIndexRoute,
+  CCompanySlugMTableSlugRoute: CCompanySlugMTableSlugRoute,
+}
+
+const CCompanySlugRouteWithChildren = CCompanySlugRoute._addFileChildren(
+  CCompanySlugRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CCompanySlugRoute: CCompanySlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
