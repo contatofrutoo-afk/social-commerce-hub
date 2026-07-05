@@ -29,12 +29,18 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin + "/app" },
         });
         if (error) throw error;
+        // Se confirmação de email está ativa, não há sessão ainda
+        if (!data.session) {
+          toast.success("Conta criada! Verifique seu email para confirmar.");
+          setLoading(false);
+          return;
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
