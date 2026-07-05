@@ -33,7 +33,7 @@ function AppLayout() {
     },
   });
 
-  const nav = [
+  const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },
     { to: "/app/clientes", label: "Clientes", icon: Users },
     { to: "/app/feed", label: "Feed", icon: Newspaper },
@@ -41,7 +41,7 @@ function AppLayout() {
     { to: "/app/pedidos", label: "Pedidos", icon: ShoppingCart },
     { to: "/app/atendimento", label: "Atendimento", icon: Store },
     { to: "/app/configuracoes", label: "Configurações", icon: Settings },
-  ] as const;
+  ];
 
   return (
     <div className="flex min-h-screen bg-muted/30">

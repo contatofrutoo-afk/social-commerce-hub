@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
 import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.sacola'
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
@@ -18,6 +21,15 @@ import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.
 import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
 import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -27,6 +39,11 @@ const CCompanySlugRoute = CCompanySlugRouteImport.update({
   id: '/c/$companySlug',
   path: '/c/$companySlug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const CCompanySlugIndexRoute = CCompanySlugIndexRouteImport.update({
   id: '/',
@@ -61,6 +78,8 @@ const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
@@ -71,6 +90,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
@@ -81,6 +102,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/app': typeof AuthenticatedAppRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
@@ -93,6 +117,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/app'
     | '/c/$companySlug'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
@@ -103,6 +129,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
+    | '/app'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
@@ -112,6 +140,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/app'
     | '/c/$companySlug'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
@@ -123,11 +154,27 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthRoute: typeof AuthRoute
   CCompanySlugRoute: typeof CCompanySlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -141,6 +188,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/c/$companySlug'
       preLoaderRoute: typeof CCompanySlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/c/$companySlug/': {
       id: '/c/$companySlug/'
@@ -187,6 +241,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 interface CCompanySlugRouteChildren {
   CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
   CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
@@ -211,6 +277,8 @@ const CCompanySlugRouteWithChildren = CCompanySlugRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthRoute: AuthRoute,
   CCompanySlugRoute: CCompanySlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
