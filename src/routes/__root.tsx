@@ -76,15 +76,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "WEAZE — Social Commerce para negócios físicos" },
+      {
+        name: "description",
+        content:
+          "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento.",
+      },
+      { property: "og:title", content: "WEAZE — Social Commerce" },
+      {
+        property: "og:description",
+        content: "Identifique, conheça e crie relacionamento com quem entra no seu estabelecimento.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
