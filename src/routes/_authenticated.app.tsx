@@ -13,6 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { ensureUserRole } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/_authenticated/app")({
@@ -38,12 +39,18 @@ function AppLayout() {
 
   useEffect(() => {
     if (role === null) {
-      ensureUserRole().then((result) => {
-        if (result.ok) {
-          refetchRole();
-          queryClient.invalidateQueries({ queryKey: ["my-company-id"] });
-        }
-      });
+      ensureUserRole()
+        .then((result) => {
+          if (result.ok) {
+            queryClient.invalidateQueries({ queryKey: ["my-company-id"] });
+            refetchRole();
+          } else {
+            toast.error("Erro ao vincular sua conta a uma empresa.");
+          }
+        })
+        .catch((err) => {
+          toast.error(err?.message ?? "Erro ao configurar acesso.");
+        });
     }
   }, [role, refetchRole, queryClient]);
 

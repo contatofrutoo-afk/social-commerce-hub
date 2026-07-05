@@ -16,14 +16,18 @@ export const Route = createFileRoute("/_authenticated/app/")({
 });
 
 function useCompanyId() {
-  const { data } = useQuery({
-    queryKey: ["my-company-id"],
+  const { data: role } = useQuery({
+    queryKey: ["my-role"],
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("company_id").limit(1).maybeSingle();
-      return data?.company_id as string | undefined;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("*, company:companies(*)")
+        .limit(1)
+        .maybeSingle();
+      return data;
     },
   });
-  return data;
+  return role?.company_id as string | undefined;
 }
 
 function DashboardPage() {

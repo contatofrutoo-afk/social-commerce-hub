@@ -21,7 +21,7 @@ function AuthPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) navigate({ to: "/app" });
-    });
+    }).catch(() => {});
   }, [navigate]);
 
   async function submit(e: React.FormEvent) {

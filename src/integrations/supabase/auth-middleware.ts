@@ -31,7 +31,7 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
-  async ({ next }) => {
+  async ({ next, data: clientContext }) => {
     
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -45,14 +45,16 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       console.error(`[Supabase] ${message}`);
       throw new Error(message);
     }
-    
-    const request = getRequest();
 
-    if (!request?.headers) {
-      throw new Error('Unauthorized: No request headers available');
+    // Tenta obter o token do contexto do middleware client primeiro (auth-attacher)
+    // Fallback para getRequest() caso não esteja disponível no contexto
+    let authHeader: string | null | undefined =
+      clientContext?.headers?.['authorization'] ?? clientContext?.headers?.['Authorization'];
+
+    if (!authHeader) {
+      const request = getRequest();
+      authHeader = request?.headers?.get('authorization');
     }
-
-    const authHeader = request.headers.get('authorization');
 
     if (!authHeader) {
       throw new Error('Unauthorized: No authorization header provided');
