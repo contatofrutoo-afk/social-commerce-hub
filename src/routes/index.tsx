@@ -22,8 +22,8 @@ function LandingPage() {
               <Link to="/auth">Entrar</Link>
             </Button>
             <Button asChild>
-              <Link to="/c/$companySlug" params={{ companySlug: "demo" }}>
-                Ver demo
+              <Link to="/c/$companySlug/feed" params={{ companySlug: "demo" }}>
+                Acessar como cliente
               </Link>
             </Button>
           </div>

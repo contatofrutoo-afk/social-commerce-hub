@@ -25,7 +25,7 @@ function FeedAdminPage() {
   });
 
   const [text, setText] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   const { data: products } = useQuery({
