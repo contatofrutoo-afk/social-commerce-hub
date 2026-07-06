@@ -65,23 +65,36 @@ function MesasView({ companyId }: { companyId: string }) {
   return (
     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {tables?.map((t) => {
-        const occupation = present?.find((c: any) => c.table_id === t.id);
-        const Icon = occupation ? contextIcons[occupation.context] : null;
+        const occupations = present?.filter((c: any) => c.table_id === t.id) ?? [];
         return (
           <div
             key={t.id}
-            className={`rounded-xl border p-4 ${occupation ? "bg-accent" : "bg-card"}`}
+            className={`rounded-xl border p-4 ${occupations.length > 0 ? "bg-accent" : "bg-card"}`}
           >
             <div className="flex items-center justify-between">
               <div className="text-lg font-bold">{t.label}</div>
-              {occupation && Icon && <Icon className="size-5 text-primary" />}
+              {occupations.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {occupations.length} pessoa{occupations.length > 1 ? "s" : ""}
+                </span>
+              )}
             </div>
-            {occupation ? (
-              <div className="mt-2">
-                <div className="text-sm font-medium">{occupation.customer?.name}</div>
-                <div className="text-xs capitalize text-muted-foreground">
-                  {occupation.context} · {relativeTime(occupation.created_at)}
-                </div>
+            {occupations.length > 0 ? (
+              <div className="mt-2 space-y-2">
+                {occupations.map((o: any) => {
+                  const Icon = contextIcons[o.context];
+                  return (
+                    <div key={o.id} className="flex items-center gap-2">
+                      {Icon && <Icon className="size-4 shrink-0 text-primary" />}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate">{o.customer?.name}</div>
+                        <div className="text-xs capitalize text-muted-foreground">
+                          {o.context} · {relativeTime(o.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="mt-2 text-xs text-muted-foreground">Livre</p>
