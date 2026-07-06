@@ -72,19 +72,23 @@ export const productRepository = {
     if (error) throw error;
   },
 
-  async likeToggle(productId: string, customerId: string, liked: boolean) {
-    if (liked) {
-      const { error } = await supabase
-        .from("product_likes")
-        .delete()
-        .eq("product_id", productId)
-        .eq("customer_id", customerId);
-      if (error) throw error;
-    } else {
-      const { error } = await supabase
-        .from("product_likes")
-        .insert({ product_id: productId, customer_id: customerId });
-      if (error) throw error;
-    }
+  async likeToggle(productId: string, customerId: string, token: string, liked: boolean) {
+    const { error } = await supabase.rpc("toggle_product_like", {
+      _customer_id: customerId,
+      _token: token,
+      _product_id: productId,
+      _liked: liked,
+    });
+    if (error) throw error;
+  },
+
+  async wishToggle(productId: string, customerId: string, token: string, wished: boolean) {
+    const { error } = await supabase.rpc("toggle_product_wish", {
+      _customer_id: customerId,
+      _token: token,
+      _product_id: productId,
+      _wished: wished,
+    });
+    if (error) throw error;
   },
 };
