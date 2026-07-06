@@ -23,7 +23,6 @@ const contexts: { id: VisitContext; label: string; icon: any }[] = [
 
 function CheckinPage() {
   const { companySlug } = Route.useParams();
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
