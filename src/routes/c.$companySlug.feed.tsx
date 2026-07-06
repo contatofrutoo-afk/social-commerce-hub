@@ -12,7 +12,7 @@ import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, ThumbsDown, MessageCircle, Plus, Store, User as UserIcon } from "lucide-react";
+import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
 
