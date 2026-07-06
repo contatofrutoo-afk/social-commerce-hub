@@ -147,6 +147,7 @@ export type Database = {
           id: string
           last_visit_at: string
           name: string
+          session_token: string
           visit_count: number
           whatsapp: string
         }
@@ -158,6 +159,7 @@ export type Database = {
           id?: string
           last_visit_at?: string
           name: string
+          session_token?: string
           visit_count?: number
           whatsapp: string
         }
@@ -169,6 +171,7 @@ export type Database = {
           id?: string
           last_visit_at?: string
           name?: string
+          session_token?: string
           visit_count?: number
           whatsapp?: string
         }
@@ -581,6 +584,71 @@ export type Database = {
       claim_own_company: {
         Args: { _name: string; _slug: string }
         Returns: string
+      }
+      get_customer_self: {
+        Args: { _customer_id: string; _token: string }
+        Returns: {
+          avatar_url: string | null
+          company_id: string
+          created_at: string
+          first_visit_at: string
+          id: string
+          last_visit_at: string
+          name: string
+          session_token: string
+          visit_count: number
+          whatsapp: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "customers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      set_post_reaction: {
+        Args: {
+          _customer_id: string
+          _post_id: string
+          _token: string
+          _type: string
+        }
+        Returns: undefined
+      }
+      toggle_product_like: {
+        Args: {
+          _customer_id: string
+          _liked: boolean
+          _product_id: string
+          _token: string
+        }
+        Returns: undefined
+      }
+      toggle_product_wish: {
+        Args: {
+          _customer_id: string
+          _product_id: string
+          _token: string
+          _wished: boolean
+        }
+        Returns: undefined
+      }
+      update_customer_self: {
+        Args: {
+          _avatar_url: string
+          _customer_id: string
+          _name: string
+          _token: string
+          _whatsapp: string
+        }
+        Returns: undefined
+      }
+      upsert_customer_visit: {
+        Args: { _company_id: string; _name: string; _whatsapp: string }
+        Returns: {
+          customer_id: string
+          session_token: string
+        }[]
       }
     }
     Enums: {
