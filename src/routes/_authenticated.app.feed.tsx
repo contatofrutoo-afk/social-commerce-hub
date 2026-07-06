@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { postRepository, productRepository } from "@/repositories";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { relativeTime } from "@/lib/format";
+import { ImageUpload } from "@/components/image-upload";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
@@ -66,11 +66,7 @@ function FeedAdminPage() {
 
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Nova publicação</h2>
-        <Input
-          placeholder="URL da imagem"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-        />
+        <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`feed/${companyId}`} />
         <Textarea
           placeholder="Texto"
           value={text}

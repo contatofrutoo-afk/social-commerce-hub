@@ -6,6 +6,7 @@ import { productRepository } from "@/repositories";
 import type { Product } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ImageUpload } from "@/components/image-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -121,10 +122,7 @@ function ProductsPage() {
               </div>
               <div>
                 <Label>URL da imagem</Label>
-                <Input
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                />
+                <ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} folder={`products/${companyId}`} />
               </div>
               <div>
                 <Label>Descrição</Label>

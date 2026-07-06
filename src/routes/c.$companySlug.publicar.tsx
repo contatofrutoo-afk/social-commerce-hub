@@ -5,9 +5,9 @@ import { companyRepository, postRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
 import { getSessionForCompany } from "@/lib/session";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { ImageUpload } from "@/components/image-upload";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/c/$companySlug/publicar")({
@@ -64,12 +64,7 @@ function PublishPage() {
       <h1 className="text-xl font-bold">Compartilhe sua experiência</h1>
       <div>
         <Label>URL da imagem</Label>
-        <Input
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://…"
-          className="mt-1.5"
-        />
+        <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`publicar/${companySlug}`} className="mt-1.5" />
       </div>
       <div>
         <Label>Conte como está sendo</Label>
