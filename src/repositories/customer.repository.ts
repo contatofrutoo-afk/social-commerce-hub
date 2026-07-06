@@ -68,9 +68,9 @@ export const customerRepository = {
     const { error } = await supabase.rpc("update_customer_self", {
       _customer_id: customerId,
       _token: token,
-      _name: patch.name ?? null,
-      _whatsapp: patch.whatsapp ?? null,
-      _avatar_url: patch.avatarUrl ?? null,
+      _name: (patch.name ?? null) as string,
+      _whatsapp: (patch.whatsapp ?? null) as string,
+      _avatar_url: (patch.avatarUrl ?? null) as string,
     });
     if (error) throw error;
   },
