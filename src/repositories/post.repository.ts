@@ -47,7 +47,7 @@ export const postRepository = {
       .from("posts")
       .select(
         `*,
-         customer:customers(name),
+         customer:customers!posts_customer_id_fkey(name),
          post_reactions(customer_id, type),
          post_products(product:products(*)),
          comments(count)`,
