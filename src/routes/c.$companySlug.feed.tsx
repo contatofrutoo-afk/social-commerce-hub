@@ -58,7 +58,13 @@ function FeedPage() {
         </div>
       )}
       {posts?.map((p) => (
-        <PostCard key={p.id} post={p} customerId={session.customerId} companyId={company!.id} />
+        <PostCard
+          key={p.id}
+          post={p}
+          customerId={session.customerId}
+          sessionToken={session.sessionToken}
+          companyId={company!.id}
+        />
       ))}
     </div>
   );
@@ -67,10 +73,12 @@ function FeedPage() {
 function PostCard({
   post,
   customerId,
+  sessionToken,
   companyId,
 }: {
   post: Post;
   customerId: string;
+  sessionToken: string;
   companyId: string;
 }) {
   const qc = useQueryClient();
@@ -79,7 +87,7 @@ function PostCard({
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
-      postRepository.setReaction(post.id, customerId, post.myReaction === t ? null : t),
+      postRepository.setReaction(post.id, customerId, sessionToken, post.myReaction === t ? null : t),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
   });
 

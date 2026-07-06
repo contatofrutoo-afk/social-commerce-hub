@@ -6,6 +6,9 @@ export type WeazeSession = {
   customerId: string;
   companyId: string;
   companySlug: string;
+  // Token opaco emitido pelo backend no upsert do cliente; usado para autorizar
+  // mutações do próprio cliente (perfil, reações, curtidas, desejos) via RPCs.
+  sessionToken: string;
 };
 
 export function getSession(): WeazeSession | null {
@@ -30,5 +33,5 @@ export function clearSession() {
 
 export function getSessionForCompany(companySlug: string): WeazeSession | null {
   const s = getSession();
-  return s && s.companySlug === companySlug ? s : null;
+  return s && s.companySlug === companySlug && s.sessionToken ? s : null;
 }

@@ -21,6 +21,17 @@ export const customerRepository = {
     return data ? map(data) : null;
   },
 
+  /** Leitura do próprio perfil (inclui whatsapp) autorizada pelo token da sessão. */
+  async findSelf(customerId: string, token: string): Promise<Customer | null> {
+    const { data, error } = await supabase.rpc("get_customer_self", {
+      _customer_id: customerId,
+      _token: token,
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row ? map(row) : null;
+  },
+
   async listByCompany(companyId: string): Promise<Customer[]> {
     const { data, error } = await supabase
       .from("customers")
@@ -31,52 +42,37 @@ export const customerRepository = {
     return (data ?? []).map(map);
   },
 
-  /** Cria o cliente ou reutiliza pelo par (company_id, whatsapp), incrementando a visita. */
-  async upsertByWhatsapp(input: {
+  /** Cria/atualiza o cliente e retorna id + token da sessão via RPC segura. */
+  async upsertVisit(input: {
     companyId: string;
     name: string;
     whatsapp: string;
-  }): Promise<Customer> {
-    const { data: existing } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("company_id", input.companyId)
-      .eq("whatsapp", input.whatsapp)
-      .maybeSingle();
-
-    if (existing) {
-      const { data, error } = await supabase
-        .from("customers")
-        .update({
-          name: input.name,
-          last_visit_at: new Date().toISOString(),
-          visit_count: (existing.visit_count ?? 0) + 1,
-        })
-        .eq("id", existing.id)
-        .select()
-        .single();
-      if (error) throw error;
-      return map(data);
-    }
-
-    const { data, error } = await supabase
-      .from("customers")
-      .insert({ company_id: input.companyId, name: input.name, whatsapp: input.whatsapp })
-      .select()
-      .single();
+  }): Promise<{ customerId: string; sessionToken: string }> {
+    const { data, error } = await supabase.rpc("upsert_customer_visit", {
+      _company_id: input.companyId,
+      _name: input.name,
+      _whatsapp: input.whatsapp,
+    });
     if (error) throw error;
-    return map(data);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error("Falha ao registrar cliente");
+    return { customerId: row.customer_id, sessionToken: row.session_token };
   },
 
-  async update(id: string, patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl">>) {
-    const { data, error } = await supabase
-      .from("customers")
-      .update({ name: patch.name, whatsapp: patch.whatsapp, avatar_url: patch.avatarUrl })
-      .eq("id", id)
-      .select()
-      .single();
+  /** Atualização do próprio perfil, autorizada pelo token da sessão. */
+  async updateSelf(
+    customerId: string,
+    token: string,
+    patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl">>,
+  ) {
+    const { error } = await supabase.rpc("update_customer_self", {
+      _customer_id: customerId,
+      _token: token,
+      _name: (patch.name ?? null) as string,
+      _whatsapp: (patch.whatsapp ?? null) as string,
+      _avatar_url: (patch.avatarUrl ?? null) as string,
+    });
     if (error) throw error;
-    return map(data);
   },
 };
 

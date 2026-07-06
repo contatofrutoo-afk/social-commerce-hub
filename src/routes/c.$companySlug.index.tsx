@@ -35,8 +35,8 @@ function CheckinPage() {
   });
 
   const { data: existingCustomer } = useQuery({
-    queryKey: ["customer", session?.customerId],
-    queryFn: () => customerRepository.findById(session!.customerId),
+    queryKey: ["customer-self", session?.customerId],
+    queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
     enabled: !!session,
   });
 
@@ -55,17 +55,22 @@ function CheckinPage() {
       const whatsappValue = whatsapp.trim() || existingCustomer?.whatsapp || "";
       if (!nameValue) throw new Error("Preencha seu nome");
       if (!whatsappValue) throw new Error("Preencha seu WhatsApp");
-      const customer = await customerRepository.upsertByWhatsapp({
+      const upserted = await customerRepository.upsertVisit({
         companyId: company.id,
         name: nameValue,
         whatsapp: whatsappValue,
       });
       await checkinRepository.create({
-        customerId: customer.id,
+        customerId: upserted.customerId,
         companyId: company.id,
         context,
       });
-      setSession({ customerId: customer.id, companyId: company.id, companySlug });
+      setSession({
+        customerId: upserted.customerId,
+        companyId: company.id,
+        companySlug,
+        sessionToken: upserted.sessionToken,
+      });
     },
     onSuccess: () => {
       window.location.href = `/c/${companySlug}/feed`;
