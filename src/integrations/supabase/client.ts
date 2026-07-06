@@ -19,21 +19,31 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 
+function getSupabaseUrl(): string {
+  const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID;
+  if (PROJECT_ID) return `https://${PROJECT_ID}.supabase.co`;
+
+  const url = (import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL) as string | undefined;
+  if (url && !url.includes('lovable.cloud')) return url;
+
+  if (url?.includes('lovable.cloud')) {
+    console.warn(
+      `[Supabase] Detected Lovable proxy URL (${url}). POST requests will hang. ` +
+      'Set VITE_SUPABASE_PROJECT_ID to use the direct Supabase URL.'
+    );
+  }
+
+  throw new Error(
+    'Could not determine Supabase URL. Set VITE_SUPABASE_PROJECT_ID or VITE_SUPABASE_URL in .env'
+  );
+}
+
 function createSupabaseClient() {
-  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID;
-  const SUPABASE_URL = SUPABASE_PROJECT_ID
-    ? `https://${SUPABASE_PROJECT_ID}.supabase.co`
-    : (import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL);
+  const SUPABASE_URL = getSupabaseUrl();
   const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL/SUPABASE_PROJECT_ID'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-    ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+  if (!SUPABASE_PUBLISHABLE_KEY) {
+    throw new Error('Missing SUPABASE_PUBLISHABLE_KEY. Connect Supabase in Lovable Cloud.');
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
