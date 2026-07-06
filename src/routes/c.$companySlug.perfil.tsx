@@ -20,8 +20,8 @@ function ProfilePage() {
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
   const { data: customer } = useQuery({
-    queryKey: ["customer", session?.customerId],
-    queryFn: () => customerRepository.findById(session!.customerId),
+    queryKey: ["customer-self", session?.customerId],
+    queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
     enabled: !!session,
   });
   const { data: orders } = useQuery({
@@ -44,10 +44,14 @@ function ProfilePage() {
 
   const save = useMutation({
     mutationFn: () =>
-      customerRepository.update(session!.customerId, { name, whatsapp, avatarUrl: avatarUrl || null }),
+      customerRepository.updateSelf(session!.customerId, session!.sessionToken, {
+        name,
+        whatsapp,
+        avatarUrl: avatarUrl || null,
+      }),
     onSuccess: () => {
       toast.success("Perfil atualizado");
-      qc.invalidateQueries({ queryKey: ["customer"] });
+      qc.invalidateQueries({ queryKey: ["customer-self"] });
     },
   });
 
