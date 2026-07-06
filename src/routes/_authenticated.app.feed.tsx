@@ -66,7 +66,7 @@ function FeedAdminPage() {
 
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Nova publicação</h2>
-        <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`feed/${companyId}`} />
+        <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`${companyId}/feed`} />
         <Textarea
           placeholder="Texto"
           value={text}
