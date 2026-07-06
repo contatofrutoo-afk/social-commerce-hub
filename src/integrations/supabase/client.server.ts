@@ -21,6 +21,11 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+const SERVER_PROJECT_ID =
+  process.env.SUPABASE_PROJECT_ID ||
+  process.env.VITE_SUPABASE_PROJECT_ID ||
+  'yxbbskycwusktasempjc';
+
 function createSupabaseAdminClient() {
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -28,21 +33,7 @@ function createSupabaseAdminClient() {
     throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY. Connect Supabase in Lovable Cloud.');
   }
 
-  const PROJECT_ID = process.env.SUPABASE_PROJECT_ID || process.env.VITE_SUPABASE_PROJECT_ID;
-  const SUPABASE_URL = PROJECT_ID
-    ? `https://${PROJECT_ID}.supabase.co`
-    : process.env.SUPABASE_URL;
-
-  if (!SUPABASE_URL) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_PROJECT_ID. Connect Supabase in Lovable Cloud.');
-  }
-
-  if (SUPABASE_URL.includes('lovable.cloud')) {
-    console.warn(
-      `[Supabase] Detected Lovable proxy URL (${SUPABASE_URL}). POST requests will hang. ` +
-      'Set SUPABASE_PROJECT_ID environment variable to use the direct Supabase URL.'
-    );
-  }
+  const SUPABASE_URL = `https://${SERVER_PROJECT_ID}.supabase.co`;
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     global: {

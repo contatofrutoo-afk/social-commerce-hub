@@ -19,23 +19,30 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 
+const SUPABASE_PROJECT_ID =
+  import.meta.env.VITE_SUPABASE_PROJECT_ID ||
+  process.env.SUPABASE_PROJECT_ID ||
+  'yxbbskycwusktasempjc'; // hardcoded fallback — Supabase project URL is public
+
+const DIRECT_SUPABASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co`;
+
 function getSupabaseUrl(): string {
-  const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID;
-  if (PROJECT_ID) return `https://${PROJECT_ID}.supabase.co`;
+  const providedUrl = (import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL) as string | undefined;
 
-  const url = (import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL) as string | undefined;
-  if (url && !url.includes('lovable.cloud')) return url;
+  // If the provided URL is already a direct Supabase URL (not proxy), use it
+  if (providedUrl && !providedUrl.includes('lovable.cloud')) {
+    return providedUrl;
+  }
 
-  if (url?.includes('lovable.cloud')) {
+  // Warn if Lovable proxy is detected
+  if (providedUrl?.includes('lovable.cloud') && !SUPABASE_PROJECT_ID) {
     console.warn(
-      `[Supabase] Detected Lovable proxy URL (${url}). POST requests will hang. ` +
-      'Set VITE_SUPABASE_PROJECT_ID to use the direct Supabase URL.'
+      `[Supabase] Detected Lovable proxy URL (${providedUrl}). ` +
+      'Using direct Supabase URL instead to avoid POST request issues.'
     );
   }
 
-  throw new Error(
-    'Could not determine Supabase URL. Set VITE_SUPABASE_PROJECT_ID or VITE_SUPABASE_URL in .env'
-  );
+  return DIRECT_SUPABASE_URL;
 }
 
 function createSupabaseClient() {
