@@ -12,7 +12,6 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
       new Headers(init.headers).forEach((value, key) => headers.set(key, value));
     }
 
-    headers.delete('Authorization');
     headers.set('apikey', supabaseKey);
     return fetch(input, { ...init, headers });
   };

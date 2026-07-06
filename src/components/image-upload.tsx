@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -18,14 +19,18 @@ export function ImageUpload({ value, onChange, folder = "general", className }: 
   const [preview, setPreview] = useState<string | null>(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    setPreview(value);
+  }, [value]);
+
   async function handleFile(file: File | undefined) {
     if (!file) return;
     if (!ALLOWED_TYPES.includes(file.type)) {
-      alert("Formato não suportado. Use JPEG, PNG, WebP ou GIF.");
+      toast.error("Formato não suportado. Use JPEG, PNG, WebP ou GIF.");
       return;
     }
     if (file.size > MAX_SIZE) {
-      alert("Arquivo muito grande. Máximo 5MB.");
+      toast.error("Arquivo muito grande. Máximo 5MB.");
       return;
     }
     setUploading(true);
@@ -39,7 +44,7 @@ export function ImageUpload({ value, onChange, folder = "general", className }: 
       setPreview(publicUrl);
       onChange(publicUrl);
     } catch (err: any) {
-      alert(err?.message ?? "Erro ao fazer upload");
+      toast.error(err?.message ?? "Erro ao fazer upload");
     } finally {
       setUploading(false);
     }
