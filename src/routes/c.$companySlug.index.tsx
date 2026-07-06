@@ -27,6 +27,7 @@ function CheckinPage() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
@@ -67,13 +68,16 @@ function CheckinPage() {
         context,
       });
       setSession({ customerId: customer.id, companyId: company.id, companySlug });
-      return customer;
-    },
-    onSuccess: () => {
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      setShouldRedirect(true);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
   });
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+    }
+  }, [shouldRedirect]);
 
   if (isLoading) return <div className="p-8 text-center">Carregando…</div>;
   if (!company) return <div className="p-8 text-center">Estabelecimento não encontrado</div>;

@@ -32,6 +32,7 @@ function TableCheckin() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
@@ -79,13 +80,16 @@ function TableCheckin() {
         source: `mesa-${table.slug}`,
       });
       setSession({ customerId: customer.id, companyId: company.id, companySlug });
-      return customer;
-    },
-    onSuccess: () => {
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      setShouldRedirect(true);
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+    }
+  }, [shouldRedirect]);
 
   if (!company || !table) return <div className="p-8 text-center">Carregando…</div>;
 
