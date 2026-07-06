@@ -136,7 +136,7 @@ export const commentRepository = {
   async listByPost(postId: string): Promise<Comment[]> {
     const { data, error } = await supabase
       .from("comments")
-      .select("*, customer:customers(name)")
+      .select("*, customer:customers!comments_customer_id_fkey(name)")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
     if (error) throw error;
