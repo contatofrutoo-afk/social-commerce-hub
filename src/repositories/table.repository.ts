@@ -35,6 +35,17 @@ export const tableRepository = {
     return map(data);
   },
 
+  async update(id: string, patch: { label?: string; slug?: string }): Promise<Table> {
+    const { data, error } = await supabase
+      .from("tables")
+      .update({ label: patch.label, slug: patch.slug })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return map(data);
+  },
+
   async remove(id: string) {
     const { error } = await supabase.from("tables").delete().eq("id", id);
     if (error) throw error;

@@ -21,11 +21,6 @@ function LandingPage() {
             <Button asChild variant="ghost">
               <Link to="/auth">Entrar</Link>
             </Button>
-            <Button asChild>
-              <Link to="/c/$companySlug/feed" params={{ companySlug: "demo" }}>
-                Acessar como cliente
-              </Link>
-            </Button>
           </div>
         </div>
       </header>
@@ -44,11 +39,6 @@ function LandingPage() {
           em relacionamento — sem ERP, sem PDV, sem complexidade.
         </p>
         <div className="mt-8 flex justify-center gap-3">
-          <Button asChild size="lg">
-            <Link to="/c/$companySlug" params={{ companySlug: "demo" }}>
-              Experimentar como cliente
-            </Link>
-          </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/auth">Acessar dashboard</Link>
           </Button>

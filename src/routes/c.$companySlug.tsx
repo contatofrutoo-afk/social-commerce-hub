@@ -26,7 +26,7 @@ function ClientLayout() {
     { to: "/c/$companySlug/perfil", label: "Perfil", icon: User },
   ] as const;
 
-  const showTabs = !path.endsWith(`/c/${companySlug}`) && !path.includes("/m/");
+  const showTabs = !path.match(new RegExp(`/c/${companySlug}/?$`)) && !path.includes("/m/");
 
   return (
     <div className="min-h-screen bg-background pb-20">

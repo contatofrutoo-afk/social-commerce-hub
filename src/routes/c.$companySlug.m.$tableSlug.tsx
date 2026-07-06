@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   companyRepository,
   customerRepository,
@@ -8,7 +8,7 @@ import {
   tableRepository,
 } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
-import { setSession } from "@/lib/session";
+import { setSession, getSessionForCompany } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,8 @@ function TableCheckin() {
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
 
+  const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
+
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
@@ -43,14 +45,31 @@ function TableCheckin() {
     enabled: !!company,
   });
 
+  const { data: existingCustomer } = useQuery({
+    queryKey: ["customer", session?.customerId],
+    queryFn: () => customerRepository.findById(session!.customerId),
+    enabled: !!session,
+  });
+
+  useEffect(() => {
+    if (existingCustomer) {
+      setName(existingCustomer.name);
+      setWhatsapp(existingCustomer.whatsapp);
+    }
+  }, [existingCustomer]);
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (!company || !table) throw new Error("Mesa não encontrada");
-      if (!name || !whatsapp || !context) throw new Error("Preencha todos os campos");
+      if (!context) throw new Error("Selecione como está sendo sua visita");
+      const nameValue = name.trim() || existingCustomer?.name || "";
+      const whatsappValue = whatsapp.trim() || existingCustomer?.whatsapp || "";
+      if (!nameValue) throw new Error("Preencha seu nome");
+      if (!whatsappValue) throw new Error("Preencha seu WhatsApp");
       const customer = await customerRepository.upsertByWhatsapp({
         companyId: company.id,
-        name,
-        whatsapp,
+        name: nameValue,
+        whatsapp: whatsappValue,
       });
       await checkinRepository.create({
         customerId: customer.id,
@@ -115,7 +134,7 @@ function TableCheckin() {
           size="lg"
           className="w-full"
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending}
+          disabled={mutation.isPending || !context}
         >
           Entrar
         </Button>

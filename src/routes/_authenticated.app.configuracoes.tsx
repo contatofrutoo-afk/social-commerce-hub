@@ -7,12 +7,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Copy, QrCode, Trash2, Pencil, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
 });
+
+function getBaseUrl() {
+  if (typeof window === "undefined") return "";
+  return window.location.origin;
+}
+
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).then(
+    () => toast.success("Link copiado!"),
+    () => toast.error("Erro ao copiar"),
+  );
+}
+
+function QrCodeDialog({ url, label }: { url: string; label: string }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="outline">
+          <QrCode className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{label}</DialogTitle>
+        </DialogHeader>
+        <div className="flex justify-center p-4">
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`}
+            alt={`QR Code: ${url}`}
+            className="rounded-lg"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function SettingsPage() {
   const qc = useQueryClient();
@@ -45,6 +88,9 @@ function SettingsPage() {
   const [color, setColor] = useState("#8800AA");
   const [tableLabel, setTableLabel] = useState("");
   const [tableSlug, setTableSlug] = useState("");
+  const [editingTableId, setEditingTableId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [editSlug, setEditSlug] = useState("");
 
   useEffect(() => {
     if (company) {
@@ -53,6 +99,9 @@ function SettingsPage() {
       setColor(company.primaryColor);
     }
   }, [company]);
+
+  const baseUrl = getBaseUrl();
+  const generalLink = company ? `${baseUrl}/c/${company.slug}` : "";
 
   const save = useMutation({
     mutationFn: () =>
@@ -70,17 +119,41 @@ function SettingsPage() {
       qc.invalidateQueries({ queryKey: ["tables"] });
       setTableLabel("");
       setTableSlug("");
+      toast.success("Mesa adicionada!");
     },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao adicionar mesa"),
   });
+
   const removeTable = useMutation({
     mutationFn: (id: string) => tableRepository.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tables"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tables"] });
+      toast.success("Mesa removida");
+    },
   });
+
+  const updateTable = useMutation({
+    mutationFn: ({ id, label, slug }: { id: string; label: string; slug: string }) =>
+      tableRepository.update(id, { label, slug }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tables"] });
+      setEditingTableId(null);
+      toast.success("Mesa atualizada");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao atualizar mesa"),
+  });
+
+  const startEditing = (t: { id: string; label: string; slug: string }) => {
+    setEditingTableId(t.id);
+    setEditLabel(t.label);
+    setEditSlug(t.slug);
+  };
 
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold">Configurações</h1>
 
+      {/* Dados do estabelecimento */}
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Estabelecimento</h2>
         <div>
@@ -106,14 +179,32 @@ function SettingsPage() {
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           Salvar
         </Button>
-        {company && (
-          <p className="text-xs text-muted-foreground">
-            Link do cliente:{" "}
-            <code className="rounded bg-muted px-1">/c/{company.slug}</code>
-          </p>
-        )}
       </div>
 
+      {/* Link Geral */}
+      {company && (
+        <div className="space-y-3 rounded-xl border bg-card p-4">
+          <h2 className="font-semibold">Link Geral</h2>
+          <p className="text-sm text-muted-foreground">
+            Link oficial do estabelecimento. Compartilhe com seus clientes.
+          </p>
+          <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
+            <code className="flex-1 text-sm break-all">{generalLink}</code>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="default"
+              onClick={() => copyToClipboard(generalLink)}
+            >
+              <Copy className="size-4 mr-2" />
+              Copiar Link
+            </Button>
+            <QrCodeDialog url={generalLink} label="QR Code — Link Geral" />
+          </div>
+        </div>
+      )}
+
+      {/* Mesas */}
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Mesas</h2>
         <div className="flex gap-2">
@@ -127,24 +218,103 @@ function SettingsPage() {
             value={tableSlug}
             onChange={(e) => setTableSlug(e.target.value)}
           />
-          <Button onClick={() => addTable.mutate()} disabled={!tableLabel || !tableSlug}>
+          <Button
+            onClick={() => addTable.mutate()}
+            disabled={!tableLabel || !tableSlug || addTable.isPending}
+          >
             Adicionar
           </Button>
         </div>
-        <div className="space-y-1">
-          {tables?.map((t) => (
-            <div key={t.id} className="flex items-center justify-between rounded border p-2">
-              <div>
-                <div className="text-sm font-medium">{t.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  /c/{company?.slug}/m/{t.slug}
-                </div>
+        <div className="space-y-2">
+          {tables?.length === 0 && (
+            <p className="text-sm text-muted-foreground py-2">
+              Nenhuma mesa cadastrada. Adicione a primeira acima.
+            </p>
+          )}
+          {tables?.map((t) => {
+            const tableUrl = `${baseUrl}/c/${company?.slug}/m/${t.slug}`;
+            const isEditing = editingTableId === t.id;
+
+            return (
+              <div key={t.id} className="rounded-lg border p-3">
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        value={editLabel}
+                        onChange={(e) => setEditLabel(e.target.value)}
+                        placeholder="Nome da mesa"
+                        className="flex-1"
+                      />
+                      <Input
+                        value={editSlug}
+                        onChange={(e) => setEditSlug(e.target.value)}
+                        placeholder="Slug"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          updateTable.mutate({ id: t.id, label: editLabel, slug: editSlug })
+                        }
+                        disabled={!editLabel || !editSlug}
+                      >
+                        <Check className="size-4 mr-1" />
+                        Salvar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingTableId(null)}
+                      >
+                        <X className="size-4 mr-1" />
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <div className="text-sm font-medium">{t.label}</div>
+                        <code className="text-xs text-muted-foreground break-all">
+                          {tableUrl}
+                        </code>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => startEditing(t)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => removeTable.mutate(t.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => copyToClipboard(tableUrl)}
+                      >
+                        <Copy className="size-3 mr-1" />
+                        Copiar Link
+                      </Button>
+                      <QrCodeDialog url={tableUrl} label={`QR Code — ${t.label}`} />
+                    </div>
+                  </>
+                )}
               </div>
-              <Button size="icon" variant="ghost" onClick={() => removeTable.mutate(t.id)}>
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
