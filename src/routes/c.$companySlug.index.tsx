@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { companyRepository, customerRepository, checkinRepository } from "@/repositories";
@@ -27,7 +27,6 @@ function CheckinPage() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
@@ -68,16 +67,12 @@ function CheckinPage() {
         context,
       });
       setSession({ customerId: customer.id, companyId: company.id, companySlug });
-      setShouldRedirect(true);
+    },
+    onSuccess: () => {
+      window.location.href = `/c/${companySlug}/feed`;
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
   });
-
-  useEffect(() => {
-    if (shouldRedirect) {
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
-    }
-  }, [shouldRedirect]);
 
   if (isLoading) return <div className="p-8 text-center">Carregando…</div>;
   if (!company) return <div className="p-8 text-center">Estabelecimento não encontrado</div>;
