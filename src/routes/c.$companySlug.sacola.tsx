@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyRepository, orderRepository, checkinRepository } from "@/repositories";
 import { getSessionForCompany } from "@/lib/session";
@@ -47,14 +47,13 @@ function BagPage() {
       toast.success("Pedido enviado! O estabelecimento foi notificado.");
       cart.clear();
       qc.invalidateQueries({ queryKey: ["orders"] });
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      window.location.href = `/c/${companySlug}/feed`;
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   if (!session) {
-    if (typeof window !== "undefined") navigate({ to: "/c/$companySlug", params: { companySlug } });
-    return null;
+    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
   }
 
   return (

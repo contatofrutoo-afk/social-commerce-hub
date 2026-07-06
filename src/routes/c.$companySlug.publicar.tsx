@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { companyRepository, postRepository } from "@/repositories";
@@ -49,14 +49,13 @@ function PublishPage() {
     onSuccess: () => {
       toast.success("Publicação enviada!");
       qc.invalidateQueries({ queryKey: ["feed"] });
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      window.location.href = `/c/${companySlug}/feed`;
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   if (!session) {
-    if (typeof window !== "undefined") navigate({ to: "/c/$companySlug", params: { companySlug } });
-    return null;
+    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
   }
 
   return (

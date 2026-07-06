@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { customerRepository, orderRepository } from "@/repositories";
@@ -52,8 +52,7 @@ function ProfilePage() {
   });
 
   if (!session) {
-    if (typeof window !== "undefined") navigate({ to: "/c/$companySlug", params: { companySlug } });
-    return null;
+    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
   }
 
   return (

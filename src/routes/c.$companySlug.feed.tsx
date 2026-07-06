@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
@@ -22,7 +22,6 @@ export const Route = createFileRoute("/c/$companySlug/feed")({
 
 function FeedPage() {
   const { companySlug } = Route.useParams();
-  const navigate = useNavigate();
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
   const { data: company } = useQuery({
@@ -37,10 +36,7 @@ function FeedPage() {
   });
 
   if (!session) {
-    // sem sessão manda pro check-in
-    if (typeof window !== "undefined")
-      navigate({ to: "/c/$companySlug", params: { companySlug } });
-    return null;
+    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
   }
 
   return (
