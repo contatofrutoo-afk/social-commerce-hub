@@ -143,7 +143,7 @@ function CheckinPage() {
           size="lg"
           className="mt-4 w-full"
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !context}
+          disabled={mutation.isPending || !context || (!name.trim() && !existingCustomer?.name) || (!whatsapp.trim() && !existingCustomer?.whatsapp)}
         >
           {mutation.isPending ? "Entrando…" : "Entrar"}
         </Button>

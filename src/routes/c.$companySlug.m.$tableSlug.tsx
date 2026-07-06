@@ -134,7 +134,7 @@ function TableCheckin() {
           size="lg"
           className="w-full"
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !context}
+          disabled={mutation.isPending || !context || (!name.trim() && !existingCustomer?.name) || (!whatsapp.trim() && !existingCustomer?.whatsapp)}
         >
           Entrar
         </Button>
