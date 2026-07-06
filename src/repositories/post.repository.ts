@@ -110,19 +110,13 @@ export const postRepository = {
     return mapPost({ ...data, post_reactions: [], post_products: [], comments: [{ count: 0 }] });
   },
 
-  async setReaction(postId: string, customerId: string, type: ReactionType | null) {
-    if (type === null) {
-      const { error } = await supabase
-        .from("post_reactions")
-        .delete()
-        .eq("post_id", postId)
-        .eq("customer_id", customerId);
-      if (error) throw error;
-      return;
-    }
-    const { error } = await supabase
-      .from("post_reactions")
-      .upsert({ post_id: postId, customer_id: customerId, type });
+  async setReaction(postId: string, customerId: string, token: string, type: ReactionType | null) {
+    const { error } = await supabase.rpc("set_post_reaction", {
+      _customer_id: customerId,
+      _token: token,
+      _post_id: postId,
+      _type: (type ?? null) as string,
+    });
     if (error) throw error;
   },
 
