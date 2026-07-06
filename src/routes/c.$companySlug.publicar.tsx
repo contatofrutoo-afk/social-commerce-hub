@@ -28,7 +28,7 @@ function PublishPage() {
     queryFn: () => companyRepository.findBySlug(companySlug),
   });
 
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>("");
   const [text, setText] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [companions, setCompanions] = useState<VisitContext | null>(null);
