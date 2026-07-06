@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyRepository, orderRepository, checkinRepository } from "@/repositories";
 import { getSessionForCompany } from "@/lib/session";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatBRL } from "@/lib/format";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/c/$companySlug/sacola")({
   component: BagPage,
@@ -47,14 +47,18 @@ function BagPage() {
       toast.success("Pedido enviado! O estabelecimento foi notificado.");
       cart.clear();
       qc.invalidateQueries({ queryKey: ["orders"] });
-      window.location.href = `/c/${companySlug}/feed`;
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  if (!session) {
-    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined" && !session) {
+      navigate({ to: "/c/$companySlug", params: { companySlug } });
+    }
+  }, [session, companySlug, navigate]);
+
+  if (!session) return null;
 
   return (
     <div className="p-4">

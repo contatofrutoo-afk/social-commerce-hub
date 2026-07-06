@@ -1,6 +1,6 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   companyRepository,
   postRepository,
@@ -22,6 +22,7 @@ export const Route = createFileRoute("/c/$companySlug/feed")({
 
 function FeedPage() {
   const { companySlug } = Route.useParams();
+  const navigate = useNavigate();
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
   const { data: company } = useQuery({
@@ -35,9 +36,13 @@ function FeedPage() {
     enabled: !!company,
   });
 
-  if (!session) {
-    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined" && !session) {
+      navigate({ to: "/c/$companySlug", params: { companySlug } });
+    }
+  }, [session, companySlug, navigate]);
+
+  if (!session) return null;
 
   return (
     <div className="divide-y">

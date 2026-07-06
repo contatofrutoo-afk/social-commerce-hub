@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import {
@@ -28,6 +28,7 @@ const contexts: { id: VisitContext; label: string; icon: any }[] = [
 
 function TableCheckin() {
   const { companySlug, tableSlug } = Route.useParams();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
@@ -81,7 +82,7 @@ function TableCheckin() {
       return customer;
     },
     onSuccess: () => {
-      window.location.href = `/c/${companySlug}/feed`;
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });

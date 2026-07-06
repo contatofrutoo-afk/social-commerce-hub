@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { companyRepository, postRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
 import { getSessionForCompany } from "@/lib/session";
@@ -49,14 +49,18 @@ function PublishPage() {
     onSuccess: () => {
       toast.success("Publicação enviada!");
       qc.invalidateQueries({ queryKey: ["feed"] });
-      window.location.href = `/c/${companySlug}/feed`;
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  if (!session) {
-    return <Navigate to="/c/$companySlug" params={{ companySlug }} />;
-  }
+  useEffect(() => {
+    if (typeof window !== "undefined" && !session) {
+      navigate({ to: "/c/$companySlug", params: { companySlug } });
+    }
+  }, [session, companySlug, navigate]);
+
+  if (!session) return null;
 
   return (
     <div className="space-y-4 p-4">
