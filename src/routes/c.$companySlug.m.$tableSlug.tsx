@@ -45,8 +45,8 @@ function TableCheckin() {
   });
 
   const { data: existingCustomer } = useQuery({
-    queryKey: ["customer", session?.customerId],
-    queryFn: () => customerRepository.findById(session!.customerId),
+    queryKey: ["customer-self", session?.customerId],
+    queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
     enabled: !!session,
   });
 
