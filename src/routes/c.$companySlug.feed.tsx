@@ -12,7 +12,7 @@ import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, ThumbsDown, MessageCircle, Plus, Store, User as UserIcon } from "lucide-react";
+import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -134,16 +134,6 @@ function PostCard({
                 <div className="text-sm font-medium">{prod.name}</div>
                 <div className="text-xs text-muted-foreground">{formatBRL(prod.price)}</div>
               </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  cart.add(prod);
-                  toast.success("Adicionado à sacola");
-                }}
-              >
-                <Plus className="size-4" />
-              </Button>
             </div>
           ))}
         </div>
@@ -172,7 +162,32 @@ function PostCard({
           <MessageCircle className="size-4" />
           <span className="ml-1 text-xs">{post.commentCount}</span>
         </Button>
+        <div className="ml-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={post.products.length === 0}
+            onClick={() => {
+              if (post.products.length === 0) return;
+              post.products.forEach((prod) => cart.add(prod));
+              toast.success(
+                post.products.length === 1
+                  ? "Adicionado à sacola"
+                  : `${post.products.length} itens adicionados à sacola`,
+              );
+            }}
+            title={
+              post.products.length === 0
+                ? "Sem produto marcado nesta publicação"
+                : "Adicionar à sacola"
+            }
+          >
+            <ShoppingBag className="size-4" />
+            <span className="ml-1 text-xs">Adicionar</span>
+          </Button>
+        </div>
       </div>
+
 
       {showComments && <CommentsSection postId={post.id} customerId={customerId} />}
     </article>
