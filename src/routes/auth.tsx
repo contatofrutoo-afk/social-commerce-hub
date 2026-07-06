@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ensureUserRole } from "@/lib/auth.functions";
-
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
@@ -19,8 +17,8 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/app" });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/app" });
     }).catch(() => {});
   }, [navigate]);
 
@@ -35,7 +33,6 @@ function AuthPage() {
           options: { emailRedirectTo: window.location.origin + "/app" },
         });
         if (error) throw error;
-        // Se confirmação de email está ativa, não há sessão ainda
         if (!data.session) {
           toast.success("Conta criada! Verifique seu email para confirmar.");
           setLoading(false);
@@ -45,11 +42,6 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      const result = await ensureUserRole();
-      if (!result.ok) {
-        toast.warning("Conta criada, mas não foi possível vincular a uma empresa.");
-      }
-      toast.success("Bem-vindo!");
       navigate({ to: "/app" });
     } catch (err: any) {
       toast.error(err.message ?? "Erro");
