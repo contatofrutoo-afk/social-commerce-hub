@@ -578,7 +578,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_own_company: {
+        Args: { _name: string; _slug: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "owner" | "staff"
