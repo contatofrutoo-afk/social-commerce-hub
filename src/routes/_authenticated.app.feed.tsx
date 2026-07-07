@@ -8,8 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { relativeTime, formatBRL } from "@/lib/format";
 import { ImageUpload } from "@/components/image-upload";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, ChevronDown, ChevronUp, BarChart3, Clock, Calendar } from "lucide-react";
+import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
   component: FeedAdminPage,
@@ -28,13 +34,14 @@ function FeedAdminPage() {
   const [text, setText] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
   const { data: products } = useQuery({
     queryKey: ["products", companyId],
     queryFn: () => productRepository.listByCompany(companyId!),
     enabled: !!companyId,
   });
-  const { data: posts, isError: postsError } = useQuery({
+  const { data: posts } = useQuery({
     queryKey: ["feed-b2b", companyId],
     queryFn: () => postRepository.listByCompany(companyId!),
     enabled: !!companyId,
@@ -73,7 +80,7 @@ function FeedAdminPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Feed</h1>
+      <h1 className="text-2xl font-bold">Publicações</h1>
 
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Nova publicação</h2>
@@ -112,22 +119,66 @@ function FeedAdminPage() {
         </Button>
       </div>
 
-      <div className="space-y-3">
-        <h2 className="font-semibold">Publicações</h2>
-        {posts?.map((p) => (
-          <PostCardWithAnalytics
-            key={p.id}
-            post={p}
-            metric={metricById.get(p.id) ?? null}
-            onRemove={() => remove.mutate(p.id)}
-          />
-        ))}
+      {/* Grid estilo Instagram */}
+      <div>
+        <h2 className="mb-3 font-semibold">Publicações</h2>
+        {(!posts || posts.length === 0) && (
+          <p className="text-sm text-muted-foreground">Nenhuma publicação ainda.</p>
+        )}
+        <div className="grid grid-cols-3 gap-1">
+          {posts?.map((p) => {
+            const m = metricById.get(p.id) ?? null;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPost({ post: p, metric: m })}
+                className="group relative aspect-square overflow-hidden bg-muted"
+              >
+                {p.imageUrl ? (
+                  <img
+                    src={p.imageUrl}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <div className="flex size-full items-center justify-center p-2 text-center text-xs text-muted-foreground">
+                    {p.text}
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center gap-4 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="flex items-center gap-1 text-sm font-bold text-white">
+                    <Heart className="size-4 fill-white" /> {p.loveCount}
+                  </span>
+                  <span className="flex items-center gap-1 text-sm font-bold text-white">
+                    <MessageCircle className="size-4 fill-white" /> {p.commentCount}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Dialog de detalhes */}
+      <Dialog open={!!selectedPost} onOpenChange={(o) => !o && setSelectedPost(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          {selectedPost && (
+            <PostDetail
+              post={selectedPost.post}
+              metric={selectedPost.metric}
+              onRemove={() => {
+                remove.mutate(selectedPost.post.id);
+                setSelectedPost(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function PostCardWithAnalytics({
+function PostDetail({
   post,
   metric,
   onRemove,
@@ -136,93 +187,93 @@ function PostCardWithAnalytics({
   metric: PostMetric | null;
   onRemove: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="text-sm">
-          <span className="font-medium">
+    <div>
+      <DialogHeader>
+        <DialogTitle className="flex items-center justify-between">
+          <span>
             {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
           </span>
-          <span className="ml-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</span>
-        </div>
-        <Button size="icon" variant="ghost" onClick={onRemove}>
-          <Trash2 className="size-4" />
-        </Button>
-      </div>
+          <Button size="icon" variant="ghost" onClick={onRemove}>
+            <Trash2 className="size-4" />
+          </Button>
+        </DialogTitle>
+      </DialogHeader>
+      <div className="mt-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</div>
       {post.imageUrl && (
-        <img src={post.imageUrl} alt="" className="max-h-64 w-full rounded-lg object-cover" />
+        <img src={post.imageUrl} alt="" className="mt-3 max-h-80 w-full rounded-lg object-cover" />
       )}
-      {post.text && <p className="mt-2 text-sm">{post.text}</p>}
-      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-        <span>❤️ {post.loveCount}</span>
-        <span>👎 {post.dislikeCount}</span>
-        <span>💬 {post.commentCount}</span>
-        {metric && (
-          <button
-            onClick={() => setOpen(!open)}
-            className="ml-auto flex items-center gap-1 text-primary hover:underline"
-          >
-            <BarChart3 className="size-3" />
-            Analytics
-            {open ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-          </button>
-        )}
+      {post.text && <p className="mt-3 text-sm">{post.text}</p>}
+      <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+        <span className="flex items-center gap-1"><Heart className="size-4" /> {post.loveCount}</span>
+        <span className="flex items-center gap-1"><ThumbsDown className="size-4" /> {post.dislikeCount}</span>
+        <span className="flex items-center gap-1"><MessageCircle className="size-4" /> {post.commentCount}</span>
       </div>
 
-      {open && metric && (
-        <div className="mt-3 space-y-2 rounded-lg bg-muted p-3 text-xs">
-          <div className="flex justify-between">
-            <span>Produtos vinculados</span>
-            <span className="font-semibold">{metric.productCount}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Pedidos gerados</span>
-            <span className="font-semibold">{metric.orderCount}</span>
-          </div>
-          <div className="flex justify-between border-b pb-1">
-            <span>Taxa de conversão</span>
-            <span className="font-semibold text-primary">{metric.conversionRate.toFixed(1)}%</span>
-          </div>
+      {metric && (
+        <>
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <BarChart3 className="size-3" /> Analytics
+          </button>
+          {showAnalytics && (
+            <div className="mt-2 space-y-2 rounded-lg bg-muted p-3 text-xs">
+              <div className="flex justify-between">
+                <span>Produtos vinculados</span>
+                <span className="font-semibold">{metric.productCount}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Pedidos gerados</span>
+                <span className="font-semibold">{metric.orderCount}</span>
+              </div>
+              <div className="flex justify-between border-b pb-1">
+                <span>Taxa de conversão</span>
+                <span className="font-semibold text-primary">{metric.conversionRate.toFixed(1)}%</span>
+              </div>
 
-          {metric.products.length > 0 && (
-            <div>
-              <div className="mb-1 font-medium">Produtos pedidos</div>
-              {metric.products.map((pr: any) => (
-                <div key={pr.id} className="flex justify-between">
-                  <span>{pr.name}</span>
-                  <span>{pr.ordered} unid. · {formatBRL(pr.revenue)}</span>
+              {metric.products.length > 0 && (
+                <div>
+                  <div className="mb-1 font-medium">Produtos pedidos</div>
+                  {metric.products.map((pr: any) => (
+                    <div key={pr.id} className="flex justify-between">
+                      <span>{pr.name}</span>
+                      <span>{pr.ordered} unid. · {formatBRL(pr.revenue)}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <div className="mb-1 flex items-center gap-1 font-medium">
+                    <Clock className="size-3" /> Horário
+                  </div>
+                  {metric.hourBreakdown.slice(0, 3).map((h: any) => (
+                    <div key={h.hour} className="flex justify-between">
+                      <span>{h.hour}h</span>
+                      <span>{h.count} interações</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div className="mb-1 flex items-center gap-1 font-medium">
+                    <Calendar className="size-3" /> Dia
+                  </div>
+                  {metric.dayBreakdown.slice(0, 3).map((d: any) => (
+                    <div key={d.day} className="flex justify-between">
+                      <span className="capitalize">{d.day}</span>
+                      <span>{d.count} interações</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
-
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <div>
-              <div className="mb-1 flex items-center gap-1 font-medium">
-                <Clock className="size-3" /> Horário
-              </div>
-              {metric.hourBreakdown.slice(0, 3).map((h: any) => (
-                <div key={h.hour} className="flex justify-between">
-                  <span>{h.hour}h</span>
-                  <span>{h.count} interações</span>
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="mb-1 flex items-center gap-1 font-medium">
-                <Calendar className="size-3" /> Dia
-              </div>
-              {metric.dayBreakdown.slice(0, 3).map((d: any) => (
-                <div key={d.day} className="flex justify-between">
-                  <span className="capitalize">{d.day}</span>
-                  <span>{d.count} interações</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

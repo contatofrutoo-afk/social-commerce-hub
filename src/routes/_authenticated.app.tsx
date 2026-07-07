@@ -57,7 +57,7 @@ function AppLayout() {
   const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },
     { to: "/app/clientes", label: "Clientes", icon: Users },
-    { to: "/app/feed", label: "Feed", icon: Newspaper },
+    { to: "/app/feed", label: "Publicações", icon: Newspaper },
     { to: "/app/produtos", label: "Produtos", icon: Package },
     { to: "/app/pedidos", label: "Pedidos", icon: ShoppingCart },
     { to: "/app/atendimento", label: "Atendimento", icon: Store },
