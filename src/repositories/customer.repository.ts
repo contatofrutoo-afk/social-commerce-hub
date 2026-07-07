@@ -102,7 +102,7 @@ export const checkinRepository = {
   async listRecentByCompany(companyId: string, limit = 50) {
     const { data, error } = await supabase
       .from("checkins")
-      .select("*, customer:customers(name, whatsapp), table:tables(label, slug)")
+      .select("*, table:tables(label, slug)")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false })
       .limit(limit);
