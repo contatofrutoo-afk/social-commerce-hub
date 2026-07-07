@@ -39,48 +39,38 @@ export const orderRepository = {
     return (data ?? []).map(mapOrder);
   },
 
-  async listByCustomer(customerId: string): Promise<Order[]> {
-    const { data, error } = await supabase
-      .from("orders")
-      .select(`*, table:tables(label), order_items(*, product:products(name))`)
-      .eq("customer_id", customerId)
-      .order("created_at", { ascending: false });
+  async listByCustomer(customerId: string, token: string): Promise<Order[]> {
+    const { data, error } = await supabase.rpc("list_customer_orders" as any, {
+      _customer_id: customerId,
+      _token: token,
+    });
     if (error) throw error;
-    return (data ?? []).map(mapOrder);
+    return ((data ?? []) as any[]).map(mapOrder);
   },
 
   async create(input: {
     companyId: string;
     customerId: string;
+    sessionToken: string;
     tableId?: string | null;
     note?: string;
     items: CartItem[];
-  }): Promise<Order> {
-    const total = input.items.reduce((s, i) => s + i.price * i.quantity, 0);
-    const { data: order, error } = await supabase
-      .from("orders")
-      .insert({
-        company_id: input.companyId,
-        customer_id: input.customerId,
-        table_id: input.tableId ?? null,
-        note: input.note ?? null,
-        total,
-        status: "received",
-      })
-      .select()
-      .single();
+  }): Promise<{ id: string }> {
+    const { data, error } = await supabase.rpc("create_customer_order" as any, {
+      _customer_id: input.customerId,
+      _token: input.sessionToken,
+      _company_id: input.companyId,
+      _note: input.note ?? null,
+      _items: input.items.map((i) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        price: i.price,
+        note: i.note ?? null,
+      })) as any,
+      _table_id: input.tableId ?? null,
+    });
     if (error) throw error;
-
-    const rows = input.items.map((i) => ({
-      order_id: order.id,
-      product_id: i.productId,
-      quantity: i.quantity,
-      unit_price: i.price,
-      note: i.note ?? null,
-    }));
-    const { error: e2 } = await supabase.from("order_items").insert(rows);
-    if (e2) throw e2;
-    return mapOrder({ ...order, order_items: [] });
+    return { id: data as string };
   },
 
   async updateStatus(id: string, status: OrderStatus) {

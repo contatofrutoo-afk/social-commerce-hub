@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { companyRepository, orderRepository, checkinRepository } from "@/repositories";
+import { companyRepository, orderRepository } from "@/repositories";
 import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -32,13 +32,11 @@ function BagPage() {
     mutationFn: async () => {
       if (!company || !session) throw new Error("Sessão inválida");
       if (cart.items.length === 0) throw new Error("Sacola vazia");
-      // pega mesa do último checkin, se houver
-      const recent = await checkinRepository.listRecentByCompany(company.id, 1);
-      const myLatest = recent.find((c: any) => c.customer_id === session.customerId);
       return orderRepository.create({
         companyId: company.id,
         customerId: session.customerId,
-        tableId: myLatest?.table_id ?? null,
+        sessionToken: session.sessionToken,
+        tableId: null,
         note,
         items: cart.items,
       });

@@ -110,7 +110,7 @@ function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
   const status = statusConfig(insights);
   const ContextIcon = insights.dominantContext ? contextIcons[insights.dominantContext] : null;
 
-  const hourIcon = insights.habits.preferredHour !== null
+  const HourIcon = insights.habits.preferredHour !== null
     ? insights.habits.preferredHour < 12 ? Sunrise
       : insights.habits.preferredHour < 18 ? Sun
       : Moon
@@ -268,7 +268,7 @@ function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
       <Section title="Hábitos" icon={Clock}>
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="rounded-lg bg-muted p-2">
-            <div className="flex items-center gap-1 text-muted-foreground"><hourIcon className="size-3" /> Horário preferido</div>
+            <div className="flex items-center gap-1 text-muted-foreground"><HourIcon className="size-3" /> Horário preferido</div>
             <div className="font-semibold">{insights.habits.preferredHour !== null ? `${String(insights.habits.preferredHour).padStart(2, "0")}h` : "—"}</div>
           </div>
           <div className="rounded-lg bg-muted p-2">

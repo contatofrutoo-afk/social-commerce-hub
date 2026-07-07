@@ -26,7 +26,7 @@ function ProfilePage() {
   });
   const { data: orders } = useQuery({
     queryKey: ["orders", "customer", session?.customerId],
-    queryFn: () => orderRepository.listByCustomer(session!.customerId),
+    queryFn: () => orderRepository.listByCustomer(session!.customerId, session!.sessionToken),
     enabled: !!session,
   });
 

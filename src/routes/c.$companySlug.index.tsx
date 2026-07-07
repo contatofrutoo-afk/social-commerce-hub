@@ -62,6 +62,7 @@ function CheckinPage() {
       });
       await checkinRepository.create({
         customerId: upserted.customerId,
+        sessionToken: upserted.sessionToken,
         companyId: company.id,
         context,
       });

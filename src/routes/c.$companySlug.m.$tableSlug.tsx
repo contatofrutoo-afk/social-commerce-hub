@@ -72,6 +72,7 @@ function TableCheckin() {
       });
       await checkinRepository.create({
         customerId: upserted.customerId,
+        sessionToken: upserted.sessionToken,
         companyId: company.id,
         context,
         tableId: table.id,

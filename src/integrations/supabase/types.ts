@@ -585,6 +585,28 @@ export type Database = {
         Args: { _name: string; _slug: string }
         Returns: string
       }
+      create_checkin: {
+        Args: {
+          _company_id: string
+          _context: string
+          _customer_id: string
+          _source?: string
+          _table_id?: string
+          _token: string
+        }
+        Returns: string
+      }
+      create_customer_order: {
+        Args: {
+          _company_id: string
+          _customer_id: string
+          _items: Json
+          _note: string
+          _table_id?: string
+          _token: string
+        }
+        Returns: string
+      }
       get_customer_self: {
         Args: { _customer_id: string; _token: string }
         Returns: {
@@ -605,6 +627,15 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      list_customer_orders: {
+        Args: { _customer_id: string; _token: string }
+        Returns: Json[]
+      }
+      list_public_comments: { Args: { _post_id: string }; Returns: Json[] }
+      list_public_posts: {
+        Args: { _company_id: string; _viewer_customer_id?: string }
+        Returns: Json[]
       }
       set_post_reaction: {
         Args: {

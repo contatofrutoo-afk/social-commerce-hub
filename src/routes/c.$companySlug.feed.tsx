@@ -250,7 +250,7 @@ function CommentsSection({ postId, customerId }: { postId: string; customerId: s
         </Button>
       </div>
       <div>
-        <ImageUpload value={commentImage} onChange={setCommentImage} folder={`comments/${postId}`} />
+        <ImageUpload value={commentImage} onChange={setCommentImage} folder={`comments/${customerId}/${postId}`} />
       </div>
     </div>
   );
