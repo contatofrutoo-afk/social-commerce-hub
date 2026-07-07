@@ -95,6 +95,7 @@ function PostCard({
     mutationFn: (t: ReactionType) =>
       postRepository.setReaction(post.id, customerId, sessionToken, post.myReaction === t ? null : t),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
+    onError: (err) => toast.error(`Erro ao reagir: ${(err as Error).message}`),
   });
 
   return (
@@ -174,13 +175,18 @@ function PostCard({
             size="sm"
             disabled={post.products.length === 0}
             onClick={() => {
-              if (post.products.length === 0) return;
-              post.products.forEach((prod) => cart.add(prod));
-              toast.success(
-                post.products.length === 1
-                  ? "Adicionado à sacola"
-                  : `${post.products.length} itens adicionados à sacola`,
-              );
+              try {
+                if (post.products.length === 0) return;
+                if (!companyId) { toast.error("Empresa não identificada"); return; }
+                post.products.forEach((prod) => cart.add(prod));
+                toast.success(
+                  post.products.length === 1
+                    ? "Adicionado à sacola"
+                    : `${post.products.length} itens adicionados à sacola`,
+                );
+              } catch (err) {
+                toast.error(`Erro ao adicionar: ${(err as Error).message}`);
+              }
             }}
             title={
               post.products.length === 0
@@ -216,6 +222,7 @@ function CommentsSection({ postId, customerId }: { postId: string; customerId: s
       qc.invalidateQueries({ queryKey: ["comments", postId] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
+    onError: (err) => toast.error(`Erro ao comentar: ${(err as Error).message}`),
   });
 
   return (
