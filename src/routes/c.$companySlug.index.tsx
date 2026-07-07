@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User, Heart, Users, Home } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/c/$companySlug/")({
   component: CheckinPage,
@@ -83,16 +84,27 @@ function CheckinPage() {
   if (!company) return <div className="p-8 text-center">Estabelecimento não encontrado</div>;
 
   return (
-    <div className="px-6 py-8">
-      <div className="mb-8 text-center">
-        <div className="mx-auto grid size-16 place-items-center rounded-2xl bg-primary text-primary-foreground text-2xl font-bold">
-          W
+    <div className="weaze-hero-gradient min-h-screen px-6 py-10">
+      <div className="mx-auto max-w-md">
+        <div className="mb-10 text-center">
+          {company.logoUrl ? (
+            <img
+              src={company.logoUrl}
+              alt={company.name}
+              className="mx-auto size-20 rounded-2xl object-cover shadow-elegant ring-1 ring-border"
+            />
+          ) : (
+            <div className="mx-auto grid size-20 place-items-center rounded-2xl bg-card shadow-elegant ring-1 ring-border">
+              <Logo className="h-10" />
+            </div>
+          )}
+          <h1 className="mt-6 font-display text-3xl font-extrabold tracking-tight">
+            {company.welcomeMessage}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {company.name} · Faça seu check-in em segundos
+          </p>
         </div>
-        <h1 className="mt-4 text-2xl font-bold">{company.welcomeMessage}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {company.name} · Faça seu check-in em segundos
-        </p>
-      </div>
 
       <div className="space-y-4">
         <div>
@@ -150,6 +162,7 @@ function CheckinPage() {
         >
           {mutation.isPending ? "Entrando…" : "Entrar"}
         </Button>
+      </div>
       </div>
     </div>
   );

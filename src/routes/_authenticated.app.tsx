@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ensureUserRole } from "@/lib/auth.functions";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
@@ -66,18 +67,20 @@ function AppLayout() {
 
   return (
     <div className="flex min-h-screen bg-muted/30">
-      <aside className="hidden w-60 flex-col border-r bg-card p-4 md:flex">
-        <div className="mb-6 flex items-center gap-2">
+      <aside className="hidden w-64 flex-col border-r bg-card p-5 md:flex">
+        <div className="mb-8 flex items-center gap-3">
           {role?.company?.logo_url ? (
-            <img src={role.company.logo_url} alt="" className="size-9 rounded-lg object-cover" />
+            <img src={role.company.logo_url} alt="" className="size-10 rounded-xl object-cover ring-1 ring-border" />
           ) : (
-            <div className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground font-bold">
-              {(role?.company?.name ?? "W").charAt(0).toUpperCase()}
+            <div className="grid size-10 place-items-center rounded-xl bg-primary/10">
+              <Logo className="h-5" />
             </div>
           )}
-          <div>
-            <div className="text-sm font-semibold">WEAZE</div>
-            <div className="text-xs text-muted-foreground">{role?.company?.name ?? "Painel"}</div>
+          <div className="min-w-0">
+            <Logo className="h-4" />
+            <div className="mt-0.5 truncate text-xs text-muted-foreground">
+              {role?.company?.name ?? "Painel"}
+            </div>
           </div>
         </div>
         <nav className="flex-1 space-y-1">
@@ -114,17 +117,11 @@ function AppLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card p-3 md:hidden">
-        <div className="flex items-center gap-2">
-          {role?.company?.logo_url ? (
-            <img src={role.company.logo_url} alt="" className="size-8 rounded object-cover" />
-          ) : (
-            <div className="grid size-8 place-items-center rounded bg-primary text-primary-foreground text-sm font-bold">
-              {(role?.company?.name ?? "W").charAt(0).toUpperCase()}
-            </div>
-          )}
-          <span className="font-semibold">{role?.company?.name ?? "WEAZE"}</span>
-        </div>
+      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/90 backdrop-blur px-4 py-3 md:hidden">
+        <Logo className="h-6" />
+        <span className="truncate text-sm font-medium text-muted-foreground">
+          {role?.company?.name ?? ""}
+        </span>
       </div>
 
       <main className="flex-1 overflow-x-hidden p-6 pt-20 md:pt-6">
