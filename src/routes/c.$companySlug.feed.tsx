@@ -5,7 +5,6 @@ import {
   companyRepository,
   postRepository,
   commentRepository,
-  productRepository,
 } from "@/repositories";
 import type { Post, ReactionType } from "@/repositories/types";
 import { getSessionForCompany } from "@/lib/session";
@@ -36,6 +35,8 @@ function FeedPage() {
     queryFn: () => postRepository.listByCompany(company!.id, session?.customerId),
     enabled: !!company,
   });
+
+  const cart = useCart(company?.id);
 
   useEffect(() => {
     if (typeof window !== "undefined" && !session) {
@@ -69,7 +70,7 @@ function FeedPage() {
           post={p}
           customerId={session.customerId}
           sessionToken={session.sessionToken}
-          companyId={company!.id}
+          cart={cart}
         />
       ))}
     </div>
@@ -80,16 +81,13 @@ function PostCard({
   post,
   customerId,
   sessionToken,
-  companyId,
+  cart,
 }: {
   post: Post;
   customerId: string;
   sessionToken: string;
-  companyId: string;
+  cart: ReturnType<typeof useCart>;
 }) {
-  const qc = useQueryClient();
-  const [showComments, setShowComments] = useState(false);
-  const cart = useCart(companyId);
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
@@ -177,7 +175,6 @@ function PostCard({
             onClick={() => {
               try {
                 if (post.products.length === 0) return;
-                if (!companyId) { toast.error("Empresa não identificada"); return; }
                 post.products.forEach((prod) => cart.add(prod));
                 toast.success(
                   post.products.length === 1
