@@ -110,7 +110,7 @@ function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
   const status = statusConfig(insights);
   const ContextIcon = insights.dominantContext ? contextIcons[insights.dominantContext] : null;
 
-  const hourIcon = insights.habits.preferredHour !== null
+  const HourIcon = insights.habits.preferredHour !== null
     ? insights.habits.preferredHour < 12 ? Sunrise
       : insights.habits.preferredHour < 18 ? Sun
       : Moon
