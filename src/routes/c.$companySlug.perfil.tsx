@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatBRL, relativeTime } from "@/lib/format";
+import { ImageUpload } from "@/components/image-upload";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
@@ -87,8 +88,12 @@ function ProfilePage() {
           <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} maxLength={20} />
         </div>
         <div>
-          <Label>Avatar (URL)</Label>
-          <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="Opcional" />
+          <Label>Avatar</Label>
+          <ImageUpload
+            value={avatarUrl}
+            onChange={(url) => setAvatarUrl(url)}
+            folder={`avatars/${session.customerId}`}
+          />
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           Salvar
