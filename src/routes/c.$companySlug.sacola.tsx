@@ -32,13 +32,11 @@ function BagPage() {
     mutationFn: async () => {
       if (!company || !session) throw new Error("Sessão inválida");
       if (cart.items.length === 0) throw new Error("Sacola vazia");
-      // pega mesa do último checkin, se houver
-      const recent = await checkinRepository.listRecentByCompany(company.id, 1);
-      const myLatest = recent.find((c: any) => c.customer_id === session.customerId);
       return orderRepository.create({
         companyId: company.id,
         customerId: session.customerId,
-        tableId: myLatest?.table_id ?? null,
+        sessionToken: session.sessionToken,
+        tableId: null,
         note,
         items: cart.items,
       });
