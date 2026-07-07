@@ -127,7 +127,7 @@ function PostCard({
 
       {post.text && <p className="px-4 py-3 text-sm">{post.text}</p>}
 
-      {post.products.length > 0 && (
+      {post.authorType === "business" && post.products.length > 0 && (
         <div className="space-y-2 px-4 pb-3">
           {post.products.map((prod) => (
             <div
@@ -169,37 +169,39 @@ function PostCard({
           <MessageCircle className="size-4" />
           <span className="ml-1 text-xs">{post.commentCount}</span>
         </Button>
-        <div className="ml-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={post.products.length === 0 ? "opacity-50" : ""}
-            onClick={() => {
-              try {
-                if (post.products.length === 0) {
-                  toast.info("Nenhum produto vinculado a esta publicação");
-                  return;
+        {post.authorType === "business" && (
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={post.products.length === 0 ? "opacity-50" : ""}
+              onClick={() => {
+                try {
+                  if (post.products.length === 0) {
+                    toast.info("Nenhum produto vinculado a esta publicação");
+                    return;
+                  }
+                  post.products.forEach((prod) => cart.add(prod));
+                  toast.success(
+                    post.products.length === 1
+                      ? "Adicionado à sacola"
+                      : `${post.products.length} itens adicionados à sacola`,
+                  );
+                } catch (err) {
+                  toast.error(`Erro ao adicionar: ${(err as Error).message}`);
                 }
-                post.products.forEach((prod) => cart.add(prod));
-                toast.success(
-                  post.products.length === 1
-                    ? "Adicionado à sacola"
-                    : `${post.products.length} itens adicionados à sacola`,
-                );
-              } catch (err) {
-                toast.error(`Erro ao adicionar: ${(err as Error).message}`);
+              }}
+              title={
+                post.products.length === 0
+                  ? "Sem produto marcado nesta publicação"
+                  : "Adicionar à sacola"
               }
-            }}
-            title={
-              post.products.length === 0
-                ? "Sem produto marcado nesta publicação"
-                : "Adicionar à sacola"
-            }
-          >
-            <ShoppingBag className="size-4" />
-            <span className="ml-1 text-xs">Adicionar</span>
-          </Button>
-        </div>
+            >
+              <ShoppingBag className="size-4" />
+              <span className="ml-1 text-xs">Adicionar</span>
+            </Button>
+          </div>
+        )}
       </div>
 
 
