@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { CustomerInsights, TimelineEvent, ProductInteraction, CustomerServiceProfile, Order } from "./types";
+import type { CustomerInsights, TimelineEvent, ProductInteraction, CustomerServiceProfile, Order, PurchaseSummary, VisitHabits, EngagementSummary } from "./types";
 
 function mapOrder(r: any): Order {
   return {
@@ -36,126 +36,112 @@ function toProductInteraction(r: any): ProductInteraction {
   };
 }
 
+function mode(arr: any[]): any | null {
+  if (arr.length === 0) return null;
+  const counts: Record<string, number> = {};
+  arr.forEach((x) => { counts[String(x)] = (counts[String(x)] ?? 0) + 1; });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
+function getDayName(iso: string): string {
+  return ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][new Date(iso).getDay()];
+}
+
+function hoursBetween(a: string, b: string): number {
+  return (new Date(b).getTime() - new Date(a).getTime()) / 3600000;
+}
+
+function daysSince(iso: string): number {
+  return (Date.now() - new Date(iso).getTime()) / 86400000;
+}
+
 export const crmRepository = {
   async getCustomerInsights(customerId: string): Promise<CustomerInsights> {
-    const [
-      checkins,
-      ordersData,
-      reactions,
-      likes,
-      comments,
-    ] = await Promise.all([
-      supabase
-        .from("checkins")
-        .select("id, context, created_at")
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("orders")
-        .select(`id, total, created_at, order_items(product_id, quantity, product:products(name, category, image_url, price))`)
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("post_reactions")
-        .select(`id, type, created_at, post:posts(id, post_products(product:products(id, name, category, image_url, price)))`)
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("product_likes")
-        .select(`id, created_at, product:products(id, name, category, image_url, price)`)
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("comments")
-        .select("id, text, created_at")
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
+    const [customerResult, checkinsResult, ordersResult, reactionsResult, likesResult, commentsResult, postsResult, wishesResult, tablesResult] = await Promise.all([
+      supabase.from("customers").select("*").eq("id", customerId).single(),
+      supabase.from("checkins").select("id, context, created_at, source, table_id").eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("orders").select(`id, total, status, created_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price))`).eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("post_reactions").select(`id, type, created_at, post:posts(id, post_products(product:products(id, name, category, image_url, price)))`).eq("customer_id", customerId),
+      supabase.from("product_likes").select(`id, created_at, product:products(id, name, category, image_url, price)`).eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("comments").select("id, text, created_at, image_url").eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("posts").select("id, created_at").eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("product_wishes").select(`product_id, product:products(id, name, category, image_url, price)`).eq("customer_id", customerId),
+      supabase.from("tables").select("id, label"),
     ]);
 
-    if (checkins.error) throw checkins.error;
-    if (ordersData.error) throw ordersData.error;
-    if (reactions.error) throw reactions.error;
-    if (likes.error) throw likes.error;
-    if (comments.error) throw comments.error;
+    if (customerResult.error) throw customerResult.error;
+    if (checkinsResult.error) throw checkinsResult.error;
+    if (ordersResult.error) throw ordersResult.error;
+    if (reactionsResult.error) throw reactionsResult.error;
+    if (likesResult.error) throw likesResult.error;
+    if (commentsResult.error) throw commentsResult.error;
+    if (postsResult.error) throw postsResult.error;
+    if (wishesResult.error) throw wishesResult.error;
+    if (tablesResult.error) throw tablesResult.error;
 
-    const rows = checkins.data ?? [];
-    const orders = ordersData.data ?? [];
-    const reactionRows = reactions.data ?? [];
-    const likesRows = likes.data ?? [];
-    const commentsRows = comments.data ?? [];
+    const customer = customerResult.data;
+    if (!customer) throw new Error("Cliente não encontrado");
 
+    const checkins = checkinsResult.data ?? [];
+    const orders = ordersResult.data ?? [];
+    const reactionRows = reactionsResult.data ?? [];
+    const likesRows = likesResult.data ?? [];
+    const commentsRows = commentsResult.data ?? [];
+    const postsRows = postsResult.data ?? [];
+    const wishesRows = wishesResult.data ?? [];
+    const allTables = tablesResult.data ?? [];
+
+    const now = Date.now();
+
+    // --- Timeline ---
     const timeline: TimelineEvent[] = [];
 
-    rows.forEach((c: any) => {
-      timeline.push({
-        id: `ck-${c.id}`,
-        type: "checkin",
-        createdAt: c.created_at,
-        description: `Check-in: ${c.context}`,
-        metadata: { context: c.context },
-      });
+    checkins.forEach((c: any) => {
+      timeline.push({ id: `ck-${c.id}`, type: "checkin", createdAt: c.created_at, description: `Check-in: ${c.context}`, metadata: { context: c.context } });
     });
-
     orders.forEach((o: any) => {
       const items = (o.order_items ?? []).map((i: any) => i.product?.name ?? "Produto").join(", ");
-      timeline.push({
-        id: `ord-${o.id}`,
-        type: "order",
-        createdAt: o.created_at,
-        description: `Pedido: ${items}`,
-        metadata: { total: Number(o.total), orderId: o.id },
-      });
+      timeline.push({ id: `ord-${o.id}`, type: "order", createdAt: o.created_at, description: `Pedido: ${items}`, metadata: { total: Number(o.total), orderId: o.id } });
     });
-
     reactionRows.forEach((r: any) => {
       const products = r.post?.post_products ?? [];
       const names = products.map((pp: any) => pp.product?.name).filter(Boolean).join(", ");
       timeline.push({
-        id: `react-${r.id}`,
-        type: r.type === "love" ? "reaction_love" : "reaction_dislike",
+        id: `react-${r.id}`, type: r.type === "love" ? "reaction_love" : "reaction_dislike",
         createdAt: r.created_at,
-        description: r.type === "love"
-          ? `Amei publicação${names ? ` (${names})` : ""}`
-          : `Não gostei${names ? ` (${names})` : ""}`,
+        description: r.type === "love" ? `Amei publicação${names ? ` (${names})` : ""}` : `Não gostei${names ? ` (${names})` : ""}`,
       });
     });
-
     likesRows.forEach((l: any) => {
-      timeline.push({
-        id: `lk-${l.id}`,
-        type: "like",
-        createdAt: l.created_at,
-        description: `Curtiu produto: ${l.product?.name ?? ""}`,
-      });
+      timeline.push({ id: `lk-${l.id}`, type: "like", createdAt: l.created_at, description: `Curtiu produto: ${l.product?.name ?? ""}` });
     });
-
     commentsRows.forEach((cm: any) => {
-      timeline.push({
-        id: `cm-${cm.id}`,
-        type: "comment",
-        createdAt: cm.created_at,
-        description: cm.text ? `Comentou: ${cm.text.substring(0, 80)}` : "Comentou",
-      });
+      timeline.push({ id: `cm-${cm.id}`, type: "comment", createdAt: cm.created_at, description: cm.text ? `Comentou: ${cm.text.substring(0, 80)}` : "Comentou" });
     });
-
+    postsRows.forEach((p: any) => {
+      timeline.push({ id: `post-${p.id}`, type: "post", createdAt: p.created_at, description: "Nova publicação" });
+    });
+    wishesRows.forEach((w: any) => {
+      timeline.push({ id: `wish-${w.product_id}`, type: "wish", createdAt: w.product?.created_at ?? "", description: `Desejou: ${w.product?.name ?? ""}` });
+    });
     timeline.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
 
-    const totalOrders = orders.length;
-    const totalSpent = orders.reduce((s: number, o: any) => s + Number(o.total ?? 0), 0);
-
+    // --- Products maps ---
     const purchasedMap = new Map<string, ProductInteraction>();
     orders.forEach((o: any) => {
       (o.order_items ?? []).forEach((i: any) => {
         const pid = i.product_id;
         const existing = purchasedMap.get(pid);
-        const prod = toProductInteraction({ ...i, product_id: pid });
         if (existing) {
           existing.count += i.quantity;
         } else {
-          purchasedMap.set(pid, prod);
+          purchasedMap.set(pid, toProductInteraction({ ...i, product_id: pid }));
         }
       });
     });
+
+    const loveCount = reactionRows.filter((r: any) => r.type === "love").length;
+    const dislikeCount = reactionRows.filter((r: any) => r.type === "dislike").length;
 
     const loveMap = new Map<string, ProductInteraction>();
     const dislikeMap = new Map<string, ProductInteraction>();
@@ -165,9 +151,7 @@ export const crmRepository = {
         if (!pp.product) return;
         const pid = pp.product.id;
         const target = r.type === "love" ? loveMap : dislikeMap;
-        if (!target.has(pid)) {
-          target.set(pid, toProductInteraction({ ...pp.product, product_id: pid, count: 1 }));
-        }
+        if (!target.has(pid)) target.set(pid, toProductInteraction({ ...pp.product, product_id: pid, count: 1 }));
       });
     });
 
@@ -175,32 +159,284 @@ export const crmRepository = {
     likesRows.forEach((l: any) => {
       if (!l.product) return;
       const pid = l.product.id;
-      if (!likeMap.has(pid)) {
-        likeMap.set(pid, toProductInteraction({ ...l.product, product_id: pid, count: 1 }));
+      if (!likeMap.has(pid)) likeMap.set(pid, toProductInteraction({ ...l.product, product_id: pid, count: 1 }));
+    });
+
+    const wishMap = new Map<string, ProductInteraction>();
+    wishesRows.forEach((w: any) => {
+      if (!w.product) return;
+      const pid = w.product_id;
+      if (!wishMap.has(pid)) wishMap.set(pid, toProductInteraction({ ...w.product, product_id: pid, count: 1 }));
+    });
+
+    // --- Visit contexts ---
+    const visitContexts: Record<string, number> = {};
+    checkins.forEach((c: any) => { visitContexts[c.context] = (visitContexts[c.context] ?? 0) + 1; });
+
+    const dominantContext = Object.entries(visitContexts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+    // --- Visit gaps ---
+    const sortedCheckins = [...checkins].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const visitGaps: number[] = [];
+    for (let i = 1; i < sortedCheckins.length; i++) {
+      visitGaps.push(hoursBetween(sortedCheckins[i - 1].created_at, sortedCheckins[i].created_at));
+    }
+    const avgTimeBetweenVisitsHours = visitGaps.length > 0 ? visitGaps.reduce((s, g) => s + g, 0) / visitGaps.length : null;
+
+    // --- Checkin source ---
+    const sources: string[] = checkins.map((c: any) => c.source ?? "qr");
+    const mostCommonSource = mode(sources);
+
+    // --- Most used table ---
+    const tableCounts: Record<string, number> = {};
+    checkins.forEach((c: any) => {
+      if (c.table_id) tableCounts[c.table_id] = (tableCounts[c.table_id] ?? 0) + 1;
+    });
+    const topTableId = Object.entries(tableCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+    const topTable = allTables.find((t: any) => t.id === topTableId);
+    const mostUsedTable = topTable ? { id: topTable.id, label: topTable.label } : null;
+
+    // --- Habits (peak hour/day from checkins) ---
+    const checkinHours: number[] = [];
+    const checkinDays: string[] = [];
+    checkins.forEach((c: any) => {
+      checkinHours.push(new Date(c.created_at).getHours());
+      checkinDays.push(getDayName(c.created_at));
+    });
+    const preferredHour = checkinHours.length > 0 ? Number(mode(checkinHours.map(String))) : null;
+    const preferredDay = checkinDays.length > 0 ? mode(checkinDays) : null;
+
+    // --- Checkin to order time ---
+    const orderTimes = orders.map((o: any) => new Date(o.created_at).getTime());
+    const checkinToOrderDiffs: number[] = [];
+    sortedCheckins.forEach((c: any) => {
+      const ct = new Date(c.created_at).getTime();
+      const nextOrder = orderTimes.find((ot: number) => ot >= ct);
+      if (nextOrder) checkinToOrderDiffs.push((nextOrder - ct) / 3600000);
+    });
+    const avgCheckinToOrderHours = checkinToOrderDiffs.length > 0 ? checkinToOrderDiffs.reduce((s, d) => s + d, 0) / checkinToOrderDiffs.length : null;
+
+    // --- Purchase summary ---
+    const totalSpent = orders.reduce((s: number, o: any) => s + Number(o.total ?? 0), 0);
+    const totalOrders = orders.length;
+    const avgOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+    const biggestPurchase = orders.length > 0 ? Math.max(...orders.map((o: any) => Number(o.total))) : 0;
+    const lastOrder = orders.length > 0 ? orders[0].created_at : null;
+
+    // Most ordered product
+    const productOrderCount: Record<string, { name: string; count: number }> = {};
+    const categoryOrderCount: Record<string, number> = {};
+    orders.forEach((o: any) => {
+      (o.order_items ?? []).forEach((i: any) => {
+        const pid = i.product_id;
+        if (!productOrderCount[pid]) productOrderCount[pid] = { name: i.product?.name ?? "Produto", count: 0 };
+        productOrderCount[pid].count += i.quantity;
+        const cat = i.product?.category ?? "sem categoria";
+        categoryOrderCount[cat] = (categoryOrderCount[cat] ?? 0) + 1;
+      });
+    });
+    const mostOrderedProductEntry = Object.entries(productOrderCount).sort((a, b) => b[1].count - a[1].count)[0];
+    const mostOrderedProduct = mostOrderedProductEntry ? { id: mostOrderedProductEntry[0], name: mostOrderedProductEntry[1].name, count: mostOrderedProductEntry[1].count } : null;
+    const mostOrderedCategory = Object.entries(categoryOrderCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+    // Bought together
+    const boughtTogetherMap: Record<string, Record<string, number>> = {};
+    orders.forEach((o: any) => {
+      const pids = (o.order_items ?? []).map((i: any) => i.product_id);
+      for (const a of pids) {
+        if (!boughtTogetherMap[a]) boughtTogetherMap[a] = {};
+        for (const b of pids) {
+          if (a !== b) boughtTogetherMap[a][b] = (boughtTogetherMap[a][b] ?? 0) + 1;
+        }
       }
     });
+    const boughtTogether: { id: string; name: string; count: number }[] = mostOrderedProduct
+      ? Object.entries(boughtTogetherMap[mostOrderedProduct.id] ?? {})
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([id, count]) => ({ id, name: productOrderCount[id]?.name ?? "Produto", count }))
+      : [];
 
-    const visitContexts: Record<string, number> = {};
-    rows.forEach((c: any) => {
-      visitContexts[c.context] = (visitContexts[c.context] ?? 0) + 1;
-    });
+    const favoriteCategories = Object.entries(categoryOrderCount)
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // --- Engagement ---
+    const daysSinceLastVisit = checkins.length > 0 ? daysSince(checkins[0].created_at) : null;
+    const photoCount = commentsRows.filter((c: any) => c.image_url).length;
+    const postsCount = postsRows.length;
+    const commentCount = commentsRows.length;
+
+    const isNew = checkins.length <= 1 && totalOrders === 0;
+    const isInactive = daysSinceLastVisit !== null && daysSinceLastVisit > 30;
+    const isVip = totalOrders >= 5 || totalSpent > 1000;
+    const isRepeatBuyer = totalOrders >= 2;
+    const totalInteractions = loveCount + dislikeCount + commentCount + postsCount + likesRows.length;
+
+    let engagementLevel: "muito_ativo" | "moderado" | "pouco_ativo" | "risco_abandono";
+    if (isInactive) {
+      engagementLevel = "risco_abandono";
+    } else if (totalInteractions > 10 || (totalOrders > 0 && checkins.length > 5)) {
+      engagementLevel = "muito_ativo";
+    } else if (totalInteractions > 3 || checkins.length > 2) {
+      engagementLevel = "moderado";
+    } else {
+      engagementLevel = "pouco_ativo";
+    }
+
+    const isHighlyEngaged = engagementLevel === "muito_ativo" || engagementLevel === "moderado";
+
+    // --- Return frequency ---
+    const returnFrequency: "alta" | "media" | "baixa" = avgTimeBetweenVisitsHours === null ? "baixa"
+      : avgTimeBetweenVisitsHours < 168 ? "alta"
+      : avgTimeBetweenVisitsHours < 720 ? "media"
+      : "baixa";
+
+    // --- Suggestions ---
+    const suggestions: string[] = [];
+
+    if (isNew) suggestions.push("Primeira visita — dê boas-vindas caprichadas.");
+    else if (isVip) suggestions.push("Cliente VIP — trate com atenção especial.");
+    else if (isRepeatBuyer) suggestions.push("Cliente fiel — reconheça a preferência.");
+
+    if (dominantContext === "casal") suggestions.push("Costuma vir em casal — sugira combos românticos.");
+    else if (dominantContext === "familia") suggestions.push("Vem com a família — ofereça opções infantis.");
+    else if (dominantContext === "amigos") suggestions.push("Vem com amigos — destaque petiscos.");
+    else if (dominantContext === "sozinho") suggestions.push("Vem sozinho — recomende o conforto do balcão.");
+
+    if (mostOrderedCategory) suggestions.push(`Preferência por ${mostOrderedCategory} — destaque novidades.`);
+
+    // Liked but not ordered
+    const orderedIds = new Set<string>();
+    orders.forEach((o: any) => (o.order_items ?? []).forEach((i: any) => orderedIds.add(i.product_id)));
+    const notOrderedLikes = likesRows.filter((l: any) => l.product && !orderedIds.has(l.product.id));
+    if (notOrderedLikes.length > 0) {
+      const names = notOrderedLikes.slice(0, 3).map((l: any) => l.product?.name).filter(Boolean).join(", ");
+      suggestions.push(`Ainda não pediu: ${names} — ofereça uma amostra.`);
+    }
+
+    if (preferredHour !== null) {
+      if (preferredHour < 12) suggestions.push("Costuma vir pela manhã — prepare ofertas de café.");
+      else if (preferredHour < 18) suggestions.push("Costuma vir à tarde — destaque o menu do dia.");
+      else suggestions.push("Costuma vir à noite — sugira drinks.");
+    }
+
+    if (preferredDay) {
+      const dayNames: Record<string, string> = { domingo: "domingo", segunda: "segunda", terça: "terça", quarta: "quarta", quinta: "quinta", sexta: "sexta", sábado: "sábado" };
+      const dayLabel = dayNames[preferredDay] ?? preferredDay;
+      if (preferredDay === "sábado" || preferredDay === "domingo") {
+        suggestions.push(`Costuma voltar aos ${dayLabel} — prepare ofertas de fim de semana.`);
+      }
+    }
+
+    if (isHighlyEngaged && !isRepeatBuyer) {
+      suggestions.push("Interage muito mas ainda não comprou — precisa de incentivo.");
+    }
+
+    if (isRepeatBuyer && checkins.length > totalOrders * 2) {
+      suggestions.push("Visita mais do que compra — talvez precise de um lembrete.");
+    }
+
+    // --- Executive summary ---
+    const summaryParts: string[] = [];
+
+    if (isNew) summaryParts.push("Cliente novo.");
+    else if (isVip) summaryParts.push("Cliente VIP.");
+    else if (isRepeatBuyer) summaryParts.push("Cliente recorrente.");
+    else summaryParts.push(`${checkins.length} visita${checkins.length > 1 ? "s" : ""}.`);
+
+    if (dominantContext) {
+      const ctxLabels: Record<string, string> = { sozinho: "sozinho", casal: "em casal", amigos: "com amigos", familia: "em família" };
+      summaryParts.push(`Costuma visitar ${ctxLabels[dominantContext] ?? dominantContext}.`);
+    }
+
+    if (preferredDay) {
+      if (preferredDay === "sábado" || preferredDay === "domingo") {
+        summaryParts.push("Geralmente vem aos finais de semana.");
+      } else {
+        summaryParts.push(`Costuma vir às ${preferredDay === "sexta" ? "sextas" : `${preferredDay}-feiras`}.`);
+      }
+    }
+
+    if (mostOrderedCategory) {
+      summaryParts.push(`Preferência por ${mostOrderedCategory}.`);
+    }
+
+    if (isHighlyEngaged) {
+      summaryParts.push("Alta interação com a plataforma.");
+    }
+
+    if (isRepeatBuyer) {
+      summaryParts.push(`${totalOrders} pedido${totalOrders > 1 ? "s" : ""} realizados.`);
+    } else if (totalInteractions > 0) {
+      summaryParts.push("Ainda não comprou.");
+    }
 
     return {
-      totalVisits: rows.length,
-      firstVisit: rows.length > 0 ? rows[rows.length - 1].created_at : null,
-      lastVisit: rows.length > 0 ? rows[0].created_at : null,
+      // Original fields (kept for reference)
+      totalVisits: checkins.length,
+      firstVisit: sortedCheckins.length > 0 ? sortedCheckins[0].created_at : null,
+      lastVisit: checkins.length > 0 ? checkins[0].created_at : null,
       totalOrders,
       totalSpent,
-      avgOrderValue: totalOrders > 0 ? totalSpent / totalOrders : 0,
-      lastOrder: orders.length > 0 ? orders[0].created_at : null,
+      avgOrderValue,
+      lastOrder,
       purchasedProducts: Array.from(purchasedMap.values()),
       lovedProducts: Array.from(loveMap.values()),
       dislikedProducts: Array.from(dislikeMap.values()),
       likedProducts: Array.from(likeMap.values()),
-      commentCount: commentsRows.length,
       lastComment: commentsRows.length > 0 ? commentsRows[0].created_at : null,
       visitContexts: Object.entries(visitContexts).map(([context, count]) => ({ context, count })),
       timeline,
+
+      // New fields
+      name: customer.name,
+      whatsapp: customer.whatsapp,
+      avatarUrl: customer.avatar_url,
+      customerSince: customer.created_at,
+
+      dislikeCount,
+      loveCount,
+      postsCount,
+      photoCount,
+      commentCount,
+      wishedProducts: Array.from(wishMap.values()),
+      favoriteCategories,
+
+      habits: {
+        preferredHour,
+        preferredDay,
+        avgTimeBetweenVisitsHours,
+        avgCheckinToOrderHours,
+        mostUsedTable,
+        mostCommonSource,
+        daysSinceLastVisit,
+        returnFrequency,
+      },
+
+      purchases: {
+        totalOrders,
+        totalSpent,
+        avgOrderValue,
+        biggestPurchase,
+        lastOrder,
+        mostOrderedProduct,
+        mostOrderedCategory,
+        boughtTogether,
+      },
+
+      engagement: {
+        level: engagementLevel,
+        isHighlyEngaged,
+        isRepeatBuyer,
+        isVip,
+        isInactive,
+        isNew,
+      },
+
+      dominantContext,
+      suggestions,
+      executiveSummary: summaryParts.join(" "),
     };
   },
 

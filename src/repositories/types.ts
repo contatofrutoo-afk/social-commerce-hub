@@ -200,7 +200,7 @@ export interface Insight {
 
 // --- CRM ---
 
-export type TimelineEventType = "checkin" | "order" | "reaction_love" | "reaction_dislike" | "comment" | "like" | "wish";
+export type TimelineEventType = "checkin" | "order" | "reaction_love" | "reaction_dislike" | "comment" | "like" | "wish" | "post";
 
 export interface TimelineEvent {
   id: string;
@@ -219,6 +219,37 @@ export interface ProductInteraction {
   count: number;
 }
 
+export interface PurchaseSummary {
+  totalOrders: number;
+  totalSpent: number;
+  avgOrderValue: number;
+  biggestPurchase: number;
+  lastOrder: string | null;
+  mostOrderedProduct: { id: string; name: string; count: number } | null;
+  mostOrderedCategory: string | null;
+  boughtTogether: { id: string; name: string; count: number }[];
+}
+
+export interface VisitHabits {
+  preferredHour: number | null;
+  preferredDay: string | null;
+  avgTimeBetweenVisitsHours: number | null;
+  avgCheckinToOrderHours: number | null;
+  mostUsedTable: { id: string; label: string } | null;
+  mostCommonSource: string | null;
+  daysSinceLastVisit: number | null;
+  returnFrequency: "alta" | "media" | "baixa";
+}
+
+export interface EngagementSummary {
+  level: "muito_ativo" | "moderado" | "pouco_ativo" | "risco_abandono";
+  isHighlyEngaged: boolean;
+  isRepeatBuyer: boolean;
+  isVip: boolean;
+  isInactive: boolean;
+  isNew: boolean;
+}
+
 export interface CustomerInsights {
   totalVisits: number;
   firstVisit: string | null;
@@ -231,8 +262,40 @@ export interface CustomerInsights {
   lovedProducts: ProductInteraction[];
   dislikedProducts: ProductInteraction[];
   likedProducts: ProductInteraction[];
-  commentCount: number;
   lastComment: string | null;
   visitContexts: { context: string; count: number }[];
   timeline: TimelineEvent[];
+
+  // Identification
+  name: string;
+  whatsapp: string;
+  avatarUrl: string | null;
+  customerSince: string;
+
+  // Behavior
+  dislikeCount: number;
+  loveCount: number;
+  postsCount: number;
+  photoCount: number;
+  commentCount: number;
+  wishedProducts: ProductInteraction[];
+  favoriteCategories: { category: string; count: number }[];
+
+  // Habits
+  habits: VisitHabits;
+
+  // Purchases
+  purchases: PurchaseSummary;
+
+  // Engagement
+  engagement: EngagementSummary;
+
+  // Dominant visit context
+  dominantContext: string | null;
+
+  // Suggestions
+  suggestions: string[];
+
+  // Executive summary
+  executiveSummary: string;
 }
