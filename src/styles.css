@@ -120,3 +120,33 @@
 @utility weaze-gradient {
   background-image: linear-gradient(135deg, oklch(0.42 0.22 320) 0%, oklch(0.32 0.2 315) 100%);
 }
+
+@utility weaze-hero-gradient {
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, oklch(0.96 0.03 320) 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, oklch(0.93 0.05 315) 0%, transparent 55%),
+    linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.99 0.005 320) 100%);
+}
+
+@utility weaze-text-gradient {
+  background-image: linear-gradient(135deg, oklch(0.42 0.22 320) 0%, oklch(0.55 0.24 320) 50%, oklch(0.35 0.2 310) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+@utility shadow-elegant {
+  box-shadow:
+    0 1px 2px oklch(0.42 0.22 320 / 0.04),
+    0 8px 24px -8px oklch(0.42 0.22 320 / 0.18);
+}
+
+@utility shadow-glow {
+  box-shadow: 0 20px 60px -20px oklch(0.42 0.22 320 / 0.5);
+}
+
