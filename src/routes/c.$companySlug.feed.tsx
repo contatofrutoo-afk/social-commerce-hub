@@ -88,6 +88,8 @@ function PostCard({
   sessionToken: string;
   cart: ReturnType<typeof useCart>;
 }) {
+  const qc = useQueryClient();
+  const [showComments, setShowComments] = useState(false);
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
