@@ -43,20 +43,29 @@ function mapPost(row: any, myCustomerId?: string | null): Post {
 
 export const postRepository = {
   async listByCompany(companyId: string, myCustomerId?: string | null): Promise<Post[]> {
-    const { data, error } = await supabase
-      .from("posts")
-      .select(
-        `*,
-         customer:customers!posts_customer_id_fkey(name),
-         post_reactions(customer_id, type),
-         post_products(product:products(*)),
-         comments(count)`,
-      )
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const { data, error } = await supabase.rpc("list_public_posts" as any, {
+      _company_id: companyId,
+      _viewer_customer_id: myCustomerId ?? null,
+    });
     if (error) throw error;
-    return (data ?? []).map((r) => mapPost(r, myCustomerId));
+    return ((data ?? []) as any[]).map((r) => ({
+      id: r.id,
+      companyId: r.company_id,
+      authorType: r.author_type,
+      customerId: r.customer_id,
+      customerName: r.customer_name,
+      imageUrl: r.image_url,
+      videoUrl: r.video_url,
+      text: r.text,
+      category: r.category,
+      companions: r.companions,
+      createdAt: r.created_at,
+      products: (r.products ?? []).map(mapProduct),
+      loveCount: r.love_count ?? 0,
+      dislikeCount: r.dislike_count ?? 0,
+      commentCount: r.comment_count ?? 0,
+      myReaction: r.my_reaction ?? null,
+    }));
   },
 
   async createBusinessPost(input: {
