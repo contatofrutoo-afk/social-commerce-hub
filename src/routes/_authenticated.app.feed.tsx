@@ -33,7 +33,7 @@ function FeedAdminPage() {
     queryFn: () => productRepository.listByCompany(companyId!),
     enabled: !!companyId,
   });
-  const { data: posts } = useQuery({
+  const { data: posts, isError: postsError } = useQuery({
     queryKey: ["feed-b2b", companyId],
     queryFn: () => postRepository.listByCompany(companyId!),
     enabled: !!companyId,
@@ -53,6 +53,9 @@ function FeedAdminPage() {
       setSelectedProducts([]);
       qc.invalidateQueries({ queryKey: ["feed-b2b"] });
       toast.success("Publicado");
+    },
+    onError: (err) => {
+      toast.error(`Erro ao publicar: ${(err as Error).message}`);
     },
   });
   const remove = useMutation({

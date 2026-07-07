@@ -30,7 +30,7 @@ function FeedPage() {
     queryFn: () => companyRepository.findBySlug(companySlug),
   });
 
-  const { data: posts, isLoading } = useQuery({
+  const { data: posts, isLoading, isError, error } = useQuery({
     queryKey: ["feed", company?.id, session?.customerId],
     queryFn: () => postRepository.listByCompany(company!.id, session?.customerId),
     enabled: !!company,
@@ -47,6 +47,11 @@ function FeedPage() {
   return (
     <div className="divide-y">
       {isLoading && <div className="p-8 text-center text-muted-foreground">Carregando feed…</div>}
+      {isError && (
+        <div className="p-8 text-center text-destructive">
+          Erro ao carregar feed: {(error as Error)?.message ?? "Erro desconhecido"}
+        </div>
+      )}
       {posts?.length === 0 && (
         <div className="p-12 text-center">
           <p className="text-muted-foreground">Ainda não há publicações. Seja o primeiro!</p>
