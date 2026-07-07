@@ -173,10 +173,13 @@ function PostCard({
           <Button
             variant="ghost"
             size="sm"
-            disabled={post.products.length === 0}
+            className={post.products.length === 0 ? "opacity-50" : ""}
             onClick={() => {
               try {
-                if (post.products.length === 0) return;
+                if (post.products.length === 0) {
+                  toast.info("Nenhum produto vinculado a esta publicação");
+                  return;
+                }
                 post.products.forEach((prod) => cart.add(prod));
                 toast.success(
                   post.products.length === 1
