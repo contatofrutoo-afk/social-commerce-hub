@@ -87,7 +87,7 @@ function CustomersPage() {
         </div>
 
         {selectedId ? (
-          <CustomerDetail id={selectedId} />
+          <CustomerDetail id={selectedId} companyId={companyId} />
         ) : (
           <div className="hidden rounded-xl border bg-card p-6 text-sm text-muted-foreground lg:block">
             Selecione um cliente para ver o perfil completo.
@@ -98,12 +98,13 @@ function CustomersPage() {
   );
 }
 
-function CustomerDetail({ id }: { id: string }) {
-  const { data: insights } = useQuery({
+function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
+  const { data: insights, isError } = useQuery({
     queryKey: ["customer-insights", id],
-    queryFn: () => crmRepository.getCustomerInsights(id),
+    queryFn: () => crmRepository.getCustomerInsights(id, companyId),
   });
 
+  if (isError) return <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Erro ao carregar perfil. Tente novamente.</div>;
   if (!insights) return <div className="rounded-xl border bg-card p-6">Carregando…</div>;
 
   const status = statusConfig(insights);

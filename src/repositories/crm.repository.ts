@@ -56,9 +56,9 @@ function daysSince(iso: string): number {
 }
 
 export const crmRepository = {
-  async getCustomerInsights(customerId: string): Promise<CustomerInsights> {
-    const [customerResult, checkinsResult, ordersResult, reactionsResult, likesResult, commentsResult, postsResult, wishesResult, tablesResult] = await Promise.all([
-      supabase.from("customers").select("*").eq("id", customerId).single(),
+  async getCustomerInsights(customerId: string, companyId?: string): Promise<CustomerInsights> {
+    const results = await Promise.allSettled([
+      supabase.from("customers").select("*").eq("id", customerId).maybeSingle(),
       supabase.from("checkins").select("id, context, created_at, source, table_id").eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("orders").select(`id, total, status, created_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price))`).eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("post_reactions").select(`id, type, created_at, post:posts(id, post_products(product:products(id, name, category, image_url, price)))`).eq("customer_id", customerId),
@@ -66,30 +66,26 @@ export const crmRepository = {
       supabase.from("comments").select("id, text, created_at, image_url").eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("posts").select("id, created_at").eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("product_wishes").select(`product_id, product:products(id, name, category, image_url, price)`).eq("customer_id", customerId),
-      supabase.from("tables").select("id, label"),
+      supabase.from("tables").select("id, label").eq("company_id", companyId ?? "__none__"),
     ]);
 
-    if (customerResult.error) throw customerResult.error;
-    if (checkinsResult.error) throw checkinsResult.error;
-    if (ordersResult.error) throw ordersResult.error;
-    if (reactionsResult.error) throw reactionsResult.error;
-    if (likesResult.error) throw likesResult.error;
-    if (commentsResult.error) throw commentsResult.error;
-    if (postsResult.error) throw postsResult.error;
-    if (wishesResult.error) throw wishesResult.error;
-    if (tablesResult.error) throw tablesResult.error;
+    function settle<T>(r: PromiseSettledResult<{ data: T; error: any }>, fallback: T): T {
+      if (r.status === "fulfilled" && !r.value.error) return r.value.data ?? fallback;
+      console.warn("[crm.getCustomerInsights] query warning:", r.status === "rejected" ? r.reason : r.value?.error);
+      return fallback;
+    }
 
-    const customer = customerResult.data;
+    const customer = settle<Record<string, any> | null>(results[0] as any, null);
     if (!customer) throw new Error("Cliente não encontrado");
 
-    const checkins = checkinsResult.data ?? [];
-    const orders = ordersResult.data ?? [];
-    const reactionRows = reactionsResult.data ?? [];
-    const likesRows = likesResult.data ?? [];
-    const commentsRows = commentsResult.data ?? [];
-    const postsRows = postsResult.data ?? [];
-    const wishesRows = wishesResult.data ?? [];
-    const allTables = tablesResult.data ?? [];
+    const checkins = settle<any[]>(results[1] as any, []);
+    const orders = settle<any[]>(results[2] as any, []);
+    const reactionRows = settle<any[]>(results[3] as any, []);
+    const likesRows = settle<any[]>(results[4] as any, []);
+    const commentsRows = settle<any[]>(results[5] as any, []);
+    const postsRows = settle<any[]>(results[6] as any, []);
+    const wishesRows = settle<any[]>(results[7] as any, []);
+    const allTables = settle<any[]>(results[8] as any, []);
 
     const now = Date.now();
 
