@@ -10,7 +10,11 @@ import {
   dashboardRepository,
 } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
-import { Users, ShoppingCart, Heart, Sparkles, Store, User, Home, ThumbsDown, MessageCircle, TrendingUp } from "lucide-react";
+import {
+  Users, ShoppingCart, Heart, Sparkles, Store, User, Home,
+  MessageCircle, TrendingUp, Clock, Calendar, Lightbulb,
+  AlertTriangle, Info, CheckCircle2, RefreshCw,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: DashboardPage,
@@ -57,6 +61,16 @@ function DashboardPage() {
   const { data: metrics } = useQuery({
     queryKey: ["dashboard-metrics", companyId],
     queryFn: () => dashboardRepository.getMetrics(companyId!),
+    enabled: !!companyId,
+  });
+  const { data: insights } = useQuery({
+    queryKey: ["insights", companyId],
+    queryFn: () => dashboardRepository.getInsights(companyId!),
+    enabled: !!companyId,
+  });
+  const { data: businessMetrics } = useQuery({
+    queryKey: ["business-metrics", companyId],
+    queryFn: () => dashboardRepository.getBusinessMetrics(companyId!),
     enabled: !!companyId,
   });
 
@@ -218,6 +232,69 @@ function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Insights */}
+      {insights && insights.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold">Insights</h2>
+          {insights.map((ins, i) => {
+            const iconMap: Record<string, any> = {
+              alert: AlertTriangle,
+              positive: CheckCircle2,
+              info: Info,
+            };
+            const Icon = iconMap[ins.type] ?? Info;
+            const colorMap: Record<string, string> = {
+              alert: "border-destructive/30 bg-destructive/10",
+              positive: "border-green-500/30 bg-green-500/10",
+              info: "border-blue-500/30 bg-blue-500/10",
+            };
+            return (
+              <div key={i} className={`rounded-xl border p-4 ${colorMap[ins.type] ?? ""}`}>
+                <div className="flex items-start gap-2">
+                  <Icon className={`size-5 mt-0.5 shrink-0 ${
+                    ins.type === "alert" ? "text-destructive" :
+                    ins.type === "positive" ? "text-green-600" : "text-blue-600"
+                  }`} />
+                  <div>
+                    <div className="text-sm font-semibold">{ins.title}</div>
+                    <p className="text-xs text-muted-foreground">{ins.description}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Business metrics summary */}
+      {businessMetrics && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Card title="Clientes">
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between"><span>Total</span><span className="font-semibold">{businessMetrics.totalCustomers}</span></div>
+              <div className="flex justify-between"><span>Ativos (7d)</span><span className="font-semibold">{businessMetrics.activeCustomers}</span></div>
+              <div className="flex justify-between"><span>Recorrentes</span><span className="font-semibold">{businessMetrics.recurringCustomers}</span></div>
+              <div className="flex justify-between"><span>Novos (30d)</span><span className="font-semibold text-primary">{businessMetrics.newCustomersLast30d}</span></div>
+              <div className="flex justify-between"><span>Check-ins</span><span className="font-semibold">{businessMetrics.totalCheckins}</span></div>
+            </div>
+          </Card>
+          <Card title="Pedidos">
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between"><span>Total</span><span className="font-semibold">{businessMetrics.totalOrders}</span></div>
+              <div className="flex justify-between"><span>Ticket médio</span><span className="font-semibold">{formatBRL(businessMetrics.avgTicket)}</span></div>
+              <div className="flex justify-between"><span>Tempo entre visitas</span><span className="font-semibold">{businessMetrics.avgTimeBetweenVisitsHours?.toFixed(1) ?? "—"}h</span></div>
+            </div>
+          </Card>
+          <Card title="Conteúdo">
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between"><span>Publicações</span><span className="font-semibold">{businessMetrics.totalPosts}</span></div>
+              <div className="flex justify-between"><span>Comentários</span><span className="font-semibold">{businessMetrics.totalComments}</span></div>
+              <div className="flex justify-between"><span>Fotos</span><span className="font-semibold">{businessMetrics.totalPhotos}</span></div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <Card title="Últimas atividades">
         <ul className="space-y-2">

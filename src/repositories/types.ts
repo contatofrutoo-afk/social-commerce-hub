@@ -113,6 +113,91 @@ export interface CartItem {
   note?: string;
 }
 
+// --- Analytics ---
+
+export interface PostMetric {
+  id: string;
+  text: string | null;
+  authorType: PostAuthorType;
+  authorName: string | null;
+  createdAt: string;
+  loveCount: number;
+  dislikeCount: number;
+  commentCount: number;
+  photoCount: number;
+  productCount: number;
+  products: { id: string; name: string; ordered: number; revenue: number }[];
+  orderCount: number;
+  conversionRate: number;
+  hourBreakdown: { hour: number; count: number }[];
+  dayBreakdown: { day: string; count: number }[];
+  contextBreakdown: { context: string; count: number }[];
+}
+
+export interface ProductMetric {
+  id: string;
+  name: string;
+  category: string | null;
+  price: number;
+  imageUrl: string | null;
+  likes: number;
+  orderCount: number;
+  quantitySold: number;
+  revenue: number;
+  customers: { id: string; name: string }[];
+  interestedCustomers: { id: string; name: string }[];
+  peakSaleHour: number | null;
+  peakSaleDay: string | null;
+  buyerProfile: { context: string; count: number }[];
+  boughtTogether: { id: string; name: string; count: number }[];
+}
+
+export interface BusinessMetrics {
+  totalCustomers: number;
+  activeCustomers: number;
+  inactiveCustomers: number;
+  recurringCustomers: number;
+  newCustomersLast30d: number;
+  totalCheckins: number;
+  totalOrders: number;
+  totalPosts: number;
+  totalComments: number;
+  totalPhotos: number;
+  accessBySource: { source: string; count: number }[];
+  visitContexts: { context: string; count: number }[];
+  peakHours: { hour: number; count: number }[];
+  peakDays: { day: string; count: number }[];
+  avgTicket: number;
+  avgTimeBetweenVisitsHours: number | null;
+  topProducts: { id: string; name: string; count: number }[];
+  topCategories: { category: string; count: number }[];
+}
+
+export interface CustomerServiceProfile {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  customerSince: string;
+  visitCount: number;
+  currentContext: string | null;
+  recentOrders: Order[];
+  favoriteProducts: { id: string; name: string; count: number }[];
+  likedProducts: { id: string; name: string }[];
+  wishedProducts: { id: string; name: string }[];
+  favoriteCategories: { category: string; count: number }[];
+  preferredHour: number | null;
+  preferredDay: string | null;
+  avgTimeBetweenVisitsHours: number | null;
+  avgSpend: number;
+  suggestions: string[];
+}
+
+export interface Insight {
+  type: "alert" | "positive" | "info";
+  title: string;
+  description: string;
+}
+
 // --- CRM ---
 
 export type TimelineEventType = "checkin" | "order" | "reaction_love" | "reaction_dislike" | "comment" | "like" | "wish";

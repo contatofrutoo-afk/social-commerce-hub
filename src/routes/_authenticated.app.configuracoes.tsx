@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { companyRepository, tableRepository } from "@/repositories";
+import { companyRepository, tableRepository, dashboardRepository } from "@/repositories";
+import type { BusinessMetrics } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +15,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
-import { Copy, QrCode, Trash2, Pencil, Check, X } from "lucide-react";
+import {
+  Copy, QrCode, Trash2, Pencil, Check, X,
+  Users, ShoppingCart, Store, TrendingUp, Heart, MessageCircle,
+  Clock, Calendar, Sparkles, RefreshCw,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
@@ -80,6 +86,11 @@ function SettingsPage() {
   const { data: tables } = useQuery({
     queryKey: ["tables", companyId],
     queryFn: () => tableRepository.listByCompany(companyId!),
+    enabled: !!companyId,
+  });
+  const { data: businessMetrics } = useQuery({
+    queryKey: ["business-metrics", companyId],
+    queryFn: () => dashboardRepository.getBusinessMetrics(companyId!),
     enabled: !!companyId,
   });
 
@@ -204,6 +215,62 @@ function SettingsPage() {
         </div>
       )}
 
+      {/* Métricas do negócio */}
+      {businessMetrics && (
+        <div className="space-y-3 rounded-xl border bg-card p-4">
+          <h2 className="font-semibold">Métricas do negócio</h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <MetricTile icon={Users} label="Clientes" value={businessMetrics.totalCustomers} />
+            <MetricTile icon={Sparkles} label="Ativos (7d)" value={businessMetrics.activeCustomers} />
+            <MetricTile icon={RefreshCw} label="Recorrentes" value={businessMetrics.recurringCustomers} />
+            <MetricTile icon={Heart} label="Novos (30d)" value={businessMetrics.newCustomersLast30d} />
+            <MetricTile icon={Store} label="Check-ins" value={businessMetrics.totalCheckins} />
+            <MetricTile icon={ShoppingCart} label="Pedidos" value={businessMetrics.totalOrders} />
+            <MetricTile icon={TrendingUp} label="Ticket médio" value={formatBRL(businessMetrics.avgTicket)} />
+            <MetricTile icon={MessageCircle} label="Comentários" value={businessMetrics.totalComments} />
+          </div>
+
+          {businessMetrics.topProducts.length > 0 && (
+            <div>
+              <h3 className="mb-1 text-sm font-medium">Produtos mais pedidos</h3>
+              <div className="space-y-1 text-xs">
+                {businessMetrics.topProducts.slice(0, 5).map((p) => (
+                  <div key={p.id} className="flex justify-between">
+                    <span>{p.name}</span>
+                    <span className="font-semibold">{p.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <h3 className="mb-1 flex items-center gap-1 text-sm font-medium">
+                <Clock className="size-3" /> Horários de pico
+              </h3>
+              {businessMetrics.peakHours.slice(0, 4).map((h) => (
+                <div key={h.hour} className="flex justify-between">
+                  <span>{h.hour}h</span>
+                  <span>{h.count} check-ins</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <h3 className="mb-1 flex items-center gap-1 text-sm font-medium">
+                <Calendar className="size-3" /> Dias de pico
+              </h3>
+              {businessMetrics.peakDays.slice(0, 4).map((d) => (
+                <div key={d.day} className="flex justify-between">
+                  <span className="capitalize">{d.day}</span>
+                  <span>{d.count} check-ins</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mesas */}
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Mesas</h2>
@@ -317,6 +384,16 @@ function SettingsPage() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MetricTile({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
+  return (
+    <div className="rounded-lg bg-muted p-2 text-center">
+      <Icon className="mx-auto size-4 text-primary" />
+      <div className="mt-1 text-lg font-bold">{value}</div>
+      <div className="text-[10px] uppercase text-muted-foreground">{label}</div>
     </div>
   );
 }

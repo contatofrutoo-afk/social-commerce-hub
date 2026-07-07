@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { postRepository, productRepository } from "@/repositories";
+import { postRepository, productRepository, dashboardRepository } from "@/repositories";
+import type { PostMetric } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { relativeTime } from "@/lib/format";
+import { relativeTime, formatBRL } from "@/lib/format";
 import { ImageUpload } from "@/components/image-upload";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, BarChart3, Clock, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
   component: FeedAdminPage,
@@ -38,6 +39,13 @@ function FeedAdminPage() {
     queryFn: () => postRepository.listByCompany(companyId!),
     enabled: !!companyId,
   });
+  const { data: postMetrics } = useQuery({
+    queryKey: ["post-metrics", companyId],
+    queryFn: () => dashboardRepository.getPostMetrics(companyId!),
+    enabled: !!companyId,
+  });
+
+  const metricById = new Map((postMetrics ?? []).map((m: PostMetric) => [m.id, m]));
 
   const publish = useMutation({
     mutationFn: () =>
@@ -107,30 +115,115 @@ function FeedAdminPage() {
       <div className="space-y-3">
         <h2 className="font-semibold">Publicações</h2>
         {posts?.map((p) => (
-          <div key={p.id} className="rounded-xl border bg-card p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-sm">
-                <span className="font-medium">
-                  {p.authorType === "business" ? "Estabelecimento" : (p.customerName ?? "Cliente")}
-                </span>
-                <span className="ml-2 text-xs text-muted-foreground">{relativeTime(p.createdAt)}</span>
-              </div>
-              <Button size="icon" variant="ghost" onClick={() => remove.mutate(p.id)}>
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
-            {p.imageUrl && (
-              <img src={p.imageUrl} alt="" className="max-h-64 w-full rounded-lg object-cover" />
-            )}
-            {p.text && <p className="mt-2 text-sm">{p.text}</p>}
-            <div className="mt-2 flex gap-3 text-xs text-muted-foreground">
-              <span>❤️ {p.loveCount}</span>
-              <span>👎 {p.dislikeCount}</span>
-              <span>💬 {p.commentCount}</span>
-            </div>
-          </div>
+          <PostCardWithAnalytics
+            key={p.id}
+            post={p}
+            metric={metricById.get(p.id) ?? null}
+            onRemove={() => remove.mutate(p.id)}
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+function PostCardWithAnalytics({
+  post,
+  metric,
+  onRemove,
+}: {
+  post: any;
+  metric: PostMetric | null;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-xl border bg-card p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="text-sm">
+          <span className="font-medium">
+            {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
+          </span>
+          <span className="ml-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</span>
+        </div>
+        <Button size="icon" variant="ghost" onClick={onRemove}>
+          <Trash2 className="size-4" />
+        </Button>
+      </div>
+      {post.imageUrl && (
+        <img src={post.imageUrl} alt="" className="max-h-64 w-full rounded-lg object-cover" />
+      )}
+      {post.text && <p className="mt-2 text-sm">{post.text}</p>}
+      <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+        <span>❤️ {post.loveCount}</span>
+        <span>👎 {post.dislikeCount}</span>
+        <span>💬 {post.commentCount}</span>
+        {metric && (
+          <button
+            onClick={() => setOpen(!open)}
+            className="ml-auto flex items-center gap-1 text-primary hover:underline"
+          >
+            <BarChart3 className="size-3" />
+            Analytics
+            {open ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+          </button>
+        )}
+      </div>
+
+      {open && metric && (
+        <div className="mt-3 space-y-2 rounded-lg bg-muted p-3 text-xs">
+          <div className="flex justify-between">
+            <span>Produtos vinculados</span>
+            <span className="font-semibold">{metric.productCount}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Pedidos gerados</span>
+            <span className="font-semibold">{metric.orderCount}</span>
+          </div>
+          <div className="flex justify-between border-b pb-1">
+            <span>Taxa de conversão</span>
+            <span className="font-semibold text-primary">{metric.conversionRate.toFixed(1)}%</span>
+          </div>
+
+          {metric.products.length > 0 && (
+            <div>
+              <div className="mb-1 font-medium">Produtos pedidos</div>
+              {metric.products.map((pr: any) => (
+                <div key={pr.id} className="flex justify-between">
+                  <span>{pr.name}</span>
+                  <span>{pr.ordered} unid. · {formatBRL(pr.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div>
+              <div className="mb-1 flex items-center gap-1 font-medium">
+                <Clock className="size-3" /> Horário
+              </div>
+              {metric.hourBreakdown.slice(0, 3).map((h: any) => (
+                <div key={h.hour} className="flex justify-between">
+                  <span>{h.hour}h</span>
+                  <span>{h.count} interações</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 flex items-center gap-1 font-medium">
+                <Calendar className="size-3" /> Dia
+              </div>
+              {metric.dayBreakdown.slice(0, 3).map((d: any) => (
+                <div key={d.day} className="flex justify-between">
+                  <span className="capitalize">{d.day}</span>
+                  <span>{d.count} interações</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
