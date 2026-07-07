@@ -28,13 +28,14 @@ function OrdersPage() {
   });
   const { data: checkins } = useQuery({
     queryKey: ["checkins-all", companyId],
-    queryFn: () =>
-      supabase
+    queryFn: async () => {
+      const { data } = await supabase
         .from("checkins")
         .select("id, customer_id, context, created_at, table_id")
         .eq("company_id", companyId!)
-        .order("created_at", { ascending: false })
-        .then((r) => r.data ?? []),
+        .order("created_at", { ascending: false });
+      return data ?? [];
+    },
     enabled: !!companyId,
   });
   const { data: customers } = useQuery({
