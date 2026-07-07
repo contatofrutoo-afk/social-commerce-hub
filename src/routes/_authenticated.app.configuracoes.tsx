@@ -96,7 +96,8 @@ function SettingsPage() {
 
   const [name, setName] = useState("");
   const [welcome, setWelcome] = useState("");
-  const [color, setColor] = useState("#8800AA");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [tableLabel, setTableLabel] = useState("");
   const [tableSlug, setTableSlug] = useState("");
   const [editingTableId, setEditingTableId] = useState<string | null>(null);
@@ -107,7 +108,7 @@ function SettingsPage() {
     if (company) {
       setName(company.name);
       setWelcome(company.welcomeMessage);
-      setColor(company.primaryColor);
+      setLogoUrl(company.logoUrl);
     }
   }, [company]);
 
@@ -116,13 +117,36 @@ function SettingsPage() {
 
   const save = useMutation({
     mutationFn: () =>
-      companyRepository.update(companyId!, { name, welcomeMessage: welcome, primaryColor: color }),
+      companyRepository.update(companyId!, { name, welcomeMessage: welcome, logoUrl }),
     onSuccess: () => {
       toast.success("Salvo");
       qc.invalidateQueries({ queryKey: ["company-full"] });
       qc.invalidateQueries({ queryKey: ["my-role"] });
     },
   });
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !companyId) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "png";
+      const filePath = `companies/${companyId}/logo.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("weaze-media")
+        .upload(filePath, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from("weaze-media")
+        .getPublicUrl(filePath);
+      setLogoUrl(urlData.publicUrl);
+      toast.success("Foto atualizada! Salve as alterações.");
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao enviar foto");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const addTable = useMutation({
     mutationFn: () => tableRepository.create(companyId!, tableLabel, tableSlug),
@@ -167,6 +191,33 @@ function SettingsPage() {
       {/* Dados do estabelecimento */}
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Estabelecimento</h2>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            {logoUrl ? (
+              <img src={logoUrl} alt="" className="size-16 rounded-full object-cover" />
+            ) : (
+              <div className="grid size-16 place-items-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                {name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="logo-upload" className="cursor-pointer">
+              <div className="rounded-lg border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted">
+                {uploading ? "Enviando…" : "Alterar foto"}
+              </div>
+            </Label>
+            <input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleLogoUpload}
+              disabled={uploading}
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">PNG, JPG ou WEBP · Máx 5MB</p>
+          </div>
+        </div>
         <div>
           <Label>Nome</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -174,18 +225,6 @@ function SettingsPage() {
         <div>
           <Label>Mensagem de boas-vindas</Label>
           <Textarea value={welcome} onChange={(e) => setWelcome(e.target.value)} maxLength={200} />
-        </div>
-        <div>
-          <Label>Cor primária</Label>
-          <div className="flex gap-2">
-            <Input value={color} onChange={(e) => setColor(e.target.value)} />
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="h-10 w-14 rounded border"
-            />
-          </div>
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           Salvar
