@@ -117,17 +117,11 @@ function AppLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card p-3 md:hidden">
-        <div className="flex items-center gap-2">
-          {role?.company?.logo_url ? (
-            <img src={role.company.logo_url} alt="" className="size-8 rounded object-cover" />
-          ) : (
-            <div className="grid size-8 place-items-center rounded bg-primary text-primary-foreground text-sm font-bold">
-              {(role?.company?.name ?? "W").charAt(0).toUpperCase()}
-            </div>
-          )}
-          <span className="font-semibold">{role?.company?.name ?? "WEAZE"}</span>
-        </div>
+      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/90 backdrop-blur px-4 py-3 md:hidden">
+        <Logo className="h-6" />
+        <span className="truncate text-sm font-medium text-muted-foreground">
+          {role?.company?.name ?? ""}
+        </span>
       </div>
 
       <main className="flex-1 overflow-x-hidden p-6 pt-20 md:pt-6">

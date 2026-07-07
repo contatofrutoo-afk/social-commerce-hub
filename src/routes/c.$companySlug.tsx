@@ -1,9 +1,10 @@
-import { createFileRoute, Outlet, Link, redirect, useParams, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { companyRepository } from "@/repositories";
-import { Home, Newspaper, ShoppingBag, User, Camera } from "lucide-react";
+import { Newspaper, ShoppingBag, User, Camera } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/c/$companySlug")({
   component: ClientLayout,
@@ -30,21 +31,32 @@ function ClientLayout() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-20 border-b bg-background/80 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link
             to="/c/$companySlug/feed"
             params={{ companySlug }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
           >
-            <div className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
-              W
+            {company?.logo_url ? (
+              <img src={company.logo_url} alt="" className="size-9 rounded-xl object-cover ring-1 ring-border" />
+            ) : (
+              <div className="grid size-9 place-items-center rounded-xl bg-primary/10">
+                <Logo className="h-4" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="truncate font-display text-sm font-bold">
+                {company?.name ?? "Estabelecimento"}
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                by WEAZE
+              </div>
             </div>
-            <span className="font-semibold">{company?.name ?? "WEAZE"}</span>
           </Link>
           <Link to="/c/$companySlug/perfil" params={{ companySlug }}>
             <div className="grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
-              <Home className="size-4" />
+              <User className="size-4" />
             </div>
           </Link>
         </div>
