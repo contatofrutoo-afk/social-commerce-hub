@@ -12,7 +12,8 @@ import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
+import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon, Camera } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
 
@@ -202,14 +203,16 @@ function PostCard({
 function CommentsSection({ postId, customerId }: { postId: string; customerId: string }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
+  const [commentImage, setCommentImage] = useState<string | null>(null);
   const { data: comments } = useQuery({
     queryKey: ["comments", postId],
     queryFn: () => commentRepository.listByPost(postId),
   });
   const add = useMutation({
-    mutationFn: () => commentRepository.create({ postId, customerId, text: text.trim() }),
+    mutationFn: () => commentRepository.create({ postId, customerId, text: text.trim(), imageUrl: commentImage }),
     onSuccess: () => {
       setText("");
+      setCommentImage(null);
       qc.invalidateQueries({ queryKey: ["comments", postId] });
       qc.invalidateQueries({ queryKey: ["feed"] });
     },
@@ -221,6 +224,9 @@ function CommentsSection({ postId, customerId }: { postId: string; customerId: s
         <div key={c.id} className="text-sm">
           <span className="font-medium">{c.customerName}: </span>
           {c.text}
+          {c.imageUrl && (
+            <img src={c.imageUrl} alt="" className="mt-1 max-h-40 rounded-lg object-cover" />
+          )}
         </div>
       ))}
       <div className="flex gap-2">
@@ -230,9 +236,12 @@ function CommentsSection({ postId, customerId }: { postId: string; customerId: s
           placeholder="Escreva um comentário…"
           maxLength={300}
         />
-        <Button size="sm" onClick={() => add.mutate()} disabled={!text.trim() || add.isPending}>
+        <Button size="sm" onClick={() => add.mutate()} disabled={(!text.trim() && !commentImage) || add.isPending}>
           Enviar
         </Button>
+      </div>
+      <div>
+        <ImageUpload value={commentImage} onChange={setCommentImage} folder={`comments/${postId}`} />
       </div>
     </div>
   );

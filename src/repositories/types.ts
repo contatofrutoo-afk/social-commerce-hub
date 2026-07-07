@@ -112,3 +112,42 @@ export interface CartItem {
   quantity: number;
   note?: string;
 }
+
+// --- CRM ---
+
+export type TimelineEventType = "checkin" | "order" | "reaction_love" | "reaction_dislike" | "comment" | "like" | "wish";
+
+export interface TimelineEvent {
+  id: string;
+  type: TimelineEventType;
+  createdAt: string;
+  description: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProductInteraction {
+  productId: string;
+  name: string;
+  category: string | null;
+  imageUrl: string | null;
+  price: number;
+  count: number;
+}
+
+export interface CustomerInsights {
+  totalVisits: number;
+  firstVisit: string | null;
+  lastVisit: string | null;
+  totalOrders: number;
+  totalSpent: number;
+  avgOrderValue: number;
+  lastOrder: string | null;
+  purchasedProducts: ProductInteraction[];
+  lovedProducts: ProductInteraction[];
+  dislikedProducts: ProductInteraction[];
+  likedProducts: ProductInteraction[];
+  commentCount: number;
+  lastComment: string | null;
+  visitContexts: { context: string; count: number }[];
+  timeline: TimelineEvent[];
+}

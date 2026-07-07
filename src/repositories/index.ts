@@ -6,3 +6,5 @@ export { customerRepository, checkinRepository } from "./customer.repository";
 export { productRepository } from "./product.repository";
 export { postRepository, commentRepository } from "./post.repository";
 export { orderRepository } from "./order.repository";
+export { crmRepository } from "./crm.repository";
+export { dashboardRepository } from "./dashboard.repository";

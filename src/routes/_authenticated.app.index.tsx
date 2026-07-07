@@ -7,9 +7,10 @@ import {
   orderRepository,
   checkinRepository,
   postRepository,
+  dashboardRepository,
 } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
-import { Users, ShoppingCart, Heart, Sparkles, Store, User, Home } from "lucide-react";
+import { Users, ShoppingCart, Heart, Sparkles, Store, User, Home, ThumbsDown, MessageCircle, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: DashboardPage,
@@ -53,9 +54,9 @@ function DashboardPage() {
     queryFn: () => postRepository.listByCompany(companyId!),
     enabled: !!companyId,
   });
-  const { data: products } = useQuery({
-    queryKey: ["products", companyId],
-    queryFn: () => productRepository.listByCompany(companyId!),
+  const { data: metrics } = useQuery({
+    queryKey: ["dashboard-metrics", companyId],
+    queryFn: () => dashboardRepository.getMetrics(companyId!),
     enabled: !!companyId,
   });
 
@@ -75,32 +76,15 @@ function DashboardPage() {
     { sozinho: 0, casal: 0, amigos: 0, familia: 0 },
   );
 
-  // Produtos mais pedidos
-  const productOrderCount: Record<string, { name: string; count: number }> = {};
-  orders?.forEach((o) =>
-    o.items.forEach((i) => {
-      const c = productOrderCount[i.productId] ?? { name: i.productName, count: 0 };
-      c.count += i.quantity;
-      productOrderCount[i.productId] = c;
-    }),
-  );
-  const topOrdered = Object.values(productOrderCount)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+  const totalRevenue = orders?.reduce((s, o) => s + o.total, 0) ?? 0;
 
-  // Últimas atividades (últimos check-ins + posts + pedidos)
+  // Últimas atividades
   const activities: { text: string; ts: string }[] = [];
   present?.slice(0, 5).forEach((c: any) =>
-    activities.push({
-      text: `${c.customer?.name ?? "Cliente"} fez check-in (${c.context})`,
-      ts: c.created_at,
-    }),
+    activities.push({ text: `${c.customer?.name ?? "Cliente"} fez check-in (${c.context})`, ts: c.created_at }),
   );
   orders?.slice(0, 5).forEach((o) =>
-    activities.push({
-      text: `Pedido ${formatBRL(o.total)} de ${o.customerName ?? "Cliente"}`,
-      ts: o.createdAt,
-    }),
+    activities.push({ text: `Pedido ${formatBRL(o.total)} de ${o.customerName ?? "Cliente"}`, ts: o.createdAt }),
   );
   posts?.slice(0, 5).forEach((p) =>
     activities.push({
@@ -121,6 +105,13 @@ function DashboardPage() {
         <StatCard icon={Store} label="Presentes agora" value={present?.length ?? 0} />
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={TrendingUp} label="Receita total" value={formatBRL(totalRevenue)} />
+        <StatCard icon={Heart} label="Curtiram" value={metrics?.topLikedProducts.reduce((s, p) => s + p.count, 0) ?? 0} />
+        <StatCard icon={MessageCircle} label="Comentários" value={metrics?.topCommentedPosts.reduce((s, p) => s + p.count, 0) ?? 0} />
+        <StatCard icon={Users} label="Converteram" value={`${metrics?.conversionRates.reactionToOrderRate.toFixed(0) ?? 0}%`} />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Presentes agora">
           <div className="grid grid-cols-4 gap-2">
@@ -139,35 +130,110 @@ function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="Produtos mais pedidos">
-          {topOrdered.length === 0 && <p className="text-sm text-muted-foreground">Sem dados ainda.</p>}
-          <ul className="space-y-2">
-            {topOrdered.map((p) => (
-              <li key={p.name} className="flex justify-between text-sm">
-                <span>{p.name}</span>
-                <span className="font-semibold">{p.count}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-        <Card title="Últimas atividades">
-          <ul className="space-y-2">
-            {activities.slice(0, 8).map((a, i) => (
-              <li key={i} className="flex justify-between gap-2 text-sm">
-                <span className="truncate">{a.text}</span>
-                <span className="whitespace-nowrap text-xs text-muted-foreground">
-                  {relativeTime(a.ts)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        {metrics && (
+          <>
+            <Card title="Conversão">
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span>Clientes que reagiram</span>
+                  <span className="font-semibold">{metrics.conversionRates.customersWhoReacted}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Clientes que pediram</span>
+                  <span className="font-semibold">{metrics.conversionRates.customersWhoOrdered}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Reagiram e pediram</span>
+                  <span className="font-semibold">{metrics.conversionRates.reactedThenOrdered}</span>
+                </div>
+                <div className="flex justify-between border-t pt-2">
+                  <span>Taxa reação → pedido</span>
+                  <span className="font-semibold text-primary">{metrics.conversionRates.reactionToOrderRate.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Taxa de conclusão</span>
+                  <span className="font-semibold text-primary">{metrics.conversionRates.orderCompletionRate.toFixed(1)}%</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card title="Clientes mais engajados">
+              {metrics.mostEngagedCustomers.length === 0 && (
+                <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+              )}
+              <ul className="space-y-2">
+                {metrics.mostEngagedCustomers.slice(0, 5).map((c) => (
+                  <li key={c.customerId} className="flex justify-between text-sm">
+                    <span className="truncate">{c.name}</span>
+                    <span className="text-muted-foreground">
+                      {c.reactionCount > 0 && `${c.reactionCount} reações`}
+                      {c.orderCount > 0 && (c.reactionCount > 0 ? " · " : "") + `${c.orderCount} pedidos`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </>
+        )}
       </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {metrics && (
+          <>
+            <Card title="Produtos mais curtidos">
+              {metrics.topLikedProducts.length === 0 && <p className="text-sm text-muted-foreground">Sem dados ainda.</p>}
+              <ul className="space-y-1">
+                {metrics.topLikedProducts.slice(0, 5).map((p) => (
+                  <li key={p.productId} className="flex justify-between text-sm">
+                    <span>{p.name}</span>
+                    <span className="font-semibold">{p.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card title="Produtos mais pedidos">
+              {metrics.topOrderedProducts.length === 0 && <p className="text-sm text-muted-foreground">Sem dados ainda.</p>}
+              <ul className="space-y-1">
+                {metrics.topOrderedProducts.slice(0, 5).map((p) => (
+                  <li key={p.productId} className="flex justify-between text-sm">
+                    <span>{p.name}</span>
+                    <span className="font-semibold">{p.count} ({formatBRL(p.revenue)})</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+
+            <Card title="Posts mais comentados">
+              {metrics.topCommentedPosts.length === 0 && <p className="text-sm text-muted-foreground">Sem dados ainda.</p>}
+              <ul className="space-y-1">
+                {metrics.topCommentedPosts.slice(0, 5).map((p) => (
+                  <li key={p.postId} className="flex justify-between text-sm">
+                    <span className="truncate">Post</span>
+                    <span className="font-semibold">{p.count}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </>
+        )}
+      </div>
+
+      <Card title="Últimas atividades">
+        <ul className="space-y-2">
+          {activities.slice(0, 8).map((a, i) => (
+            <li key={i} className="flex justify-between gap-2 text-sm">
+              <span className="truncate">{a.text}</span>
+              <span className="whitespace-nowrap text-xs text-muted-foreground">{relativeTime(a.ts)}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
+function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
   return (
     <div className="rounded-xl border bg-card p-4">
       <div className="flex items-center justify-between">
