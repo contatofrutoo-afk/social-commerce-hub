@@ -57,6 +57,7 @@ function ServicePage() {
 }
 
 function MesasView({ companyId }: { companyId: string }) {
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const { data: tables } = useQuery({
     queryKey: ["tables", companyId],
     queryFn: () => tableRepository.listByCompany(companyId),
@@ -68,45 +69,65 @@ function MesasView({ companyId }: { companyId: string }) {
   });
 
   return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {tables?.map((t) => {
-        const occupations = present?.filter((c: any) => c.table_id === t.id) ?? [];
-        return (
-          <div
-            key={t.id}
-            className={`rounded-xl border p-4 ${occupations.length > 0 ? "bg-accent" : "bg-card"}`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="text-lg font-bold">{t.label}</div>
-              {occupations.length > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {occupations.length} pessoa{occupations.length > 1 ? "s" : ""}
-                </span>
+    <div className="mt-4 space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {tables?.map((t) => {
+          const occupations = present?.filter((c: any) => c.table_id === t.id) ?? [];
+          return (
+            <div
+              key={t.id}
+              className={`rounded-xl border p-4 ${occupations.length > 0 ? "bg-accent" : "bg-card"}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-lg font-bold">{t.label}</div>
+                {occupations.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {occupations.length} pessoa{occupations.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+              {occupations.length > 0 ? (
+                <div className="mt-2 space-y-2">
+                  {occupations.map((o: any) => {
+                    const Icon = contextIcons[o.context];
+                    return (
+                      <button
+                        key={o.id}
+                        onClick={() => setSelectedCustomer(o.customer_id)}
+                        className={`flex w-full items-center gap-2 rounded-lg p-1.5 text-left hover:bg-card ${
+                          selectedCustomer === o.customer_id ? "ring-1 ring-primary" : ""
+                        }`}
+                      >
+                        {Icon && <Icon className="size-4 shrink-0 text-primary" />}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{o.customer?.name}</div>
+                          <div className="text-xs capitalize text-muted-foreground">
+                            {o.context} · {relativeTime(o.created_at)}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">Livre</p>
               )}
             </div>
-            {occupations.length > 0 ? (
-              <div className="mt-2 space-y-2">
-                {occupations.map((o: any) => {
-                  const Icon = contextIcons[o.context];
-                  return (
-                    <div key={o.id} className="flex items-center gap-2">
-                      {Icon && <Icon className="size-4 shrink-0 text-primary" />}
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate">{o.customer?.name}</div>
-                        <div className="text-xs capitalize text-muted-foreground">
-                          {o.context} · {relativeTime(o.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs text-muted-foreground">Livre</p>
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+
+      {selectedCustomer && (
+        <div className="relative">
+          <button
+            onClick={() => setSelectedCustomer(null)}
+            className="mb-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            &larr; Voltar para mesas
+          </button>
+          <CustomerServicePanel id={selectedCustomer} />
+        </div>
+      )}
     </div>
   );
 }
