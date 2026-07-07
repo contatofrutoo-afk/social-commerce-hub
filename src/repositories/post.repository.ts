@@ -137,17 +137,15 @@ export const postRepository = {
 
 export const commentRepository = {
   async listByPost(postId: string): Promise<Comment[]> {
-    const { data, error } = await supabase
-      .from("comments")
-      .select("*, customer:customers!comments_customer_id_fkey(name)")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
+    const { data, error } = await supabase.rpc("list_public_comments" as any, {
+      _post_id: postId,
+    });
     if (error) throw error;
-    return (data ?? []).map((r) => ({
+    return ((data ?? []) as any[]).map((r) => ({
       id: r.id,
       postId: r.post_id,
       customerId: r.customer_id,
-      customerName: r.customer?.name ?? "Cliente",
+      customerName: r.customer_name ?? "Cliente",
       text: r.text,
       imageUrl: r.image_url,
       createdAt: r.created_at,
