@@ -38,8 +38,8 @@ function ClientLayout() {
             params={{ companySlug }}
             className="flex items-center gap-3"
           >
-            {company?.logo_url ? (
-              <img src={company.logo_url} alt="" className="size-9 rounded-xl object-cover ring-1 ring-border" />
+            {company?.logoUrl ? (
+              <img src={company.logoUrl} alt="" className="size-9 rounded-xl object-cover ring-1 ring-border" />
             ) : (
               <div className="grid size-9 place-items-center rounded-xl bg-primary/10">
                 <Logo className="h-4" />

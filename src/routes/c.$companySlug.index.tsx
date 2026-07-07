@@ -87,9 +87,9 @@ function CheckinPage() {
     <div className="weaze-hero-gradient min-h-screen px-6 py-10">
       <div className="mx-auto max-w-md">
         <div className="mb-10 text-center">
-          {company.logo_url ? (
+          {company.logoUrl ? (
             <img
-              src={company.logo_url}
+              src={company.logoUrl}
               alt={company.name}
               className="mx-auto size-20 rounded-2xl object-cover shadow-elegant ring-1 ring-border"
             />
