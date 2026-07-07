@@ -163,6 +163,7 @@ function CheckinPage() {
           {mutation.isPending ? "Entrando…" : "Entrar"}
         </Button>
       </div>
+      </div>
     </div>
   );
 }
