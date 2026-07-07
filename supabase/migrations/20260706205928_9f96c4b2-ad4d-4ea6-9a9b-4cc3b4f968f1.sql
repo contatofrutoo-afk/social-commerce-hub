@@ -136,7 +136,7 @@ BEGIN
     WHERE p.id = _post_id AND c.company_id = p.company_id
   ) THEN RAISE EXCEPTION 'company mismatch'; END IF;
   INSERT INTO public.post_reactions (post_id, customer_id, type)
-    VALUES (_post_id, _customer_id, _type)
+    VALUES (_post_id, _customer_id, _type::reaction_type)
     ON CONFLICT (post_id, customer_id) DO UPDATE SET type = EXCLUDED.type;
 END;
 $$;
