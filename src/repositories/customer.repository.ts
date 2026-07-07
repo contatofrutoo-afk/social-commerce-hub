@@ -79,24 +79,22 @@ export const customerRepository = {
 export const checkinRepository = {
   async create(input: {
     customerId: string;
+    sessionToken: string;
     companyId: string;
     context: VisitContext;
     tableId?: string | null;
     source?: string;
   }) {
-    const { data, error } = await supabase
-      .from("checkins")
-      .insert({
-        customer_id: input.customerId,
-        company_id: input.companyId,
-        context: input.context,
-        table_id: input.tableId ?? null,
-        source: input.source ?? "qr",
-      })
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("create_checkin" as any, {
+      _customer_id: input.customerId,
+      _token: input.sessionToken,
+      _company_id: input.companyId,
+      _context: input.context,
+      _table_id: input.tableId ?? null,
+      _source: input.source ?? "qr",
+    });
     if (error) throw error;
-    return data;
+    return { id: data as string };
   },
 
   async listRecentByCompany(companyId: string, limit = 50) {
