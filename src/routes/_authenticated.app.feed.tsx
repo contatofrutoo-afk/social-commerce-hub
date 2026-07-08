@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { relativeTime, formatBRL } from "@/lib/format";
 import { ImageUpload } from "@/components/image-upload";
+import { VideoUpload } from "@/components/video-upload";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar, Store, User as UserIcon } from "lucide-react";
+import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar, Store, User as UserIcon, Play } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
   component: FeedAdminPage,
@@ -35,6 +36,8 @@ function FeedAdminPage() {
 
   const [text, setText] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>("");
+  const [videoUrl, setVideoUrl] = useState<string | null>("");
+  const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
@@ -61,12 +64,15 @@ function FeedAdminPage() {
       postRepository.createBusinessPost({
         companyId: companyId!,
         text,
-        imageUrl: imageUrl || null,
+        imageUrl: mediaType === "image" ? (imageUrl || null) : null,
+        videoUrl: mediaType === "video" ? (videoUrl || null) : null,
         productIds: selectedProducts,
       }),
     onSuccess: () => {
       setText("");
       setImageUrl("");
+      setVideoUrl("");
+      setMediaType("image");
       setSelectedProducts([]);
       qc.invalidateQueries({ queryKey: ["feed-b2b"] });
       toast.success("Publicado");
@@ -86,7 +92,31 @@ function FeedAdminPage() {
 
       <div className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="font-semibold">Nova publicação</h2>
-        <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`${companyId}/feed`} />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMediaType("image")}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              mediaType === "image" ? "bg-primary text-primary-foreground" : "bg-muted"
+            }`}
+          >
+            Imagem
+          </button>
+          <button
+            type="button"
+            onClick={() => setMediaType("video")}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              mediaType === "video" ? "bg-primary text-primary-foreground" : "bg-muted"
+            }`}
+          >
+            Vídeo 9:16
+          </button>
+        </div>
+        {mediaType === "image" ? (
+          <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`${companyId}/feed`} />
+        ) : (
+          <VideoUpload value={videoUrl} onChange={setVideoUrl} folder={`${companyId}/feed`} />
+        )}
         <Textarea
           placeholder="Texto"
           value={text}
@@ -116,7 +146,7 @@ function FeedAdminPage() {
             })}
           </div>
         </div>
-        <Button onClick={() => publish.mutate()} disabled={publish.isPending || (!text && !imageUrl)}>
+        <Button onClick={() => publish.mutate()} disabled={publish.isPending || (!text && !imageUrl && !videoUrl)}>
           Publicar
         </Button>
       </div>
@@ -136,7 +166,21 @@ function FeedAdminPage() {
                 onClick={() => setSelectedPost({ post: p, metric: m })}
                 className="group relative aspect-square overflow-hidden bg-muted"
               >
-                {p.imageUrl ? (
+                {p.videoUrl ? (
+                  <div className="relative size-full">
+                    <video
+                      src={p.videoUrl}
+                      className="size-full object-cover"
+                      muted
+                      playsInline
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex size-12 items-center justify-center rounded-full bg-black/60">
+                        <Play className="size-6 fill-white text-white" />
+                      </div>
+                    </div>
+                  </div>
+                ) : p.imageUrl ? (
                   <img
                     src={p.imageUrl}
                     alt=""
@@ -220,9 +264,16 @@ function PostDetail({
         </DialogTitle>
       </DialogHeader>
       <div className="mt-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</div>
-      {post.imageUrl && (
+      {post.videoUrl ? (
+        <video
+          src={post.videoUrl}
+          className="mt-3 max-h-80 w-full rounded-lg object-cover"
+          controls
+          playsInline
+        />
+      ) : post.imageUrl ? (
         <img src={post.imageUrl} alt="" className="mt-3 max-h-80 w-full rounded-lg object-cover" />
-      )}
+      ) : null}
       {post.text && <p className="mt-3 text-sm">{post.text}</p>}
       <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
         <span className="flex items-center gap-1"><Heart className="size-4" /> {post.loveCount}</span>

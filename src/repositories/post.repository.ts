@@ -76,6 +76,7 @@ export const postRepository = {
     companyId: string;
     text: string;
     imageUrl?: string | null;
+    videoUrl?: string | null;
     productIds?: string[];
   }): Promise<Post> {
     const { data, error } = await supabase
@@ -85,6 +86,7 @@ export const postRepository = {
         author_type: "business",
         text: input.text,
         image_url: input.imageUrl ?? null,
+        video_url: input.videoUrl ?? null,
       })
       .select("*, company:company_id(*)")
       .single();
