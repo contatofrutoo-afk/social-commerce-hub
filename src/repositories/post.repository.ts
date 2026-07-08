@@ -97,26 +97,23 @@ export const postRepository = {
   async createCustomerPost(input: {
     companyId: string;
     customerId: string;
+    sessionToken: string;
     text: string;
     imageUrl?: string | null;
     category?: string;
     companions?: VisitContext;
-  }): Promise<Post> {
-    const { data, error } = await supabase
-      .from("posts")
-      .insert({
-        company_id: input.companyId,
-        author_type: "customer",
-        customer_id: input.customerId,
-        text: input.text,
-        image_url: input.imageUrl ?? null,
-        category: input.category ?? null,
-        companions: input.companions ?? null,
-      })
-      .select()
-      .single();
+  }): Promise<{ id: string }> {
+    const { data, error } = await supabase.rpc("create_customer_post" as any, {
+      _customer_id: input.customerId,
+      _token: input.sessionToken,
+      _company_id: input.companyId,
+      _text: input.text,
+      _image_url: input.imageUrl ?? null,
+      _category: input.category ?? null,
+      _companions: (input.companions as string | undefined) ?? null,
+    });
     if (error) throw error;
-    return mapPost({ ...data, post_reactions: [], post_products: [], comments: [{ count: 0 }] });
+    return { id: data as string };
   },
 
   async setReaction(postId: string, customerId: string, token: string, type: ReactionType | null) {
