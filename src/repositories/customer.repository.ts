@@ -32,6 +32,11 @@ export const customerRepository = {
     return row ? map(row) : null;
   },
 
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from("customers").delete().eq("id", id);
+    if (error) throw error;
+  },
+
   async listByCompany(companyId: string): Promise<Customer[]> {
     const { data, error } = await supabase
       .from("customers")

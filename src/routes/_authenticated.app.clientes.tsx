@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { customerRepository, crmRepository } from "@/repositories";
 import type { CustomerInsights, TimelineEvent, ProductInteraction } from "@/repositories/types";
@@ -7,17 +7,46 @@ import { useState } from "react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { Input } from "@/components/ui/input";
 import {
-  User, Heart, ThumbsDown, MessageCircle, ShoppingCart, ShoppingBag, Calendar, Clock, Users, Star,
-  Home, Sparkles, TrendingUp, RefreshCw, Lightbulb,
-  Camera, Edit3, Target, Gift, Sun, Moon, Sunrise, Sunset, Activity,
-  ArrowUp, ArrowDown, Minus,
+  User,
+  Heart,
+  ThumbsDown,
+  MessageCircle,
+  ShoppingCart,
+  ShoppingBag,
+  Calendar,
+  Clock,
+  Users,
+  Star,
+  Home,
+  Sparkles,
+  TrendingUp,
+  RefreshCw,
+  Lightbulb,
+  Camera,
+  Edit3,
+  Target,
+  Gift,
+  Sun,
+  Moon,
+  Sunrise,
+  Sunset,
+  Activity,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/clientes")({
   component: CustomersPage,
 });
 
-const contextIcons: Record<string, any> = { sozinho: User, casal: Heart, amigos: Users, familia: Home };
+const contextIcons: Record<string, any> = {
+  sozinho: User,
+  casal: Heart,
+  amigos: Users,
+  familia: Home,
+};
 
 const classificationConfig = {
   new: { label: "Novo", class: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
@@ -66,21 +95,47 @@ const trendDescriptions: Record<string, string> = {
 // ======= MAIN PAGE =======
 
 function CustomersPage() {
+  const queryClient = useQueryClient();
   const { data: companyId } = useQuery({
     queryKey: ["my-company-id"],
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("company_id").limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("company_id")
+        .limit(1)
+        .maybeSingle();
       return data?.company_id as string | undefined;
     },
   });
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: customers } = useQuery({
     queryKey: ["customers", companyId],
     queryFn: () => customerRepository.listByCompany(companyId!),
     enabled: !!companyId,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => customerRepository.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers", companyId] });
+      setSelectedId((prev) => (prev === deletingId ? null : prev));
+      setDeletingId(null);
+    },
+    onError: () => {
+      setDeletingId(null);
+    },
+  });
+
+  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
+    e.stopPropagation();
+    if (window.confirm(`Excluir cliente "${name}"? Esta ação não pode ser desfeita.`)) {
+      setDeletingId(id);
+      deleteMutation.mutate(id);
+    }
+  };
 
   const filtered = customers?.filter(
     (c) => c.name.toLowerCase().includes(q.toLowerCase()) || c.whatsapp.includes(q),
@@ -89,7 +144,11 @@ function CustomersPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Clientes</h1>
-      <Input placeholder="Buscar por nome ou WhatsApp" value={q} onChange={(e) => setQ(e.target.value)} />
+      <Input
+        placeholder="Buscar por nome ou WhatsApp"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
         <div className="rounded-xl border bg-card divide-y">
@@ -97,31 +156,49 @@ function CustomersPage() {
             <p className="p-6 text-sm text-muted-foreground">Nenhum cliente ainda.</p>
           )}
           {filtered?.map((c) => (
-            <button
+            <div
               key={c.id}
-              onClick={() => setSelectedId(c.id)}
-              className={`flex w-full items-center justify-between p-3 text-left hover:bg-muted ${
+              className={`group relative flex items-center justify-between p-3 text-left transition-colors ${
                 selectedId === c.id ? "bg-accent" : ""
               }`}
             >
-              <div className="flex items-center gap-2 min-w-0">
-                {c.avatarUrl ? (
-                  <img src={c.avatarUrl} alt="" className="size-8 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                    {c.name.charAt(0).toUpperCase()}
+              <button
+                onClick={() => setSelectedId(c.id)}
+                className="flex flex-1 items-center gap-2 min-w-0"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {c.avatarUrl ? (
+                    <img
+                      src={c.avatarUrl}
+                      alt=""
+                      className="size-8 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                      {c.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{c.name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{c.whatsapp}</div>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{c.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{c.whatsapp}</div>
                 </div>
-              </div>
-              <div className="text-right shrink-0">
-                <div className="text-xs text-muted-foreground">{c.visitCount} visitas</div>
-                <div className="text-[11px] text-muted-foreground">{relativeTime(c.lastVisitAt)}</div>
-              </div>
-            </button>
+                <div className="text-right shrink-0">
+                  <div className="text-xs text-muted-foreground">{c.visitCount} visitas</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {relativeTime(c.lastVisitAt)}
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, c.id, c.name)}
+                disabled={deletingId === c.id}
+                className="ml-2 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 disabled:opacity-50"
+                title="Excluir cliente"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           ))}
         </div>
 
@@ -145,16 +222,24 @@ function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
     queryFn: () => crmRepository.getCustomerInsights(id, companyId),
   });
 
-  if (isError) return <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Erro ao carregar perfil. Tente novamente.</div>;
+  if (isError)
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Erro ao carregar perfil. Tente novamente.
+      </div>
+    );
   if (!insights) return <div className="rounded-xl border bg-card p-6">Carregando…</div>;
 
   const cc = classificationConfig[insights.classification];
   const ContextIcon = insights.dominantContext ? contextIcons[insights.dominantContext] : null;
-  const HourIcon = insights.habits.preferredHour !== null
-    ? insights.habits.preferredHour < 12 ? Sunrise
-      : insights.habits.preferredHour < 18 ? Sun
-      : Moon
-    : Clock;
+  const HourIcon =
+    insights.habits.preferredHour !== null
+      ? insights.habits.preferredHour < 12
+        ? Sunrise
+        : insights.habits.preferredHour < 18
+          ? Sun
+          : Moon
+      : Clock;
 
   return (
     <div className="space-y-4">
@@ -218,7 +303,13 @@ function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
 
 // ======= BLOCOS =======
 
-function Bloco1({ insights, cc }: { insights: CustomerInsights; cc: typeof classificationConfig.new }) {
+function Bloco1({
+  insights,
+  cc,
+}: {
+  insights: CustomerInsights;
+  cc: typeof classificationConfig.new;
+}) {
   return (
     <div className="rounded-xl border bg-card p-5">
       <div className="flex items-start gap-4">
@@ -232,10 +323,14 @@ function Bloco1({ insights, cc }: { insights: CustomerInsights; cc: typeof class
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold">{insights.name}</h2>
-            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}>{cc.label}</span>
+            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}>
+              {cc.label}
+            </span>
           </div>
           <p className="text-sm text-muted-foreground">{insights.whatsapp}</p>
-          <p className="text-[11px] text-muted-foreground">Cliente desde {new Date(insights.customerSince).toLocaleDateString("pt-BR")}</p>
+          <p className="text-[11px] text-muted-foreground">
+            Cliente desde {new Date(insights.customerSince).toLocaleDateString("pt-BR")}
+          </p>
         </div>
       </div>
 
@@ -253,34 +348,61 @@ function Bloco1({ insights, cc }: { insights: CustomerInsights; cc: typeof class
   );
 }
 
-function Bloco2({ insights, cc }: { insights: CustomerInsights; cc: typeof classificationConfig.new }) {
+function Bloco2({
+  insights,
+  cc,
+}: {
+  insights: CustomerInsights;
+  cc: typeof classificationConfig.new;
+}) {
   return (
     <Section title="Relacionamento" icon={Heart}>
       <div className="mb-3 rounded-lg bg-accent p-3 text-sm text-accent-foreground">
         {insights.habits.returnFrequencyText}
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <InfoTile label="Primeira visita" value={insights.firstVisit ? new Date(insights.firstVisit).toLocaleDateString("pt-BR") : "—"} />
-        <InfoTile label="Última visita" value={insights.lastVisit ? relativeTime(insights.lastVisit) : "—"} />
+        <InfoTile
+          label="Primeira visita"
+          value={
+            insights.firstVisit ? new Date(insights.firstVisit).toLocaleDateString("pt-BR") : "—"
+          }
+        />
+        <InfoTile
+          label="Última visita"
+          value={insights.lastVisit ? relativeTime(insights.lastVisit) : "—"}
+        />
         <InfoTile label="Total de visitas" value={String(insights.totalVisits)} />
-        <InfoTile label="Última visita há" value={insights.habits.daysSinceLastVisit !== null ? `${Math.round(insights.habits.daysSinceLastVisit)} dias` : "—"} />
+        <InfoTile
+          label="Última visita há"
+          value={
+            insights.habits.daysSinceLastVisit !== null
+              ? `${Math.round(insights.habits.daysSinceLastVisit)} dias`
+              : "—"
+          }
+        />
       </div>
       <div className="mt-2 text-[11px] text-muted-foreground">
-        <span className="font-medium">{cc.label}:</span> {classificationExplanations[insights.classification]}
+        <span className="font-medium">{cc.label}:</span>{" "}
+        {classificationExplanations[insights.classification]}
       </div>
     </Section>
   );
 }
 
 function Bloco3({ insights }: { insights: CustomerInsights }) {
-  const hasData = insights.purchasedProducts.length > 0 || insights.favoriteCategories.length > 0
-    || insights.likedProducts.length > 0 || insights.wishedProducts.length > 0
-    || insights.lovedProducts.length > 0;
+  const hasData =
+    insights.purchasedProducts.length > 0 ||
+    insights.favoriteCategories.length > 0 ||
+    insights.likedProducts.length > 0 ||
+    insights.wishedProducts.length > 0 ||
+    insights.lovedProducts.length > 0;
 
   if (!hasData) {
     return (
       <Section title="Preferências" icon={Star}>
-        <p className="text-sm text-muted-foreground">Ainda não há dados suficientes sobre as preferências deste cliente.</p>
+        <p className="text-sm text-muted-foreground">
+          Ainda não há dados suficientes sobre as preferências deste cliente.
+        </p>
       </Section>
     );
   }
@@ -290,14 +412,22 @@ function Bloco3({ insights }: { insights: CustomerInsights }) {
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {insights.purchasedProducts.length > 0 && (
           <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Produtos comprados</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              Produtos comprados
+            </p>
             <ProductList products={insights.purchasedProducts.slice(0, 5)} />
-            {insights.purchasedProducts.length > 5 && <p className="mt-0.5 text-[11px] text-muted-foreground">+{insights.purchasedProducts.length - 5} outros</p>}
+            {insights.purchasedProducts.length > 5 && (
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                +{insights.purchasedProducts.length - 5} outros
+              </p>
+            )}
           </div>
         )}
         {insights.favoriteCategories.length > 0 && (
           <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Categorias favoritas</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              Categorias favoritas
+            </p>
             <div className="space-y-0.5">
               {insights.favoriteCategories.slice(0, 4).map((fc) => (
                 <div key={fc.category} className="flex justify-between text-sm">
@@ -310,25 +440,33 @@ function Bloco3({ insights }: { insights: CustomerInsights }) {
         )}
         {insights.likedProducts.length > 0 && (
           <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Produtos curtidos</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              Produtos curtidos
+            </p>
             <ProductList products={insights.likedProducts.slice(0, 5)} />
           </div>
         )}
         {insights.wishedProducts.length > 0 && (
           <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Produtos desejados</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              Produtos desejados
+            </p>
             <ProductList products={insights.wishedProducts.slice(0, 5)} />
           </div>
         )}
         {insights.lovedProducts.length > 0 && (
           <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Produtos que amou</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              Produtos que amou
+            </p>
             <ProductList products={insights.lovedProducts} />
           </div>
         )}
         {insights.dislikedProducts.length > 0 && (
           <div>
-            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Produtos que não gostou</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+              Produtos que não gostou
+            </p>
             <ProductList products={insights.dislikedProducts} />
           </div>
         )}
@@ -337,18 +475,31 @@ function Bloco3({ insights }: { insights: CustomerInsights }) {
   );
 }
 
-function Bloco4({ insights, HourIcon, ContextIcon }: { insights: CustomerInsights; HourIcon: any; ContextIcon: any }) {
+function Bloco4({
+  insights,
+  HourIcon,
+  ContextIcon,
+}: {
+  insights: CustomerInsights;
+  HourIcon: any;
+  ContextIcon: any;
+}) {
   return (
     <Section title="Comportamento" icon={Activity}>
       {insights.visitContexts.length > 0 && (
         <div className="mb-3">
-          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Contexto das visitas</p>
+          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            Contexto das visitas
+          </p>
           <div className="grid grid-cols-4 gap-1.5">
             {["sozinho", "casal", "amigos", "familia"].map((ctx) => {
               const found = insights.visitContexts.find((v) => v.context === ctx);
               const Icon = contextIcons[ctx] ?? User;
               return (
-                <div key={ctx} className={`rounded-lg p-1.5 text-center ${insights.dominantContext === ctx ? "bg-accent ring-1 ring-primary" : "bg-muted"}`}>
+                <div
+                  key={ctx}
+                  className={`rounded-lg p-1.5 text-center ${insights.dominantContext === ctx ? "bg-accent ring-1 ring-primary" : "bg-muted"}`}
+                >
                   <Icon className="mx-auto size-3.5 text-primary" />
                   <div className="text-xs font-bold">{found?.count ?? 0}</div>
                   <div className="text-[9px] uppercase text-muted-foreground">{ctx}</div>
@@ -360,14 +511,54 @@ function Bloco4({ insights, HourIcon, ContextIcon }: { insights: CustomerInsight
       )}
 
       <div className="grid grid-cols-2 gap-1.5 text-xs">
-        <InfoTile icon={HourIcon} label="Horário preferido" value={insights.habits.preferredHour !== null ? `${String(insights.habits.preferredHour).padStart(2, "0")}h` : "—"} />
-        <InfoTile icon={Calendar} label="Dia preferido" value={insights.habits.preferredDay ? insights.habits.preferredDay.charAt(0).toUpperCase() + insights.habits.preferredDay.slice(1) : "—"} />
-        <InfoTile label="Tempo entre visitas" value={insights.habits.avgTimeBetweenVisitsHours !== null ? `${(insights.habits.avgTimeBetweenVisitsHours / 24).toFixed(1)} dias` : "—"} />
-        <InfoTile label="Check-in → Pedido" value={insights.habits.avgCheckinToOrderHours !== null ? `${insights.habits.avgCheckinToOrderHours.toFixed(1)}h` : "—"} />
+        <InfoTile
+          icon={HourIcon}
+          label="Horário preferido"
+          value={
+            insights.habits.preferredHour !== null
+              ? `${String(insights.habits.preferredHour).padStart(2, "0")}h`
+              : "—"
+          }
+        />
+        <InfoTile
+          icon={Calendar}
+          label="Dia preferido"
+          value={
+            insights.habits.preferredDay
+              ? insights.habits.preferredDay.charAt(0).toUpperCase() +
+                insights.habits.preferredDay.slice(1)
+              : "—"
+          }
+        />
+        <InfoTile
+          label="Tempo entre visitas"
+          value={
+            insights.habits.avgTimeBetweenVisitsHours !== null
+              ? `${(insights.habits.avgTimeBetweenVisitsHours / 24).toFixed(1)} dias`
+              : "—"
+          }
+        />
+        <InfoTile
+          label="Check-in → Pedido"
+          value={
+            insights.habits.avgCheckinToOrderHours !== null
+              ? `${insights.habits.avgCheckinToOrderHours.toFixed(1)}h`
+              : "—"
+          }
+        />
         {insights.habits.mostUsedTable && (
           <InfoTile label="Mesa preferida" value={insights.habits.mostUsedTable.label} />
         )}
-        <InfoTile label="Origem mais comum" value={insights.habits.mostCommonSource === "qr" ? "Link Geral" : insights.habits.mostCommonSource === "table" ? "Mesa" : insights.habits.mostCommonSource ?? "—"} />
+        <InfoTile
+          label="Origem mais comum"
+          value={
+            insights.habits.mostCommonSource === "qr"
+              ? "Link Geral"
+              : insights.habits.mostCommonSource === "table"
+                ? "Mesa"
+                : (insights.habits.mostCommonSource ?? "—")
+          }
+        />
       </div>
     </Section>
   );
@@ -383,29 +574,40 @@ function Bloco5({ insights }: { insights: CustomerInsights }) {
         <InfoTile label="Valor gasto" value={formatBRL(insights.purchases.totalSpent)} />
         <InfoTile label="Ticket médio" value={formatBRL(insights.purchases.avgOrderValue)} />
         <InfoTile label="Maior compra" value={formatBRL(insights.purchases.biggestPurchase)} />
-        <InfoTile label="Última compra" value={insights.purchases.lastOrder ? relativeTime(insights.purchases.lastOrder) : "—"} />
+        <InfoTile
+          label="Última compra"
+          value={insights.purchases.lastOrder ? relativeTime(insights.purchases.lastOrder) : "—"}
+        />
       </div>
 
       {insights.purchases.mostOrderedProduct && (
         <div className="mt-2 rounded-lg bg-accent p-2 text-xs">
           <span className="text-muted-foreground">Produto mais comprado: </span>
           <strong>{insights.purchases.mostOrderedProduct.name}</strong>
-          <span className="text-muted-foreground"> ({insights.purchases.mostOrderedProduct.count}x)</span>
+          <span className="text-muted-foreground">
+            {" "}
+            ({insights.purchases.mostOrderedProduct.count}x)
+          </span>
         </div>
       )}
 
       {insights.purchases.mostOrderedCategory && (
         <p className="mt-1 text-xs text-muted-foreground">
-          Categoria favorita: <strong className="capitalize">{insights.purchases.mostOrderedCategory}</strong>
+          Categoria favorita:{" "}
+          <strong className="capitalize">{insights.purchases.mostOrderedCategory}</strong>
         </p>
       )}
 
       {insights.purchases.boughtTogether.length > 0 && (
         <div className="mt-2">
-          <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Comprados juntos</p>
+          <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            Comprados juntos
+          </p>
           <div className="flex flex-wrap gap-1">
             {insights.purchases.boughtTogether.map((bt) => (
-              <span key={bt.id} className="rounded-full bg-accent px-2 py-0.5 text-[10px]">{bt.name} ({bt.count})</span>
+              <span key={bt.id} className="rounded-full bg-accent px-2 py-0.5 text-[10px]">
+                {bt.name} ({bt.count})
+              </span>
             ))}
           </div>
         </div>
@@ -429,10 +631,15 @@ function Bloco6({ insights }: { insights: CustomerInsights }) {
       <div className="mb-2">
         <div className="flex items-center justify-between text-xs mb-1">
           <span className="font-medium">{levelInfo.label}</span>
-          <span className="text-muted-foreground">{insights.engagement.isHighlyEngaged ? "Alto" : "Baixo"} engajamento</span>
+          <span className="text-muted-foreground">
+            {insights.engagement.isHighlyEngaged ? "Alto" : "Baixo"} engajamento
+          </span>
         </div>
         <div className="h-2 rounded-full bg-muted overflow-hidden">
-          <div className={`h-full rounded-full transition-all ${levelInfo.barClass}`} style={{ width: levelInfo.width }} />
+          <div
+            className={`h-full rounded-full transition-all ${levelInfo.barClass}`}
+            style={{ width: levelInfo.width }}
+          />
         </div>
       </div>
 
@@ -450,12 +657,15 @@ function Bloco6({ insights }: { insights: CustomerInsights }) {
 }
 
 function Bloco7({ insights }: { insights: CustomerInsights }) {
-  const hasOpportunities = insights.likedButNotOrdered.length > 0 || insights.wishedProducts.length > 0;
+  const hasOpportunities =
+    insights.likedButNotOrdered.length > 0 || insights.wishedProducts.length > 0;
 
   if (!hasOpportunities) {
     return (
       <Section title="Oportunidades" icon={Target}>
-        <p className="text-sm text-muted-foreground">Nenhuma oportunidade identificada no momento.</p>
+        <p className="text-sm text-muted-foreground">
+          Nenhuma oportunidade identificada no momento.
+        </p>
       </Section>
     );
   }
@@ -466,21 +676,33 @@ function Bloco7({ insights }: { insights: CustomerInsights }) {
         {insights.likedButNotOrdered.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 mb-1">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Curtiu mas não comprou</p>
-              <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{insights.likedButNotOrdered.length}</span>
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Curtiu mas não comprou
+              </p>
+              <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
+                {insights.likedButNotOrdered.length}
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mb-1">Cliente demonstrou interesse e ainda não pediu.</p>
+            <p className="text-xs text-muted-foreground mb-1">
+              Cliente demonstrou interesse e ainda não pediu.
+            </p>
             <ProductList products={insights.likedButNotOrdered.slice(0, 4)} />
             {insights.likedButNotOrdered.length > 4 && (
-              <p className="mt-0.5 text-[11px] text-muted-foreground">+{insights.likedButNotOrdered.length - 4} outros</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                +{insights.likedButNotOrdered.length - 4} outros
+              </p>
             )}
           </div>
         )}
         {insights.wishedProducts.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 mb-1">
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Na lista de desejos</p>
-              <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">{insights.wishedProducts.length}</span>
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                Na lista de desejos
+              </p>
+              <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium">
+                {insights.wishedProducts.length}
+              </span>
             </div>
             <ProductList products={insights.wishedProducts.slice(0, 4)} />
           </div>
@@ -497,7 +719,9 @@ function Bloco8({ insights }: { insights: CustomerInsights }) {
   return (
     <Section title="Tendência" icon={TrendingUp}>
       <div className="flex items-center gap-4">
-        <div className={`flex items-center justify-center size-12 rounded-full bg-accent ${tInfo.color}`}>
+        <div
+          className={`flex items-center justify-center size-12 rounded-full bg-accent ${tInfo.color}`}
+        >
           <TrendIcon className="size-6" />
         </div>
         <div>
@@ -514,19 +738,42 @@ function Bloco9({ insights }: { insights: CustomerInsights }) {
 
   parts.push(`${insights.name}`);
 
-  if (insights.classification === "new") parts.push("é um cliente novo que acabou de conhecer o estabelecimento.");
-  else if (insights.classification === "vip") parts.push(`é um cliente VIP com ${insights.totalOrders} pedidos e ${formatBRL(insights.totalSpent)} em gastos.`);
-  else if (insights.classification === "inactive") parts.push(`é um cliente inativo — não visita há ${Math.round(insights.habits.daysSinceLastVisit ?? 0)} dias.`);
-  else if (insights.classification === "at_risk") parts.push(`está em risco de abandono — última visita foi há ${Math.round(insights.habits.daysSinceLastVisit ?? 0)} dias.`);
-  else parts.push(`é um cliente frequente com ${insights.totalVisits} visitas e ${insights.totalOrders} pedidos.`);
+  if (insights.classification === "new")
+    parts.push("é um cliente novo que acabou de conhecer o estabelecimento.");
+  else if (insights.classification === "vip")
+    parts.push(
+      `é um cliente VIP com ${insights.totalOrders} pedidos e ${formatBRL(insights.totalSpent)} em gastos.`,
+    );
+  else if (insights.classification === "inactive")
+    parts.push(
+      `é um cliente inativo — não visita há ${Math.round(insights.habits.daysSinceLastVisit ?? 0)} dias.`,
+    );
+  else if (insights.classification === "at_risk")
+    parts.push(
+      `está em risco de abandono — última visita foi há ${Math.round(insights.habits.daysSinceLastVisit ?? 0)} dias.`,
+    );
+  else
+    parts.push(
+      `é um cliente frequente com ${insights.totalVisits} visitas e ${insights.totalOrders} pedidos.`,
+    );
 
   if (insights.dominantContext) {
-    const ctxMap: Record<string, string> = { sozinho: "sozinho(a)", casal: "em casal", amigos: "com amigos", familia: "em família" };
+    const ctxMap: Record<string, string> = {
+      sozinho: "sozinho(a)",
+      casal: "em casal",
+      amigos: "com amigos",
+      familia: "em família",
+    };
     parts.push(`Costuma visitar ${ctxMap[insights.dominantContext] ?? insights.dominantContext}.`);
   }
 
   if (insights.habits.preferredDay && insights.habits.preferredHour !== null) {
-    const period = insights.habits.preferredHour < 12 ? "pela manhã" : insights.habits.preferredHour < 18 ? "à tarde" : "à noite";
+    const period =
+      insights.habits.preferredHour < 12
+        ? "pela manhã"
+        : insights.habits.preferredHour < 18
+          ? "à tarde"
+          : "à noite";
     parts.push(`Geralmente vem às ${insights.habits.preferredDay}s ${period}.`);
   }
 
@@ -538,16 +785,26 @@ function Bloco9({ insights }: { insights: CustomerInsights }) {
     parts.push(`Preferência por ${insights.purchases.mostOrderedCategory}.`);
   }
 
-  const engLabel = insights.engagement.level === "muito_ativo" ? "alto" : insights.engagement.level === "ativo" ? "moderado" : "baixo";
+  const engLabel =
+    insights.engagement.level === "muito_ativo"
+      ? "alto"
+      : insights.engagement.level === "ativo"
+        ? "moderado"
+        : "baixo";
   parts.push(`Engajamento ${engLabel} com a plataforma.`);
 
   if (insights.likedButNotOrdered.length > 0) {
-    const names = insights.likedButNotOrdered.slice(0, 2).map((p) => p.name).join(" e ");
+    const names = insights.likedButNotOrdered
+      .slice(0, 2)
+      .map((p) => p.name)
+      .join(" e ");
     parts.push(`Tem interesse em ${names} — oportunidade de conversão.`);
   }
 
-  if (insights.trend === "increasing") parts.push("A frequência de visitas está aumentando — ótimo sinal!");
-  else if (insights.trend === "decreasing") parts.push("A frequência de visitas está diminuindo — vale atenção.");
+  if (insights.trend === "increasing")
+    parts.push("A frequência de visitas está aumentando — ótimo sinal!");
+  else if (insights.trend === "decreasing")
+    parts.push("A frequência de visitas está diminuindo — vale atenção.");
 
   return (
     <Section title="Resumo Inteligente" icon={Sparkles}>
@@ -563,7 +820,11 @@ function Bloco9({ insights }: { insights: CustomerInsights }) {
 function InfoTile({ icon: Icon, label, value }: { icon?: any; label: string; value: string }) {
   return (
     <div className="rounded-lg bg-muted p-2">
-      {Icon && <div className="flex items-center gap-1 text-muted-foreground"><Icon className="size-3" /> {label}</div>}
+      {Icon && (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <Icon className="size-3" /> {label}
+        </div>
+      )}
       {!Icon && <div className="text-muted-foreground">{label}</div>}
       <div className="font-semibold">{value}</div>
     </div>
@@ -574,12 +835,22 @@ function EngDetail({ label, active }: { label: string; active: boolean }) {
   return (
     <div className="flex items-center justify-between rounded-lg bg-muted px-2 py-1">
       <span className="text-muted-foreground">{label}</span>
-      <span className={`font-medium ${active ? "text-green-600" : "text-muted-foreground"}`}>{active ? "Sim" : "Não"}</span>
+      <span className={`font-medium ${active ? "text-green-600" : "text-muted-foreground"}`}>
+        {active ? "Sim" : "Não"}
+      </span>
     </div>
   );
 }
 
-function StatBox({ icon: Icon, value, label }: { icon: any; value: string | number; label: string }) {
+function StatBox({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: any;
+  value: string | number;
+  label: string;
+}) {
   return (
     <div className="rounded-lg bg-muted p-2">
       <Icon className="mx-auto size-4 text-primary" />
@@ -599,7 +870,15 @@ function Tile({ icon: Icon, value, label }: { icon: any; value: string | number;
   );
 }
 
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: any;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
