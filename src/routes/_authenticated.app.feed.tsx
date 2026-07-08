@@ -15,7 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar, Store, User as UserIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
   component: FeedAdminPage,
@@ -193,9 +194,25 @@ function PostDetail({
     <div>
       <DialogHeader>
         <DialogTitle className="flex items-center justify-between">
-          <span>
-            {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
-          </span>
+          <div className="flex items-center gap-2">
+            <Avatar className="size-7">
+              {post.authorType === "business" && post.companyLogoUrl ? (
+                <AvatarImage src={post.companyLogoUrl} alt="" />
+              ) : post.authorType === "customer" && post.customerAvatarUrl ? (
+                <AvatarImage src={post.customerAvatarUrl} alt="" />
+              ) : null}
+              <AvatarFallback>
+                {post.authorType === "business" ? (
+                  <Store className="size-3" />
+                ) : (
+                  <UserIcon className="size-3" />
+                )}
+              </AvatarFallback>
+            </Avatar>
+            <span>
+              {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
+            </span>
+          </div>
           <Button size="icon" variant="ghost" onClick={onRemove}>
             <Trash2 className="size-4" />
           </Button>

@@ -12,6 +12,7 @@ import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/image-upload";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
@@ -101,13 +102,20 @@ function PostCard({
   return (
     <article className="bg-card">
       <header className="flex items-center gap-3 px-4 py-3">
-        <div className="grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
-          {post.authorType === "business" ? (
-            <Store className="size-4" />
-          ) : (
-            <UserIcon className="size-4" />
-          )}
-        </div>
+        <Avatar className="size-9">
+          {post.authorType === "business" && post.companyLogoUrl ? (
+            <AvatarImage src={post.companyLogoUrl} alt={post.customerName ?? ""} />
+          ) : post.authorType === "customer" && post.customerAvatarUrl ? (
+            <AvatarImage src={post.customerAvatarUrl} alt={post.customerName ?? ""} />
+          ) : null}
+          <AvatarFallback className="text-accent-foreground">
+            {post.authorType === "business" ? (
+              <Store className="size-4" />
+            ) : (
+              <UserIcon className="size-4" />
+            )}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1">
           <div className="text-sm font-semibold">
             {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}

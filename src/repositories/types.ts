@@ -57,6 +57,8 @@ export interface Post {
   authorType: PostAuthorType;
   customerId: string | null;
   customerName?: string | null;
+  customerAvatarUrl?: string | null;
+  companyLogoUrl?: string | null;
   imageUrl: string | null;
   videoUrl: string | null;
   text: string | null;
