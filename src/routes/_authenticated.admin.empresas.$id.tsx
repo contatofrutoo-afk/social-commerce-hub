@@ -23,6 +23,13 @@ const statusOptions = [
   { value: "cancelado", label: "Cancelado", color: "outline" },
 ] as const;
 
+const STATUS_MAP_TO_EN: Record<string, string> = {
+  ativo: "active",
+  teste: "trial",
+  bloqueado: "blocked",
+  cancelado: "cancelled",
+};
+
 const planOptions = ["Mensal", "Anual", "Promocional", "Personalizado"];
 const paymentMethods = ["PIX", "Cartão", "Dinheiro", "Outro"];
 const paymentStatuses = [
@@ -60,6 +67,30 @@ function WeazeEmpresaFicha() {
         const { data, error } = await supabase.from("companies").select("*").eq("id", id).single();
         if (cancelled) return;
         if (error || !data) { nav({ to: "/admin/empresas" }); return; }
+
+        let status = data.status;
+        let planType = data.plan_type;
+        let monthlyFee = data.monthly_fee;
+        let nextDueDate = data.next_due_date;
+        let lastPaymentDate = data.last_payment_date;
+        let paymentMethod = data.payment_method;
+        let paymentStatus = data.payment_status;
+        let internalNotes = data.internal_notes;
+
+        if (!status) {
+          const { data: adminData } = await supabase.from("company_admin").select("*").eq("company_id", id).maybeSingle();
+          if (adminData) {
+            status = adminData.status === "active" ? "ativo" : adminData.status === "blocked" ? "bloqueado" : adminData.status === "trial" ? "teste" : "cancelado";
+            planType ||= adminData.plan_type;
+            monthlyFee ??= adminData.monthly_fee;
+            nextDueDate ||= adminData.next_due_date;
+            lastPaymentDate ||= adminData.last_payment_date;
+            paymentMethod ||= adminData.payment_method;
+            paymentStatus ||= adminData.payment_status;
+            internalNotes ||= adminData.internal_notes;
+          }
+        }
+
         setForm({
           name: data.name ?? "",
           slug: data.slug ?? "",
@@ -68,14 +99,14 @@ function WeazeEmpresaFicha() {
           email_principal: data.email_principal ?? "",
           responsible_email: data.responsible_email ?? "",
           city: data.city ?? "",
-          status: data.status ?? "ativo",
-          planType: data.plan_type ?? "Mensal",
-          monthlyFee: Number(data.monthly_fee ?? 237),
-          nextDueDate: data.next_due_date ?? "",
-          lastPaymentDate: data.last_payment_date ?? "",
-          paymentMethod: data.payment_method ?? "PIX",
-          paymentStatus: data.payment_status ?? "pending",
-          internalNotes: data.internal_notes ?? "",
+          status: status ?? "ativo",
+          planType: planType ?? "Mensal",
+          monthlyFee: Number(monthlyFee ?? 237),
+          nextDueDate: nextDueDate ?? "",
+          lastPaymentDate: lastPaymentDate ?? "",
+          paymentMethod: paymentMethod ?? "PIX",
+          paymentStatus: paymentStatus ?? "pending",
+          internalNotes: internalNotes ?? "",
         });
       } catch { nav({ to: "/admin/empresas" }); }
       setLoading(false);
@@ -116,7 +147,7 @@ function WeazeEmpresaFicha() {
           if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
             const adminPayload = {
               company_id: id,
-              status: form.status,
+              status: STATUS_MAP_TO_EN[form.status] ?? form.status,
               plan_type: form.planType,
               monthly_fee: form.monthlyFee,
               next_due_date: form.nextDueDate || null,
@@ -164,7 +195,7 @@ function WeazeEmpresaFicha() {
       if (error) {
         if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
           const { error: fbErr } = await supabase.from("company_admin").upsert(
-            { company_id: id, status: newStatus, plan_type: form.planType, monthly_fee: form.monthlyFee, payment_method: form.paymentMethod, payment_status: form.paymentStatus, internal_notes: form.internalNotes },
+            { company_id: id, status: STATUS_MAP_TO_EN[newStatus] ?? newStatus, plan_type: form.planType, monthly_fee: form.monthlyFee, payment_method: form.paymentMethod, payment_status: form.paymentStatus, internal_notes: form.internalNotes },
             { onConflict: "company_id" }
           );
           if (fbErr) throw fbErr;
