@@ -120,6 +120,8 @@ function MesasView({ companyId }: { companyId: string }) {
     refetchInterval: 15000,
   });
 
+  const mesaCheckins = (present ?? []).filter((c: any) => c.table_id);
+
   const clearTable = useMutation({
     mutationFn: (ids: string[]) => checkinRepository.deleteByIds(ids),
     onSuccess: () => {
@@ -150,7 +152,7 @@ function MesasView({ companyId }: { companyId: string }) {
   return (
     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {tables?.map((t) => {
-        const occupations = present?.filter((c: any) => c.table_id === t.id) ?? [];
+        const occupations = mesaCheckins.filter((c: any) => c.table_id === t.id);
         return (
           <div
             key={t.id}
@@ -233,6 +235,8 @@ function LojaView({ companyId }: { companyId: string }) {
     refetchInterval: 15000,
   });
 
+  const lojaCustomers = (present ?? []).filter((c: any) => !c.table_id);
+
   if (selectedCheckin) {
     return (
       <div className="mt-4">
@@ -255,10 +259,10 @@ function LojaView({ companyId }: { companyId: string }) {
   return (
     <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.5fr]">
       <div className="rounded-xl border bg-card divide-y">
-        {present?.length === 0 && (
-          <p className="p-6 text-sm text-muted-foreground">Ninguém no local agora.</p>
+        {lojaCustomers.length === 0 && (
+          <p className="p-6 text-sm text-muted-foreground">Ninguém na loja agora.</p>
         )}
-        {present?.map((c: any) => {
+        {lojaCustomers.map((c: any) => {
           const avatar = c.customer?.avatar_url;
           const name = c.customer?.name ?? "";
           return (

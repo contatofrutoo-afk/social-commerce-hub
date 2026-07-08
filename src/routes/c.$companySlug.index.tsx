@@ -66,6 +66,7 @@ function CheckinPage() {
         sessionToken: upserted.sessionToken,
         companyId: company.id,
         context,
+        source: "loja",
       });
       setSession({
         customerId: upserted.customerId,
@@ -106,63 +107,68 @@ function CheckinPage() {
           </p>
         </div>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="name">Seu nome</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Como podemos te chamar?"
-            className="mt-1.5"
-            maxLength={80}
-          />
-        </div>
-        <div>
-          <Label htmlFor="wa">WhatsApp</Label>
-          <Input
-            id="wa"
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
-            placeholder="(11) 90000-0000"
-            className="mt-1.5"
-            maxLength={20}
-          />
-        </div>
-
-        <div>
-          <Label>Como está sendo sua visita hoje?</Label>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            {contexts.map((c) => {
-              const active = context === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setContext(c.id)}
-                  className={`flex items-center gap-2 rounded-xl border-2 p-4 text-left transition ${
-                    active
-                      ? "border-primary bg-accent text-accent-foreground"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  <c.icon className="size-5" />
-                  <span className="font-medium">{c.label}</span>
-                </button>
-              );
-            })}
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="name">Seu nome</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Como podemos te chamar?"
+              className="mt-1.5"
+              maxLength={80}
+            />
           </div>
-        </div>
+          <div>
+            <Label htmlFor="wa">WhatsApp</Label>
+            <Input
+              id="wa"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="(11) 90000-0000"
+              className="mt-1.5"
+              maxLength={20}
+            />
+          </div>
 
-        <Button
-          size="lg"
-          className="mt-4 w-full"
-          onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !context || (!name.trim() && !existingCustomer?.name) || (!whatsapp.trim() && !existingCustomer?.whatsapp)}
-        >
-          {mutation.isPending ? "Entrando…" : "Entrar"}
-        </Button>
-      </div>
+          <div>
+            <Label>Como está sendo sua visita hoje?</Label>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {contexts.map((c) => {
+                const active = context === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setContext(c.id)}
+                    className={`flex items-center gap-2 rounded-xl border-2 p-4 text-left transition ${
+                      active
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    <c.icon className="size-5" />
+                    <span className="font-medium">{c.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <Button
+            size="lg"
+            className="mt-4 w-full"
+            onClick={() => mutation.mutate()}
+            disabled={
+              mutation.isPending ||
+              !context ||
+              (!name.trim() && !existingCustomer?.name) ||
+              (!whatsapp.trim() && !existingCustomer?.whatsapp)
+            }
+          >
+            {mutation.isPending ? "Entrando…" : "Entrar"}
+          </Button>
+        </div>
       </div>
     </div>
   );
