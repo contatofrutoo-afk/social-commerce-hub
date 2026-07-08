@@ -62,12 +62,28 @@ function AppLayout() {
     queryKey: ["company-status-block", role?.company_id],
     queryFn: async () => {
       if (!role?.company_id) return null;
-      const { data } = await supabase
+
+      let status: string | undefined;
+      const { data: coData } = await supabase
         .from("companies")
         .select("status")
         .eq("id", role.company_id)
         .single();
-      return data;
+      status = coData?.status;
+
+      if (!status) {
+        const { data: adminData } = await supabase
+          .from("company_admin")
+          .select("status")
+          .eq("company_id", role.company_id)
+          .maybeSingle();
+        if (adminData?.status === "blocked") status = "bloqueado";
+        else if (adminData?.status === "active") status = "ativo";
+        else if (adminData?.status === "trial") status = "teste";
+        else if (adminData?.status === "cancelled") status = "cancelado";
+      }
+
+      return { status };
     },
     enabled: !!role?.company_id,
   });

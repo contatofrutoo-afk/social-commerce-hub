@@ -142,7 +142,7 @@ function WeazeEmpresaFicha() {
         nav({ to: "/admin/empresas/$id", params: { id: data.id }, replace: true });
         setIsNew(false);
       } else {
-        const { data, error } = await supabase.from("companies").update(payload).eq("id", id).select("id");
+        const { error } = await supabase.from("companies").update(payload).eq("id", id);
         if (error) {
           if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
             const adminPayload = {
@@ -161,8 +161,6 @@ function WeazeEmpresaFicha() {
           } else {
             throw error;
           }
-        } else if (!data || data.length === 0) {
-          throw new Error("Nenhuma linha foi atualizada. Verifique as permissões do banco.");
         }
         toast.success("Dados salvos com sucesso!");
       }
@@ -191,7 +189,7 @@ function WeazeEmpresaFicha() {
     setForm((prev) => ({ ...prev, status: newStatus }));
     setSaving(true);
     try {
-      const { data, error } = await supabase.from("companies").update({ status: newStatus }).eq("id", id).select("id,status");
+      const { error } = await supabase.from("companies").update({ status: newStatus }).eq("id", id);
       if (error) {
         if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
           const { error: fbErr } = await supabase.from("company_admin").upsert(
@@ -202,8 +200,6 @@ function WeazeEmpresaFicha() {
         } else {
           throw error;
         }
-      } else if (!data || data.length === 0) {
-        throw new Error("Nenhuma linha foi atualizada. Verifique as permissões do banco.");
       }
       toast.success(
         newStatus === "ativo" ? "Empresa ativada!" :
