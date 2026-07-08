@@ -86,7 +86,7 @@ export const postRepository = {
         text: input.text,
         image_url: input.imageUrl ?? null,
       })
-      .select()
+      .select("*, company:company_id(*)")
       .single();
     if (error) throw error;
 
