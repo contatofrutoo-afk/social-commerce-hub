@@ -119,9 +119,9 @@ function CustomersPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => customerRepository.delete(id),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ["customers", companyId] });
-      setSelectedId((prev) => (prev === deletingId ? null : prev));
+      setSelectedId((prev) => (prev === id ? null : prev));
       setDeletingId(null);
     },
     onError: () => {
