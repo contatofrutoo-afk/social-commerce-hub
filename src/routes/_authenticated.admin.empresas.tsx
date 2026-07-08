@@ -4,9 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Building2, Search, Plus } from "lucide-react";
+import { Building2, Search, Plus, Shield, ShieldOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+const STATUS_MAP_TO_EN: Record<string, string> = {
+  ativo: "active",
+  bloqueado: "blocked",
+  teste: "trial",
+  cancelado: "cancelled",
+};
 
 export const Route = createFileRoute("/_authenticated/admin/empresas")({
   component: WeazeEmpresas,
@@ -27,6 +35,7 @@ function WeazeEmpresas() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState<any[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -42,6 +51,35 @@ function WeazeEmpresas() {
   const filtered = companies.filter((c: any) =>
     !search || c.name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const toggleStatus = async (e: React.MouseEvent, c: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newStatus = c.status === "bloqueado" ? "ativo" : "bloqueado";
+    setTogglingId(c.id);
+    try {
+      const { error } = await supabase.from("companies").update({ status: newStatus }).eq("id", c.id);
+      if (error) {
+        if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
+          const { error: fbErr } = await supabase.from("company_admin").upsert(
+            { company_id: c.id, status: STATUS_MAP_TO_EN[newStatus] ?? newStatus },
+            { onConflict: "company_id" },
+          );
+          if (fbErr) throw fbErr;
+        } else {
+          throw error;
+        }
+      }
+      setCompanies((prev) =>
+        prev.map((co) => (co.id === c.id ? { ...co, status: newStatus } : co)),
+      );
+      toast.success(newStatus === "bloqueado" ? "Empresa bloqueada!" : "Empresa desbloqueada!");
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao alterar status");
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -80,13 +118,25 @@ function WeazeEmpresas() {
             <Link key={c.id} to="/admin/empresas/$id" params={{ id: c.id }} className="block">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-display font-semibold">{c.name ?? "—"}</h3>
-                      <p className="text-xs text-muted-foreground">{c.responsible ?? c.city ?? "—"}</p>
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-display font-semibold">{c.name ?? "—"}</h3>
+                        <p className="text-xs text-muted-foreground">{c.responsible ?? c.city ?? "—"}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={statusBadgeClass(c.status)}>{statusLabel(c.status)}</Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={togglingId === c.id}
+                          onClick={(e) => toggleStatus(e, c)}
+                          title={c.status === "bloqueado" ? "Desbloquear" : "Bloquear"}
+                        >
+                          {c.status === "bloqueado" ? <ShieldOff className="h-4 w-4 text-red-600" /> : <Shield className="h-4 w-4 text-green-600" />}
+                        </Button>
+                      </div>
                     </div>
-                    <Badge className={statusBadgeClass(c.status)}>{statusLabel(c.status)}</Badge>
-                  </div>
                   <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mt-2">
                     <div><span className="block text-[10px] uppercase tracking-wider">Plano</span><span className="font-medium text-foreground">{c.plan_type}</span></div>
                     <div><span className="block text-[10px] uppercase tracking-wider">Valor</span><span className="font-medium text-foreground">R$ {Number(c.monthly_fee).toFixed(2)}</span></div>
