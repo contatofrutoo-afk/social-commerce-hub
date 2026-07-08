@@ -178,20 +178,31 @@ export interface BusinessMetrics {
 export interface CustomerServiceProfile {
   id: string;
   name: string;
+  whatsapp: string;
   avatarUrl: string | null;
   customerSince: string;
-  visitCount: number;
+  totalVisits: number;
+  firstVisit: string | null;
+  lastVisit: string | null;
   currentContext: string | null;
   recentOrders: Order[];
   favoriteProducts: { id: string; name: string; count: number }[];
   likedProducts: { id: string; name: string }[];
   wishedProducts: { id: string; name: string }[];
   favoriteCategories: { category: string; count: number }[];
-  preferredHour: number | null;
-  preferredDay: string | null;
-  avgTimeBetweenVisitsHours: number | null;
   avgSpend: number;
   suggestions: string[];
+  classification: "new" | "frequent" | "vip" | "at_risk" | "inactive";
+  totalOrders: number;
+  lastOrder: string | null;
+  lastOrderValue: number;
+  avgOrderValue: number;
+  mostOrderedProduct: { id: string; name: string; count: number } | null;
+  mostOrderedCategory: string | null;
+  recentlyLikedProducts: { id: string; name: string }[];
+  likedButNotOrdered: { id: string; name: string }[];
+  opportunities: string[];
+  weazeSuggestions: string[];
 }
 
 export interface Insight {

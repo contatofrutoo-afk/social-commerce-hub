@@ -535,13 +535,12 @@ export const crmRepository = {
   },
 
   async getCustomerServiceProfile(customerId: string): Promise<CustomerServiceProfile> {
-    const [customerResult, checkinsResult, ordersResult, likesResult, wishesResult, commentsResult] = await Promise.all([
+    const [customerResult, checkinsResult, ordersResult, likesResult, wishesResult] = await Promise.all([
       supabase.from("customers").select("*").eq("id", customerId).single(),
-      supabase.from("checkins").select("id, context, created_at").eq("customer_id", customerId).order("created_at", { ascending: false }),
-      supabase.from("orders").select(`*, table:tables(label), order_items(*, product:products(name))`).eq("customer_id", customerId).order("created_at", { ascending: false }),
-      supabase.from("product_likes").select("product_id, product:products(name)").eq("customer_id", customerId),
-      supabase.from("product_wishes").select("product_id, product:products(name)").eq("customer_id", customerId),
-      supabase.from("comments").select("id, text, created_at").eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("checkins").select("id, context, created_at, table_id").eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("orders").select(`*, table:tables(label), order_items(*, product:products(name, category))`).eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("product_likes").select("product_id, created_at, product:products(name, category, image_url, price)").eq("customer_id", customerId).order("created_at", { ascending: false }),
+      supabase.from("product_wishes").select("product_id, product:products(name, category, image_url, price)").eq("customer_id", customerId),
     ]);
 
     if (customerResult.error) throw customerResult.error;
@@ -549,7 +548,6 @@ export const crmRepository = {
     if (ordersResult.error) throw ordersResult.error;
     if (likesResult.error) throw likesResult.error;
     if (wishesResult.error) throw wishesResult.error;
-    if (commentsResult.error) throw commentsResult.error;
 
     const customer = customerResult.data;
     if (!customer) throw new Error("Cliente não encontrado");
@@ -558,100 +556,30 @@ export const crmRepository = {
     const orders = ordersResult.data ?? [];
     const likes = likesResult.data ?? [];
     const wishes = wishesResult.data ?? [];
-    const comments = commentsResult.data ?? [];
 
-    const now = Date.now();
-
-    // Favorite products (most ordered)
-    const productCount: Record<string, { name: string; count: number }> = {};
-    const categoryCount: Record<string, number> = {};
-    const orderHours: number[] = [];
-    const orderDays: string[] = [];
-    const visitGaps: number[] = [];
-    let totalSpend = 0;
-
-    orders.forEach((o: any) => {
-      totalSpend += Number(o.total);
-      const h = new Date(o.created_at).getHours();
-      orderHours.push(h);
-      const days = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-      orderDays.push(days[new Date(o.created_at).getDay()]);
-      (o.order_items ?? []).forEach((i: any) => {
-        if (!productCount[i.product_id]) productCount[i.product_id] = { name: i.product?.name ?? "Produto", count: 0 };
-        productCount[i.product_id].count += i.quantity;
-        const cat = i.product?.category ?? "sem categoria";
-        categoryCount[cat] = (categoryCount[cat] ?? 0) + 1;
-      });
-    });
-
-    // Time between visits
     const sortedCheckins = [...checkins].sort((a: any, b: any) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
-    for (let i = 1; i < sortedCheckins.length; i++) {
-      const diff = (new Date(sortedCheckins[i].created_at).getTime() - new Date(sortedCheckins[i - 1].created_at).getTime()) / 3600000;
-      visitGaps.push(diff);
-    }
-    const avgGap = visitGaps.length > 0 ? visitGaps.reduce((s, g) => s + g, 0) / visitGaps.length : null;
 
-    const avgSpend = orders.length > 0 ? totalSpend / orders.length : 0;
+    // --- Counts & spends ---
+    const totalSpend = orders.reduce((s: number, o: any) => s + Number(o.total ?? 0), 0);
+    const totalOrders = orders.length;
+    const avgOrderValue = totalOrders > 0 ? totalSpend / totalOrders : 0;
+    const lastOrder = orders.length > 0 ? orders[0].created_at : null;
+    const lastOrderValue = orders.length > 0 ? Number(orders[0].total) : 0;
 
-    // Peak hour/day
-    const peakHour = orderHours.length > 0
-      ? Number(Object.entries(orderHours.reduce((acc: Record<number, number>, h: number) => {
-          acc[h] = (acc[h] ?? 0) + 1; return acc;
-        }, {})).sort((a, b) => b[1] - a[1])[0]?.[0]) : null;
-
-    const peakDay = orderDays.length > 0
-      ? Object.entries(orderDays.reduce((acc: Record<string, number>, d: string) => {
-          acc[d] = (acc[d] ?? 0) + 1; return acc;
-        }, {})).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null : null;
-
-    const recentOrders = orders.slice(0, 5).map(mapOrder);
-
-    // Suggestions
-    const suggestions: string[] = [];
-
-    if (checkins.length <= 1) {
-      suggestions.push("Primeira visita — dê boas-vindas caprichadas e ofereça um tour pelo espaço.");
-    } else if (checkins.length < 5) {
-      suggestions.push("Cliente recorrente — pergunte como foi a experiência anterior e ofereça algo novo.");
-    } else {
-      suggestions.push("Cliente fiel — trate como VIP, reconheça a preferência.");
-    }
-
-    // Category-based suggestion
-    const topCat = Object.entries(categoryCount).sort((a, b) => b[1] - a[1])[0];
-    if (topCat) {
-      suggestions.push(`Costuma consumir ${topCat[0]} — destaque novidades desta categoria.`);
-    }
-
-    // Context-based
-    const latestContext = checkins[0]?.context;
-    if (latestContext === "casal") {
-      suggestions.push("Geralmente está em casal — sugira combos românticos ou pratos para dividir.");
-    } else if (latestContext === "familia") {
-      suggestions.push("Vem com a família — ofereça opções infantis ou porções familiares.");
-    } else if (latestContext === "amigos") {
-      suggestions.push("Vem com amigos — destaque petiscos e bebidas para compartilhar.");
-    }
-
-    // Liked but not ordered
-    const likedNames = likes.map((l: any) => l.product?.name).filter(Boolean);
-    const orderedIds = new Set<string>();
-    orders.forEach((o: any) => (o.order_items ?? []).forEach((i: any) => orderedIds.add(i.product_id)));
-    const notOrderedLikes = likes.filter((l: any) => !orderedIds.has(l.product_id));
-    if (notOrderedLikes.length > 0) {
-      const names = notOrderedLikes.slice(0, 3).map((l: any) => l.product?.name).filter(Boolean).join(", ");
-      suggestions.push(`Ainda não pediu: ${names} — ofereça uma amostra.`);
-    }
-
-    // Preferred time
-    if (peakHour !== null) {
-      if (peakHour < 12) suggestions.push("Costuma vir pela manhã — prepare ofertas de café da manhã.");
-      else if (peakHour < 18) suggestions.push("Costuma vir à tarde — destaque o menu do dia.");
-      else suggestions.push("Costuma vir à noite — sugira drinks e jantar.");
-    }
+    // --- Favorite products & categories ---
+    const productCount: Record<string, { name: string; count: number }> = {};
+    const categoryCount: Record<string, number> = {};
+    orders.forEach((o: any) => {
+      (o.order_items ?? []).forEach((i: any) => {
+        const pid = i.product_id;
+        if (!productCount[pid]) productCount[pid] = { name: i.product?.name ?? "Produto", count: 0 };
+        productCount[pid].count += i.quantity;
+        const cat = i.product?.category;
+        if (cat) categoryCount[cat] = (categoryCount[cat] ?? 0) + 1;
+      });
+    });
 
     const favoriteProducts = Object.entries(productCount)
       .map(([id, v]) => ({ id, name: v.name, count: v.count }))
@@ -660,25 +588,169 @@ export const crmRepository = {
 
     const favoriteCategories = Object.entries(categoryCount)
       .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => b.count - a.count)
+      .filter((fc) => fc.category !== "sem categoria");
+
+    const mostOrderedProductEntry = Object.entries(productCount).sort((a, b) => b[1].count - a[1].count)[0];
+    const mostOrderedProduct = mostOrderedProductEntry
+      ? { id: mostOrderedProductEntry[0], name: mostOrderedProductEntry[1].name, count: mostOrderedProductEntry[1].count }
+      : null;
+    const mostOrderedCategory = favoriteCategories[0]?.category ?? null;
+
+    const recentOrders = orders.slice(0, 3).map(mapOrder);
+
+    // --- Visit context ---
+    const visitContexts: Record<string, number> = {};
+    checkins.forEach((c: any) => { visitContexts[c.context] = (visitContexts[c.context] ?? 0) + 1; });
+    const dominantContext = Object.entries(visitContexts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+    // --- Classification ---
+    const daysSinceLastVisit = checkins.length > 0
+      ? (Date.now() - new Date(checkins[0].created_at).getTime()) / 86400000
+      : null;
+    const isNew = checkins.length <= 1 && totalOrders === 0;
+    const isVip = totalOrders >= 5 || totalSpend > 1000;
+    const isRepeatBuyer = totalOrders >= 2;
+    const isInactive = daysSinceLastVisit !== null && daysSinceLastVisit > 60;
+
+    let classification: "new" | "frequent" | "vip" | "at_risk" | "inactive";
+    if (isNew) classification = "new";
+    else if (isInactive) classification = "inactive";
+    else if (daysSinceLastVisit !== null && daysSinceLastVisit >= 30) classification = "at_risk";
+    else if (isVip) classification = "vip";
+    else classification = "frequent";
+
+    // --- Recently liked products (last 30 days) ---
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+    const recentlyLikedProducts = likes
+      .filter((l: any) => l.created_at >= thirtyDaysAgo && l.product)
+      .map((l: any) => ({ id: l.product_id, name: l.product.name ?? "" }));
+
+    // --- Liked but not ordered ---
+    const orderedIds = new Set<string>();
+    orders.forEach((o: any) => (o.order_items ?? []).forEach((i: any) => orderedIds.add(i.product_id)));
+    const likedButNotOrdered = likes
+      .filter((l: any) => l.product && !orderedIds.has(l.product_id))
+      .map((l: any) => ({ id: l.product_id, name: l.product.name ?? "" }));
+
+    // --- Avg spend ---
+    const avgSpend = totalOrders > 0 ? totalSpend / totalOrders : 0;
+
+    // --- Opportunities ---
+    const opportunities: string[] = [];
+
+    if (mostOrderedCategory) {
+      opportunities.push(`Costuma consumir ${mostOrderedCategory}.`);
+    }
+    const hasCombos = orders.some((o: any) =>
+      (o.order_items ?? []).some((i: any) => {
+        const n = i.product?.name?.toLowerCase() ?? "";
+        return n.includes("combo") || n.includes("kit");
+      })
+    );
+    if (hasCombos) opportunities.push("Costuma comprar combos.");
+    const hasDrinks = Object.keys(categoryCount).some((c) =>
+      ["bebida", "drink", "refrigerante", "suco", "água"].some((k) => c.toLowerCase().includes(k))
+    );
+    if (hasDrinks) opportunities.push("Costuma pedir bebidas.");
+    const hasDessert = Object.keys(categoryCount).some((c) =>
+      ["sobremesa", "doce", "sorvete", "torta"].some((k) => c.toLowerCase().includes(k))
+    );
+    if (hasDessert) opportunities.push("Costuma comprar sobremesa.");
+    if (avgOrderValue > 100) opportunities.push("Costuma consumir produtos premium.");
+    if (dominantContext === "amigos" || dominantContext === "familia") {
+      opportunities.push("Costuma compartilhar pratos.");
+    }
+    if (likedButNotOrdered.length > 0) {
+      const names = likedButNotOrdered.slice(0, 3).map((l) => l.name).filter(Boolean).join(", ");
+      opportunities.push(`Ainda não experimentou: ${names}.`);
+    }
+
+    // --- Weaze suggestions ---
+    const weazeSuggestions: string[] = [];
+
+    if (isNew) {
+      weazeSuggestions.push("Cliente está conhecendo o estabelecimento agora. Seja acolhedor e explique o cardápio.");
+    } else {
+      weazeSuggestions.push("Cliente já conhece o estabelecimento. Apresente novidades e promoções.");
+    }
+
+    const latestContext = checkins[0]?.context;
+    if (latestContext === "familia") {
+      weazeSuggestions.push("Está acompanhado da família. Ofereça pratos para compartilhar e opções infantis.");
+    } else if (latestContext === "casal") {
+      weazeSuggestions.push("Está em casal. Sugira combos românticos ou pratos especiais para dois.");
+    } else if (latestContext === "amigos") {
+      weazeSuggestions.push("Está com amigos. Destaque petiscos, porções e bebidas para compartilhar.");
+    } else if (latestContext === "sozinho") {
+      weazeSuggestions.push("Está sozinho. Recomende um atendimento personalizado e um ambiente tranquilo.");
+    }
+
+    if (likedButNotOrdered.length > 0) {
+      const names = likedButNotOrdered.slice(0, 2).map((l) => l.name).filter(Boolean).join(" ou ");
+      weazeSuggestions.push(`Cliente demonstrou interesse em ${names}. Pergunte se deseja experimentar hoje.`);
+    }
+    if (mostOrderedCategory) {
+      weazeSuggestions.push(`Cliente costuma pedir ${mostOrderedCategory}. Ofereça novidades desta categoria.`);
+    }
+    if (hasCombos || avgOrderValue > 80) {
+      weazeSuggestions.push("Alta probabilidade de aceitar um combo ou upgrade.");
+    }
+    if (recentlyLikedProducts.length > 0) {
+      const names = recentlyLikedProducts.slice(0, 2).map((l) => l.name).filter(Boolean).join(" e ");
+      weazeSuggestions.push(`Cliente curtiu recentemente ${names}. Aproveite o interesse!`);
+    }
+
+    // --- Legacy suggestions (kept for backward compatibility) ---
+    const suggestions: string[] = [];
+
+    if (isNew) {
+      suggestions.push("Primeira visita — dê boas-vindas caprichadas.");
+    } else if (isVip) {
+      suggestions.push("Cliente VIP — trate com atenção especial.");
+    } else if (isRepeatBuyer) {
+      suggestions.push("Cliente fiel — reconheça a preferência.");
+    }
+
+    if (latestContext === "casal") suggestions.push("Geralmente está em casal — sugira combos românticos.");
+    else if (latestContext === "familia") suggestions.push("Vem com a família — ofereça opções infantis.");
+    else if (latestContext === "amigos") suggestions.push("Vem com amigos — destaque petiscos.");
+
+    if (mostOrderedCategory) suggestions.push(`Preferência por ${mostOrderedCategory} — destaque novidades.`);
+
+    if (likedButNotOrdered.length > 0) {
+      const names = likedButNotOrdered.slice(0, 3).map((l) => l.name).filter(Boolean).join(", ");
+      suggestions.push(`Ainda não pediu: ${names} — ofereça uma amostra.`);
+    }
 
     return {
       id: customer.id,
       name: customer.name,
+      whatsapp: customer.whatsapp,
       avatarUrl: customer.avatar_url,
       customerSince: customer.created_at,
-      visitCount: customer.visit_count,
+      totalVisits: checkins.length,
+      firstVisit: sortedCheckins.length > 0 ? sortedCheckins[0].created_at : null,
+      lastVisit: checkins.length > 0 ? checkins[0].created_at : null,
       currentContext: checkins[0]?.context ?? null,
       recentOrders,
       favoriteProducts,
       likedProducts: likes.map((l: any) => ({ id: l.product_id, name: l.product?.name ?? "" })),
       wishedProducts: wishes.map((w: any) => ({ id: w.product_id, name: w.product?.name ?? "" })),
       favoriteCategories,
-      preferredHour: peakHour,
-      preferredDay: peakDay,
-      avgTimeBetweenVisitsHours: avgGap,
       avgSpend,
       suggestions,
+      classification,
+      totalOrders,
+      lastOrder,
+      lastOrderValue,
+      avgOrderValue,
+      mostOrderedProduct,
+      mostOrderedCategory,
+      recentlyLikedProducts,
+      likedButNotOrdered,
+      opportunities,
+      weazeSuggestions,
     };
   },
 };
