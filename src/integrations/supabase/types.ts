@@ -596,6 +596,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_customer_comment: {
+        Args: {
+          _customer_id: string
+          _image_url: string
+          _post_id: string
+          _text: string
+          _token: string
+        }
+        Returns: string
+      }
       create_customer_order: {
         Args: {
           _company_id: string
@@ -603,6 +613,18 @@ export type Database = {
           _items: Json
           _note: string
           _table_id?: string
+          _token: string
+        }
+        Returns: string
+      }
+      create_customer_post: {
+        Args: {
+          _category: string
+          _companions: string
+          _company_id: string
+          _customer_id: string
+          _image_url: string
+          _text: string
           _token: string
         }
         Returns: string

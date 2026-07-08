@@ -205,12 +205,12 @@ function PostCard({
       </div>
 
 
-      {showComments && <CommentsSection postId={post.id} customerId={customerId} />}
+      {showComments && <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />}
     </article>
   );
 }
 
-function CommentsSection({ postId, customerId }: { postId: string; customerId: string }) {
+function CommentsSection({ postId, customerId, sessionToken }: { postId: string; customerId: string; sessionToken: string }) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [commentImage, setCommentImage] = useState<string | null>(null);
@@ -219,7 +219,7 @@ function CommentsSection({ postId, customerId }: { postId: string; customerId: s
     queryFn: () => commentRepository.listByPost(postId),
   });
   const add = useMutation({
-    mutationFn: () => commentRepository.create({ postId, customerId, text: text.trim(), imageUrl: commentImage }),
+    mutationFn: () => commentRepository.create({ postId, customerId, sessionToken, text: text.trim(), imageUrl: commentImage }),
     onSuccess: () => {
       setText("");
       setCommentImage(null);
