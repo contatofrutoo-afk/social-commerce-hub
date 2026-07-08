@@ -269,18 +269,18 @@ export const crmRepository = {
     const isRepeatBuyer = totalOrders >= 2;
     const totalInteractions = loveCount + dislikeCount + commentCount + postsCount + likesRows.length;
 
-    let engagementLevel: "muito_ativo" | "moderado" | "pouco_ativo" | "risco_abandono";
+    let engagementLevel: "muito_ativo" | "ativo" | "pouco_ativo" | "baixo_engajamento";
     if (isInactive) {
-      engagementLevel = "risco_abandono";
+      engagementLevel = "baixo_engajamento";
     } else if (totalInteractions > 10 || (totalOrders > 0 && checkins.length > 5)) {
       engagementLevel = "muito_ativo";
     } else if (totalInteractions > 3 || checkins.length > 2) {
-      engagementLevel = "moderado";
+      engagementLevel = "ativo";
     } else {
       engagementLevel = "pouco_ativo";
     }
 
-    const isHighlyEngaged = engagementLevel === "muito_ativo" || engagementLevel === "moderado";
+    const isHighlyEngaged = engagementLevel === "muito_ativo" || engagementLevel === "ativo";
 
     // --- Return frequency ---
     const returnFrequency: "alta" | "media" | "baixa" = avgTimeBetweenVisitsHours === null ? "baixa"
@@ -288,85 +288,173 @@ export const crmRepository = {
       : avgTimeBetweenVisitsHours < 720 ? "media"
       : "baixa";
 
-    // --- Suggestions ---
-    const suggestions: string[] = [];
+    // --- Classification ---
+    let classification: "new" | "frequent" | "vip" | "at_risk" | "inactive";
+    if (checkins.length <= 1 && totalOrders === 0) {
+      classification = "new";
+    } else if (daysSinceLastVisit !== null && daysSinceLastVisit > 60) {
+      classification = "inactive";
+    } else if (daysSinceLastVisit !== null && daysSinceLastVisit >= 30) {
+      classification = "at_risk";
+    } else if (isVip) {
+      classification = "vip";
+    } else {
+      classification = "frequent";
+    }
 
-    if (isNew) suggestions.push("Primeira visita — dê boas-vindas caprichadas.");
-    else if (isVip) suggestions.push("Cliente VIP — trate com atenção especial.");
-    else if (isRepeatBuyer) suggestions.push("Cliente fiel — reconheça a preferência.");
+    // --- Trend ---
+    let trend: "increasing" | "stable" | "decreasing" | "inactive";
+    if (daysSinceLastVisit !== null && daysSinceLastVisit > 60) {
+      trend = "inactive";
+    } else if (sortedCheckins.length < 4) {
+      trend = "stable";
+    } else {
+      const mid = Math.floor(sortedCheckins.length / 2);
+      const t0 = new Date(sortedCheckins[0].created_at).getTime();
+      const t1 = new Date(sortedCheckins[mid - 1].created_at).getTime();
+      const t2 = new Date(sortedCheckins[mid].created_at).getTime();
+      const t3 = new Date(sortedCheckins[sortedCheckins.length - 1].created_at).getTime();
+      const firstDays = (t1 - t0) / 86400000 || 1;
+      const secondDays = (t3 - t2) / 86400000 || 1;
+      const firstDensity = mid / firstDays;
+      const secondDensity = (sortedCheckins.length - mid) / secondDays;
+      if (secondDensity > firstDensity * 1.3) trend = "increasing";
+      else if (secondDensity < firstDensity * 0.7) trend = "decreasing";
+      else trend = "stable";
+    }
 
-    if (dominantContext === "casal") suggestions.push("Costuma vir em casal — sugira combos românticos.");
-    else if (dominantContext === "familia") suggestions.push("Vem com a família — ofereça opções infantis.");
-    else if (dominantContext === "amigos") suggestions.push("Vem com amigos — destaque petiscos.");
-    else if (dominantContext === "sozinho") suggestions.push("Vem sozinho — recomende o conforto do balcão.");
+    // --- Return frequency text ---
+    const returnFrequencyText: string = avgTimeBetweenVisitsHours === null
+      ? checkins.length <= 1
+        ? "Primeira visita — ainda sem padrão de retorno definido."
+        : "Ainda sem padrão de retorno definido — poucas visitas registradas."
+      : avgTimeBetweenVisitsHours < 24
+        ? `Costuma retornar aproximadamente a cada ${Math.round(avgTimeBetweenVisitsHours)} horas.`
+        : `Costuma retornar aproximadamente a cada ${Math.round(avgTimeBetweenVisitsHours / 24 * 10) / 10} dias.`;
 
-    if (mostOrderedCategory) suggestions.push(`Preferência por ${mostOrderedCategory} — destaque novidades.`);
+    // --- Last interaction timestamps ---
+    const allTimestamps: string[] = [
+      ...checkins.map((c: any) => c.created_at),
+      ...orders.map((o: any) => o.created_at),
+      ...reactionRows.map((r: any) => r.created_at),
+      ...likesRows.map((l: any) => l.created_at),
+      ...commentsRows.map((cm: any) => cm.created_at),
+      ...postsRows.map((p: any) => p.created_at),
+    ].filter(Boolean);
+    const lastInteractionAt = allTimestamps.length > 0
+      ? allTimestamps.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+      : null;
+    const lastLoveAt = reactionRows.filter((r: any) => r.type === "love").map((r: any) => r.created_at).sort().reverse()[0] ?? null;
+    const lastDislikeAt = reactionRows.filter((r: any) => r.type === "dislike").map((r: any) => r.created_at).sort().reverse()[0] ?? null;
+    const lastCommentAt = commentsRows.length > 0 ? commentsRows[0].created_at : null;
+    const lastPostAt = postsRows.length > 0 ? postsRows[0].created_at : null;
+    const lastLikeAt = likesRows.length > 0 ? likesRows[0].created_at : null;
 
-    // Liked but not ordered
+    // --- Liked but not ordered ---
+    const likedButNotOrdered: ProductInteraction[] = [];
     const orderedIds = new Set<string>();
     orders.forEach((o: any) => (o.order_items ?? []).forEach((i: any) => orderedIds.add(i.product_id)));
     const notOrderedLikes = likesRows.filter((l: any) => l.product && !orderedIds.has(l.product.id));
-    if (notOrderedLikes.length > 0) {
-      const names = notOrderedLikes.slice(0, 3).map((l: any) => l.product?.name).filter(Boolean).join(", ");
-      suggestions.push(`Ainda não pediu: ${names} — ofereça uma amostra.`);
+    notOrderedLikes.forEach((l: any) => {
+      const pid = l.product.id;
+      if (!likedButNotOrdered.some((p) => p.productId === pid)) {
+        likedButNotOrdered.push(toProductInteraction({ ...l.product, product_id: pid, count: 1 }));
+      }
+    });
+
+    // --- Suggestions ---
+    const suggestions: string[] = [];
+
+    if (classification === "new") {
+      suggestions.push("Primeira visita! Cliente acabou de conhecer o estabelecimento. Capriche no acolhimento.");
+    } else if (classification === "vip") {
+      suggestions.push(`Cliente VIP com ${totalOrders} pedidos e R$ ${totalSpent.toFixed(2)} em gastos. Trate com atenção exclusiva.`);
+    } else if (classification === "inactive") {
+      suggestions.push(`Cliente inativo há ${Math.round(daysSinceLastVisit!)} dias. Considere enviar uma oferta personalizada.`);
+    } else if (classification === "at_risk") {
+      suggestions.push(`Cliente em risco! Última visita foi há ${Math.round(daysSinceLastVisit!)} dias. Vale um contato estratégico.`);
+    } else if (classification === "frequent") {
+      suggestions.push(`Cliente frequente! Já visitou ${checkins.length}x e fez ${totalOrders} pedidos. Mantenha a qualidade.`);
+    }
+
+    if (dominantContext === "casal") {
+      suggestions.push("Costuma vir em casal — sugira combos românticos ou pratos para compartilhar.");
+    } else if (dominantContext === "familia") {
+      suggestions.push("Vem com a família — ofereça opções infantis e porções familiares.");
+    } else if (dominantContext === "amigos") {
+      suggestions.push("Vem com amigos — destaque petiscos e bebidas para compartilhar.");
+    } else if (dominantContext === "sozinho") {
+      suggestions.push("Vem sozinho — recomende um ambiente tranquilo e atendimento personalizado.");
+    }
+
+    if (mostOrderedCategory) {
+      suggestions.push(`Preferência por ${mostOrderedCategory} — destaque novidades desta categoria.`);
+    }
+
+    if (likedButNotOrdered.length > 0) {
+      const names = likedButNotOrdered.slice(0, 3).map((p) => p.name).filter(Boolean).join(", ");
+      suggestions.push(`Ainda não pediu: ${names} — ofereça uma amostra ou desconto especial.`);
     }
 
     if (preferredHour !== null) {
-      if (preferredHour < 12) suggestions.push("Costuma vir pela manhã — prepare ofertas de café.");
-      else if (preferredHour < 18) suggestions.push("Costuma vir à tarde — destaque o menu do dia.");
-      else suggestions.push("Costuma vir à noite — sugira drinks.");
+      if (preferredHour < 12) suggestions.push("Costuma vir pela manhã — prepare ofertas de café da manhã.");
+      else if (preferredHour < 18) suggestions.push("Costuma vir à tarde — destaque o menu executivo.");
+      else suggestions.push("Costuma vir à noite — sugira drinks e petiscos.");
     }
 
-    if (preferredDay) {
-      const dayNames: Record<string, string> = { domingo: "domingo", segunda: "segunda", terça: "terça", quarta: "quarta", quinta: "quinta", sexta: "sexta", sábado: "sábado" };
-      const dayLabel = dayNames[preferredDay] ?? preferredDay;
-      if (preferredDay === "sábado" || preferredDay === "domingo") {
-        suggestions.push(`Costuma voltar aos ${dayLabel} — prepare ofertas de fim de semana.`);
-      }
+    if (preferredDay && (preferredDay === "sábado" || preferredDay === "domingo")) {
+      suggestions.push("Costuma vir aos finais de semana — prepare experiências especiais para esses dias.");
     }
 
     if (isHighlyEngaged && !isRepeatBuyer) {
-      suggestions.push("Interage muito mas ainda não comprou — precisa de incentivo.");
+      suggestions.push("Interage muito mas ainda não comprou — talvez precise de um incentivo para converter.");
     }
 
     if (isRepeatBuyer && checkins.length > totalOrders * 2) {
-      suggestions.push("Visita mais do que compra — talvez precise de um lembrete.");
+      suggestions.push("Visita mais do que compra — talvez precise de um lembrete sobre o cardápio.");
     }
 
     // --- Executive summary ---
     const summaryParts: string[] = [];
 
-    if (isNew) summaryParts.push("Cliente novo.");
-    else if (isVip) summaryParts.push("Cliente VIP.");
-    else if (isRepeatBuyer) summaryParts.push("Cliente recorrente.");
-    else summaryParts.push(`${checkins.length} visita${checkins.length > 1 ? "s" : ""}.`);
+    if (classification === "new") {
+      summaryParts.push("Cliente novo que acabou de conhecer o estabelecimento.");
+    } else if (classification === "vip") {
+      summaryParts.push(`Cliente VIP com ${totalOrders} pedidos realizados.`);
+    } else if (classification === "inactive") {
+      summaryParts.push(`Cliente inativo há ${Math.round(daysSinceLastVisit!)} dias.`);
+    } else if (classification === "at_risk") {
+      summaryParts.push(`Cliente que não visita há ${Math.round(daysSinceLastVisit!)} dias — precisa de atenção.`);
+    } else {
+      summaryParts.push(`Cliente frequente com ${checkins.length} visitas e ${totalOrders} pedidos.`);
+    }
 
     if (dominantContext) {
-      const ctxLabels: Record<string, string> = { sozinho: "sozinho", casal: "em casal", amigos: "com amigos", familia: "em família" };
+      const ctxLabels: Record<string, string> = { sozinho: "sozinho(a)", casal: "em casal", amigos: "com amigos", familia: "em família" };
       summaryParts.push(`Costuma visitar ${ctxLabels[dominantContext] ?? dominantContext}.`);
     }
 
-    if (preferredDay) {
-      if (preferredDay === "sábado" || preferredDay === "domingo") {
-        summaryParts.push("Geralmente vem aos finais de semana.");
-      } else {
-        summaryParts.push(`Costuma vir às ${preferredDay === "sexta" ? "sextas" : `${preferredDay}-feiras`}.`);
+    if (avgTimeBetweenVisitsHours !== null) {
+      const days = avgTimeBetweenVisitsHours / 24;
+      if (days < 30) {
+        summaryParts.push(days < 1
+          ? `Retorna a cada ${Math.round(avgTimeBetweenVisitsHours)} horas.`
+          : `Retorna a cada ${Math.round(days)} dias.`);
       }
     }
 
-    if (mostOrderedCategory) {
-      summaryParts.push(`Preferência por ${mostOrderedCategory}.`);
-    }
-
-    if (isHighlyEngaged) {
-      summaryParts.push("Alta interação com a plataforma.");
-    }
-
     if (isRepeatBuyer) {
-      summaryParts.push(`${totalOrders} pedido${totalOrders > 1 ? "s" : ""} realizados.`);
-    } else if (totalInteractions > 0) {
-      summaryParts.push("Ainda não comprou.");
+      if (mostOrderedCategory) summaryParts.push(`Preferência por ${mostOrderedCategory}.`);
+      if (mostOrderedProduct) summaryParts.push(`Produto favorito: ${mostOrderedProduct.name}.`);
     }
+
+    const engLabels: Record<string, string> = {
+      muito_ativo: "Alto engajamento com a plataforma.",
+      ativo: "Engajamento moderado com a plataforma.",
+      pouco_ativo: "Baixo engajamento com a plataforma.",
+      baixo_engajamento: "Quase sem interação com a plataforma.",
+    };
+    summaryParts.push(engLabels[engagementLevel] ?? "");
 
     return {
       // Original fields (kept for reference)
@@ -408,6 +496,7 @@ export const crmRepository = {
         mostCommonSource,
         daysSinceLastVisit,
         returnFrequency,
+        returnFrequencyText,
       },
 
       purchases: {
@@ -433,6 +522,15 @@ export const crmRepository = {
       dominantContext,
       suggestions,
       executiveSummary: summaryParts.join(" "),
+      classification,
+      trend,
+      lastInteractionAt,
+      lastLoveAt,
+      lastDislikeAt,
+      lastCommentAt,
+      lastPostAt,
+      lastLikeAt,
+      likedButNotOrdered,
     };
   },
 

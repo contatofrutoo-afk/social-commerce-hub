@@ -241,10 +241,15 @@ export interface VisitHabits {
   mostCommonSource: string | null;
   daysSinceLastVisit: number | null;
   returnFrequency: "alta" | "media" | "baixa";
+  returnFrequencyText: string;
 }
 
+export type CustomerClassification = "new" | "frequent" | "vip" | "at_risk" | "inactive";
+
+export type TrendType = "increasing" | "stable" | "decreasing" | "inactive";
+
 export interface EngagementSummary {
-  level: "muito_ativo" | "moderado" | "pouco_ativo" | "risco_abandono";
+  level: "muito_ativo" | "ativo" | "pouco_ativo" | "baixo_engajamento";
   isHighlyEngaged: boolean;
   isRepeatBuyer: boolean;
   isVip: boolean;
@@ -300,4 +305,15 @@ export interface CustomerInsights {
 
   // Executive summary
   executiveSummary: string;
+
+  // Classification
+  classification: CustomerClassification;
+  trend: TrendType;
+  lastInteractionAt: string | null;
+  lastLoveAt: string | null;
+  lastDislikeAt: string | null;
+  lastCommentAt: string | null;
+  lastPostAt: string | null;
+  lastLikeAt: string | null;
+  likedButNotOrdered: ProductInteraction[];
 }
