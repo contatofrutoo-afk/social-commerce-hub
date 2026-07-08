@@ -14,7 +14,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
       _user_id: user.id,
       _role: "admin",
     });
-    if (error || !isAdmin) throw redirect({ to: "/app" });
+    if (error) {
+      console.warn("[admin] has_role RPC failed — redirecting to /app", error);
+      throw redirect({ to: "/app" });
+    }
+    if (!isAdmin) throw redirect({ to: "/app" });
   },
 });
 

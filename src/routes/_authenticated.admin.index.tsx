@@ -86,14 +86,20 @@ function WeazeDashboard() {
 
           const activeNames = new Map((activeCompanyData ?? []).map((t: any) => [t.id, t.name]));
 
-          for (const cid of activeCompanyIds.slice(0, 20)) {
-            const [{ count: posts }, { count: checkins }] = await Promise.all([
+          const companyIds = activeCompanyIds.slice(0, 20);
+          const batchResults = await Promise.all(
+            companyIds.flatMap(cid => [
               supabase.from("posts").select("*", { count: "exact", head: true }).eq("company_id", cid),
               supabase.from("checkins").select("*", { count: "exact", head: true }).gte("start_time", startOfMonth).eq("company_id", cid),
-            ]);
+            ])
+          );
+          for (let i = 0; i < companyIds.length; i++) {
+            const cid = companyIds[i];
+            const posts = batchResults[i * 2].count ?? 0;
+            const checkins = batchResults[i * 2 + 1].count ?? 0;
             const name = activeNames.get(cid) ?? "?";
-            topCompanies.push({ name, posts: posts ?? 0, checkins: checkins ?? 0 });
-            if ((posts ?? 0) === 0 && (checkins ?? 0) === 0) inactiveCompanies.push(name);
+            topCompanies.push({ name, posts, checkins });
+            if (posts === 0 && checkins === 0) inactiveCompanies.push(name);
           }
           topCompanies.sort((a, b) => (b.checkins + b.posts) - (a.checkins + a.posts));
         }
