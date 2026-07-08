@@ -5,14 +5,17 @@ import { BarChart3, Building2, DollarSign, FileText, Settings, TrendingUp, LogOu
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  ssr: false,
   component: WeazeLayout,
   beforeLoad: async () => {
-    const { data: roles } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw redirect({ to: "/auth" });
+    const { data: role } = await supabase
       .from("user_roles")
       .select("role")
-      .limit(1)
+      .eq("user_id", user.id)
       .maybeSingle();
-    if (!roles || roles.role !== "admin") throw redirect({ to: "/app" });
+    if (role?.role !== "admin") throw redirect({ to: "/app" });
   },
 });
 
