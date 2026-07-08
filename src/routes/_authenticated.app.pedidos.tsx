@@ -9,6 +9,7 @@ import { User, Clock, Heart, Users, Home, RefreshCw, Sparkles, Trash2 } from "lu
 
 export const Route = createFileRoute("/_authenticated/app/pedidos")({
   component: OrdersPage,
+  head: () => ({ meta: [{ title: "Pedidos — WEAZE" }] }),
 });
 
 function OrdersPage() {

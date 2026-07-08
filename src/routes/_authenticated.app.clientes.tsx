@@ -39,6 +39,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/app/clientes")({
   component: CustomersPage,
+  head: () => ({ meta: [{ title: "Clientes — WEAZE" }] }),
 });
 
 const contextIcons: Record<string, any> = {

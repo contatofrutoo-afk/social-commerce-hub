@@ -25,6 +25,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
   component: SettingsPage,
+  head: () => ({ meta: [{ title: "Configurações — WEAZE" }] }),
 });
 
 function getBaseUrl() {

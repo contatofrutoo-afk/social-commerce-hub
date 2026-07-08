@@ -50,6 +50,7 @@ import { useState, useMemo } from "react";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: DashboardPage,
+  head: () => ({ meta: [{ title: "Dashboard — WEAZE" }] }),
 });
 
 // ─── Period helpers ───

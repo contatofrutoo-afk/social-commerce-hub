@@ -17,6 +17,7 @@ import { Pencil, Trash2, Plus, BarChart3, ChevronDown, ChevronUp, Clock, Calenda
 
 export const Route = createFileRoute("/_authenticated/app/produtos")({
   component: ProductsPage,
+  head: () => ({ meta: [{ title: "Produtos — WEAZE" }] }),
 });
 
 const empty = { name: "", category: "", price: 0, image_url: "", description: "", available: true };

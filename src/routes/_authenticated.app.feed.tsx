@@ -20,6 +20,7 @@ import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar, S
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
   component: FeedAdminPage,
+  head: () => ({ meta: [{ title: "Feed — WEAZE" }] }),
 });
 
 function FeedAdminPage() {
