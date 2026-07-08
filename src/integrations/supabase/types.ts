@@ -134,30 +134,69 @@ export type Database = {
       }
       companies: {
         Row: {
+          city: string | null
           created_at: string
+          email_principal: string | null
           id: string
+          internal_notes: string | null
+          last_payment_date: string | null
           logo_url: string | null
+          monthly_fee: number
           name: string
+          next_due_date: string | null
+          payment_method: string
+          payment_status: string
+          phone: string | null
+          plan_type: string
           primary_color: string | null
+          responsible: string | null
+          responsible_email: string | null
           slug: string
+          status: string
           welcome_message: string | null
         }
         Insert: {
+          city?: string | null
           created_at?: string
+          email_principal?: string | null
           id?: string
+          internal_notes?: string | null
+          last_payment_date?: string | null
           logo_url?: string | null
+          monthly_fee?: number
           name: string
+          next_due_date?: string | null
+          payment_method?: string
+          payment_status?: string
+          phone?: string | null
+          plan_type?: string
           primary_color?: string | null
+          responsible?: string | null
+          responsible_email?: string | null
           slug: string
+          status?: string
           welcome_message?: string | null
         }
         Update: {
+          city?: string | null
           created_at?: string
+          email_principal?: string | null
           id?: string
+          internal_notes?: string | null
+          last_payment_date?: string | null
           logo_url?: string | null
+          monthly_fee?: number
           name?: string
+          next_due_date?: string | null
+          payment_method?: string
+          payment_status?: string
+          phone?: string | null
+          plan_type?: string
           primary_color?: string | null
+          responsible?: string | null
+          responsible_email?: string | null
           slug?: string
+          status?: string
           welcome_message?: string | null
         }
         Relationships: []

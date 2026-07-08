@@ -111,8 +111,28 @@ function WeazeEmpresaFicha() {
         nav({ to: "/admin/empresas/$id", params: { id: data.id }, replace: true });
         setIsNew(false);
       } else {
-        const { error } = await supabase.from("companies").update(payload).eq("id", id);
-        if (error) throw error;
+        const { data, error } = await supabase.from("companies").update(payload).eq("id", id).select("id");
+        if (error) {
+          if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
+            const adminPayload = {
+              company_id: id,
+              status: form.status,
+              plan_type: form.planType,
+              monthly_fee: form.monthlyFee,
+              next_due_date: form.nextDueDate || null,
+              last_payment_date: form.lastPaymentDate || null,
+              payment_method: form.paymentMethod,
+              payment_status: form.paymentStatus,
+              internal_notes: form.internalNotes,
+            };
+            const { error: fbErr } = await supabase.from("company_admin").upsert(adminPayload, { onConflict: "company_id" });
+            if (fbErr) throw fbErr;
+          } else {
+            throw error;
+          }
+        } else if (!data || data.length === 0) {
+          throw new Error("Nenhuma linha foi atualizada. Verifique as permissões do banco.");
+        }
         toast.success("Dados salvos com sucesso!");
       }
     } catch (err: any) {
@@ -136,11 +156,24 @@ function WeazeEmpresaFicha() {
 
   async function updateStatus(newStatus: string) {
     if (newStatus === form.status || isNew) return;
+    const prevStatus = form.status;
     setForm((prev) => ({ ...prev, status: newStatus }));
     setSaving(true);
     try {
-      const { error } = await supabase.from("companies").update({ status: newStatus }).eq("id", id);
-      if (error) throw error;
+      const { data, error } = await supabase.from("companies").update({ status: newStatus }).eq("id", id).select("id,status");
+      if (error) {
+        if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
+          const { error: fbErr } = await supabase.from("company_admin").upsert(
+            { company_id: id, status: newStatus, plan_type: form.planType, monthly_fee: form.monthlyFee, payment_method: form.paymentMethod, payment_status: form.paymentStatus, internal_notes: form.internalNotes },
+            { onConflict: "company_id" }
+          );
+          if (fbErr) throw fbErr;
+        } else {
+          throw error;
+        }
+      } else if (!data || data.length === 0) {
+        throw new Error("Nenhuma linha foi atualizada. Verifique as permissões do banco.");
+      }
       toast.success(
         newStatus === "ativo" ? "Empresa ativada!" :
         newStatus === "bloqueado" ? "Acesso bloqueado!" :
@@ -148,7 +181,7 @@ function WeazeEmpresaFicha() {
       );
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao atualizar status");
-      setForm((prev) => ({ ...prev, status: form.status }));
+      setForm((prev) => ({ ...prev, status: prevStatus }));
     } finally { setSaving(false); }
   }
 
