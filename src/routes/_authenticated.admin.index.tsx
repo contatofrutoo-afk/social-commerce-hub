@@ -53,7 +53,7 @@ function WeazeDashboard() {
         const adminMap = new Map((adminRows ?? []).map((r: any) => [r.company_id, r]));
 
         const total = companies?.length ?? 0;
-        let active = 0, blocked = 0, trial = 0, cancelled = 0;
+        let active = 0, blocked = 0, trial = 0,           cancelled = 0, cancellationsThisMonth = 0;
         let monthlyRev = 0;
         let dueThisWeek = 0, overdue = 0;
 
@@ -102,7 +102,7 @@ function WeazeDashboard() {
           totalCompanies: total, activeCompanies: active, blockedCompanies: blocked,
           trialCompanies: trial, cancelledCompanies: cancelled,
           monthlyRevenue: monthlyRev, annualRevenue: monthlyRev * 12,
-          dueThisWeek, overdue, newThisMonth, cancellationsThisMonth: 0,
+          dueThisWeek, overdue, newThisMonth, cancellationsThisMonth: cancelled,
           topCompanies: topCompanies.slice(0, 10), inactiveCompanies,
         });
       } catch { /* table may not exist yet */ }

@@ -116,6 +116,9 @@ CREATE POLICY "Admin gerencia company_licenses" ON public.company_licenses
 GRANT ALL ON public.company_admin TO service_role;
 GRANT ALL ON public.company_payments TO service_role;
 GRANT ALL ON public.company_licenses TO service_role;
+GRANT ALL ON public.company_admin TO authenticated;
+GRANT ALL ON public.company_payments TO authenticated;
+GRANT ALL ON public.company_licenses TO authenticated;
 
 -- 7. Trigger
 DROP TRIGGER IF EXISTS company_admin_updated ON public.company_admin;
