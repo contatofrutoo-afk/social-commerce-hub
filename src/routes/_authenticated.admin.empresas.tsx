@@ -13,8 +13,11 @@ export const Route = createFileRoute("/_authenticated/admin/empresas")({
   head: () => ({ meta: [{ title: "Empresas — WEAZE Admin" }] }),
 });
 
-const statusColor = (s: string) =>
-  s === "ativo" ? "default" : s === "teste" ? "secondary" : s === "bloqueado" ? "destructive" : "outline";
+const statusBadgeClass = (s: string) =>
+  s === "ativo" ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200" :
+  s === "bloqueado" ? "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" :
+  s === "teste" ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" :
+  "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200";
 const statusLabel = (s: string) =>
   s === "ativo" ? "Ativo" : s === "bloqueado" ? "Bloqueado" : s === "teste" ? "Teste" : "Cancelado";
 const paymentLabel = (s: string) =>
@@ -82,7 +85,7 @@ function WeazeEmpresas() {
                       <h3 className="font-display font-semibold">{c.name ?? "—"}</h3>
                       <p className="text-xs text-muted-foreground">{c.responsible ?? c.city ?? "—"}</p>
                     </div>
-                    <Badge variant={statusColor(c.status) as any}>{statusLabel(c.status)}</Badge>
+                    <Badge className={statusBadgeClass(c.status)}>{statusLabel(c.status)}</Badge>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mt-2">
                     <div><span className="block text-[10px] uppercase tracking-wider">Plano</span><span className="font-medium text-foreground">{c.plan_type}</span></div>
