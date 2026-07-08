@@ -30,9 +30,9 @@ function WeazeFinanceiro() {
       setLoading(true);
       try {
         const { data } = await supabase
-          .from("company_admin")
-          .select("company_id, monthly_fee, payment_status, payment_method, next_due_date, last_payment_date, plan_type, companies!inner(name, slug, city, responsible)")
-          .order("company_id");
+          .from("companies")
+          .select("id, name, slug, city, responsible, status, plan_type, monthly_fee, payment_status, payment_method, next_due_date, last_payment_date")
+          .order("name");
         setRows(data ?? []);
       } catch { /* table may not exist */ }
       setLoading(false);
@@ -40,7 +40,7 @@ function WeazeFinanceiro() {
   }, []);
 
   const filtered = rows.filter((r: any) =>
-    !search || r.companies?.name?.toLowerCase().includes(search.toLowerCase())
+    !search || r.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const kpis = (() => {
@@ -123,13 +123,13 @@ function WeazeFinanceiro() {
                 </thead>
                 <tbody>
                   {filtered.map((r: any) => (
-                    <tr key={r.company_id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={r.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-5 py-3">
-                        <Link to="/admin/empresas/$id" params={{ id: r.company_id }} className="font-medium hover:underline">
-                          {r.companies?.name ?? "—"}
+                        <Link to="/admin/empresas/$id" params={{ id: r.id }} className="font-medium hover:underline">
+                          {r.name ?? "—"}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground">{r.companies?.responsible ?? "—"}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{r.responsible ?? "—"}</td>
                       <td className="px-5 py-3">{r.plan_type}</td>
                       <td className="px-5 py-3 font-medium">R$ {Number(r.monthly_fee).toFixed(2)}</td>
                       <td className="px-5 py-3 text-muted-foreground">{r.last_payment_date ? new Date(r.last_payment_date).toLocaleDateString("pt-BR") : "—"}</td>

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Ban, CheckCircle, Lock, Unlock, Save, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle, Lock, Unlock, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/empresas/$id")({
@@ -17,10 +17,10 @@ export const Route = createFileRoute("/_authenticated/admin/empresas/$id")({
 });
 
 const statusOptions = [
-  { value: "active", label: "Ativo", color: "default" },
-  { value: "trial", label: "Em Teste", color: "secondary" },
-  { value: "blocked", label: "Bloqueado", color: "destructive" },
-  { value: "cancelled", label: "Cancelado", color: "outline" },
+  { value: "ativo", label: "Ativo", color: "default" },
+  { value: "teste", label: "Em Teste", color: "secondary" },
+  { value: "bloqueado", label: "Bloqueado", color: "destructive" },
+  { value: "cancelado", label: "Cancelado", color: "outline" },
 ] as const;
 
 const planOptions = ["Mensal", "Anual", "Promocional", "Personalizado"];
@@ -37,117 +37,120 @@ function WeazeEmpresaFicha() {
   const nav = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tenant, setTenant] = useState<any>(null);
-  const [admin, setAdmin] = useState<any>(null);
+  const [isNew, setIsNew] = useState(false);
   const [form, setForm] = useState({
-    status: "active", planType: "Mensal", monthlyFee: 237,
+    name: "", slug: "", responsible: "", phone: "", email_principal: "",
+    responsible_email: "", city: "", status: "ativo" as string,
+    planType: "Mensal", monthlyFee: 237,
     nextDueDate: "", lastPaymentDate: "",
     paymentMethod: "PIX", paymentStatus: "pending", internalNotes: "",
   });
-  const [payments, setPayments] = useState<any[]>([]);
 
   useEffect(() => {
     if (!id) return;
+    if (id === "nova") {
+      setIsNew(true);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const { data: tenantData } = await supabase.from("companies").select("*").eq("id", id).single();
+        const { data, error } = await supabase.from("companies").select("*").eq("id", id).single();
         if (cancelled) return;
-        if (!tenantData) { nav({ to: "/admin/empresas" }); return; }
-        setTenant(tenantData);
-
-        let adminData: any = null;
-        try {
-          const res = await supabase.from("company_admin").select("*").eq("company_id", id).single();
-          adminData = res.data;
-        } catch { /* not found */ }
-
-        let paymentData: any[] = [];
-        try {
-          const res = await supabase.from("company_payments").select("*").eq("company_id", id).order("created_at", { ascending: false });
-          paymentData = res.data ?? [];
-        } catch { /* not found */ }
-
-        if (adminData) {
-          setAdmin(adminData);
-          setForm({
-            status: adminData.status, planType: adminData.plan_type,
-            monthlyFee: Number(adminData.monthly_fee),
-            nextDueDate: adminData.next_due_date ?? "", lastPaymentDate: adminData.last_payment_date ?? "",
-            paymentMethod: adminData.payment_method, paymentStatus: adminData.payment_status,
-            internalNotes: adminData.internal_notes ?? "",
-          });
-        } else {
-          try {
-            const { data: settings } = await supabase.from("admin_settings").select("default_plan_value").single();
-            if (!cancelled) setForm((prev) => ({ ...prev, monthlyFee: Number(settings?.default_plan_value ?? 237) }));
-          } catch { /* not found */ }
-        }
-        if (!cancelled) { setPayments(paymentData); setLoading(false); }
-      } catch { if (!cancelled) setLoading(false); }
+        if (error || !data) { nav({ to: "/admin/empresas" }); return; }
+        setForm({
+          name: data.name ?? "",
+          slug: data.slug ?? "",
+          responsible: data.responsible ?? "",
+          phone: data.phone ?? "",
+          email_principal: data.email_principal ?? "",
+          responsible_email: data.responsible_email ?? "",
+          city: data.city ?? "",
+          status: data.status ?? "ativo",
+          planType: data.plan_type ?? "Mensal",
+          monthlyFee: Number(data.monthly_fee ?? 237),
+          nextDueDate: data.next_due_date ?? "",
+          lastPaymentDate: data.last_payment_date ?? "",
+          paymentMethod: data.payment_method ?? "PIX",
+          paymentStatus: data.payment_status ?? "pending",
+          internalNotes: data.internal_notes ?? "",
+        });
+      } catch { nav({ to: "/admin/empresas" }); }
+      setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [id, nav]);
 
   async function handleSave() {
-    if (!id) return;
     setSaving(true);
     try {
       const payload = {
-        company_id: id, status: form.status, plan_type: form.planType,
-        monthly_fee: form.monthlyFee, next_due_date: form.nextDueDate || null,
-        last_payment_date: form.lastPaymentDate || null, payment_method: form.paymentMethod,
-        payment_status: form.paymentStatus, internal_notes: form.internalNotes,
-        blocked_at: form.status === "blocked" ? new Date().toISOString() : admin?.blocked_at ?? null,
-        blocked_reason: form.status === "blocked" ? "Bloqueado manualmente pela WEAZE" : "",
+        name: form.name,
+        slug: form.slug || form.name.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 40),
+        responsible: form.responsible || null,
+        phone: form.phone || null,
+        email_principal: form.email_principal || null,
+        responsible_email: form.responsible_email || null,
+        city: form.city || null,
+        status: form.status,
+        plan_type: form.planType,
+        monthly_fee: form.monthlyFee,
+        next_due_date: form.nextDueDate || null,
+        last_payment_date: form.lastPaymentDate || null,
+        payment_method: form.paymentMethod,
+        payment_status: form.paymentStatus,
+        internal_notes: form.internalNotes,
       };
-      if (admin) {
-        const { error } = await supabase.from("company_admin").update(payload).eq("company_id", id);
+
+      if (isNew) {
+        const { data, error } = await supabase.from("companies").insert(payload).select().single();
         if (error) throw error;
+        toast.success("Empresa cadastrada!");
+        nav({ to: "/admin/empresas/$id", params: { id: data.id }, replace: true });
+        setIsNew(false);
       } else {
-        const { error } = await supabase.from("company_admin").insert(payload);
+        const { error } = await supabase.from("companies").update(payload).eq("id", id);
         if (error) throw error;
+        toast.success("Dados salvos com sucesso!");
       }
-      toast.success("Dados salvos com sucesso!");
-      const { data: refresh } = await supabase.from("company_admin").select("*").eq("company_id", id).single();
-      if (refresh) setAdmin(refresh);
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao salvar");
     } finally { setSaving(false); }
   }
 
-  async function toggleBlock(block: boolean) {
-    setForm((prev) => ({ ...prev, status: block ? "blocked" : "active" }));
+  async function handleDelete() {
+    if (!id || isNew) return;
+    if (!confirm("Tem certeza que deseja excluir esta empresa? Esta ação não pode ser desfeita.")) return;
     setSaving(true);
     try {
-      const payload: any = {
-        company_id: id, status: block ? "blocked" : "active",
-        plan_type: form.planType, monthly_fee: form.monthlyFee,
-        next_due_date: form.nextDueDate || null, last_payment_date: form.lastPaymentDate || null,
-        payment_method: form.paymentMethod, payment_status: form.paymentStatus,
-        internal_notes: form.internalNotes,
-        blocked_at: block ? new Date().toISOString() : null,
-        blocked_reason: block ? "Bloqueado manualmente pela WEAZE" : "",
-      };
-      if (admin) { await supabase.from("company_admin").update(payload).eq("company_id", id); }
-      else { await supabase.from("company_admin").insert(payload); }
+      const { error } = await supabase.from("companies").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Empresa excluída!");
+      nav({ to: "/admin/empresas" });
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao excluir");
+    } finally { setSaving(false); }
+  }
+
+  async function toggleBlock(block: boolean) {
+    const newStatus = block ? "bloqueado" : "ativo";
+    setForm((prev) => ({ ...prev, status: newStatus }));
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("companies").update({ status: newStatus }).eq("id", id);
+      if (error) throw error;
       toast.success(block ? "Acesso bloqueado!" : "Acesso liberado!");
-      const { data: refresh } = await supabase.from("company_admin").select("*").eq("company_id", id).single();
-      if (refresh) {
-        setAdmin(refresh);
-        setForm((prev) => ({ ...prev, status: refresh.status, blocked_at: refresh.blocked_at, blocked_reason: refresh.blocked_reason }));
-      }
     } catch (err: any) {
       toast.error(err.message ?? "Erro");
-      setForm((prev) => ({ ...prev, status: block ? "active" : "blocked" }));
+      setForm((prev) => ({ ...prev, status: block ? "ativo" : "bloqueado" }));
     } finally { setSaving(false); }
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
-  if (!tenant) return null;
 
-  const isBlocked = form.status === "blocked";
+  const isBlocked = form.status === "bloqueado";
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -157,21 +160,28 @@ function WeazeEmpresaFicha() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl">{tenant.name}</h1>
-          <p className="text-sm text-muted-foreground">{tenant.city ?? "—"} · {tenant.slug}</p>
+          <h1 className="font-display text-2xl">{isNew ? "Nova Empresa" : form.name}</h1>
+          {!isNew && <p className="text-sm text-muted-foreground">{form.city || "—"} · {form.slug}</p>}
         </div>
         <div className="flex gap-2">
-          {isBlocked ? (
-            <Button onClick={() => toggleBlock(false)} disabled={saving} variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
-              <Unlock className="h-4 w-4 mr-1" /> Liberar Acesso
-            </Button>
-          ) : (
-            <Button onClick={() => toggleBlock(true)} disabled={saving} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
-              <Lock className="h-4 w-4 mr-1" /> Bloquear Acesso
-            </Button>
+          {!isNew && (
+            <>
+              {isBlocked ? (
+                <Button onClick={() => toggleBlock(false)} disabled={saving} variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
+                  <Unlock className="h-4 w-4 mr-1" /> Liberar Acesso
+                </Button>
+              ) : (
+                <Button onClick={() => toggleBlock(true)} disabled={saving} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10">
+                  <Lock className="h-4 w-4 mr-1" /> Bloquear Acesso
+                </Button>
+              )}
+              <Button onClick={handleDelete} disabled={saving} variant="outline" className="text-muted-foreground hover:text-destructive">
+                <Trash2 className="h-4 w-4 mr-1" /> Excluir
+              </Button>
+            </>
           )}
           <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-1" /> Salvar
+            <Save className="h-4 w-4 mr-1" /> {isNew ? "Cadastrar" : "Salvar"}
           </Button>
         </div>
       </div>
@@ -180,12 +190,30 @@ function WeazeEmpresaFicha() {
         <Card>
           <CardHeader><CardTitle className="font-display text-base">Informações da Empresa</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div><Label>Nome</Label><p className="text-sm font-medium">{tenant.name}</p></div>
-            <div><Label>Responsável</Label><p className="text-sm">{tenant.responsible ?? "—"}</p></div>
-            <div><Label>Telefone</Label><p className="text-sm">{tenant.phone ?? "—"}</p></div>
-            <div><Label>Email</Label><p className="text-sm break-all">{tenant.email_principal ?? tenant.responsible_email ?? "—"}</p></div>
-            <div><Label>Cidade</Label><p className="text-sm">{tenant.city ?? "—"}</p></div>
-            <div><Label>Data de Cadastro</Label><p className="text-sm">{tenant.created_at ? new Date(tenant.created_at).toLocaleDateString("pt-BR") : "—"}</p></div>
+            <div>
+              <Label htmlFor="name">Nome da Empresa</Label>
+              <Input id="name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="responsible">Responsável</Label>
+              <Input id="responsible" value={form.responsible} onChange={(e) => setForm((p) => ({ ...p, responsible: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="phone">Telefone</Label>
+              <Input id="phone" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="email_principal">Email Principal</Label>
+              <Input id="email_principal" type="email" value={form.email_principal} onChange={(e) => setForm((p) => ({ ...p, email_principal: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="responsible_email">Email do Responsável</Label>
+              <Input id="responsible_email" type="email" value={form.responsible_email} onChange={(e) => setForm((p) => ({ ...p, responsible_email: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="city">Cidade</Label>
+              <Input id="city" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} />
+            </div>
           </CardContent>
         </Card>
 
@@ -253,42 +281,22 @@ function WeazeEmpresaFicha() {
         </CardContent>
       </Card>
 
-      {payments.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="font-display text-base">Histórico de Pagamentos</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y text-sm">
-              {payments.map((p: any) => (
-                <div key={p.id} className="flex items-center justify-between px-5 py-3">
-                  <div>
-                    <span className="font-medium">R$ {Number(p.amount).toLocaleString("pt-BR")}</span>
-                    <span className="text-muted-foreground ml-2">{p.payment_method}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-muted-foreground">{new Date(p.payment_date).toLocaleDateString("pt-BR")}</span>
-                    <Badge variant={p.status === "paid" ? "default" : p.status === "overdue" ? "destructive" : "secondary"} className="ml-2">
-                      {p.status === "paid" ? "Pago" : p.status === "pending" ? "Pendente" : p.status === "overdue" ? "Atrasado" : "Cancelado"}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="flex items-center gap-4 pb-8">
-        {isBlocked ? (
-          <Button onClick={() => toggleBlock(false)} disabled={saving} size="lg" className="bg-green-600 hover:bg-green-700">
-            <CheckCircle className="h-5 w-5 mr-2" /> Liberar Acesso
-          </Button>
-        ) : (
-          <Button onClick={() => toggleBlock(true)} disabled={saving} size="lg" variant="destructive">
-            <Ban className="h-5 w-5 mr-2" /> Bloquear Acesso
-          </Button>
+        {!isNew && (
+          <>
+            {isBlocked ? (
+              <Button onClick={() => toggleBlock(false)} disabled={saving} size="lg" className="bg-green-600 hover:bg-green-700">
+                <CheckCircle className="h-5 w-5 mr-2" /> Liberar Acesso
+              </Button>
+            ) : (
+              <Button onClick={() => toggleBlock(true)} disabled={saving} size="lg" variant="destructive">
+                <Ban className="h-5 w-5 mr-2" /> Bloquear Acesso
+              </Button>
+            )}
+          </>
         )}
         <Button onClick={handleSave} disabled={saving} size="lg">
-          <Save className="h-5 w-5 mr-2" /> Salvar Alterações
+          <Save className="h-5 w-5 mr-2" /> {isNew ? "Cadastrar Empresa" : "Salvar Alterações"}
         </Button>
       </div>
     </div>

@@ -45,31 +45,29 @@ function WeazeDashboard() {
       const todayStr = now.toISOString().slice(0, 10);
 
       try {
-        const [{ data: companies }, { data: adminRows }] = await Promise.all([
+        const [{ data: companies }, { data: allCompanies }] = await Promise.all([
           supabase.from("companies").select("id, name, created_at"),
-          supabase.from("company_admin").select("*"),
+          supabase.from("companies").select("id, name, status, plan_type, monthly_fee, next_due_date, payment_status, created_at"),
         ]);
 
-        const adminMap = new Map((adminRows ?? []).map((r: any) => [r.company_id, r]));
-
         const total = companies?.length ?? 0;
-        let active = 0, blocked = 0, trial = 0,           cancelled = 0, cancellationsThisMonth = 0;
+        let active = 0, blocked = 0, trial = 0, cancelled = 0;
         let monthlyRev = 0;
         let dueThisWeek = 0, overdue = 0;
 
         const activeCompanyIds: string[] = [];
 
-        (adminRows ?? []).forEach((a: any) => {
-          const fee = Number(a.monthly_fee) || 0;
+        (allCompanies ?? []).forEach((c: any) => {
+          const fee = Number(c.monthly_fee) || 0;
           monthlyRev += fee;
-          if (a.status === "active") { active++; activeCompanyIds.push(a.company_id); }
-          else if (a.status === "blocked") blocked++;
-          else if (a.status === "trial") trial++;
-          else if (a.status === "cancelled") cancelled++;
-          if (a.next_due_date) {
-            const due = a.next_due_date.slice(0, 10);
+          if (c.status === "ativo") { active++; activeCompanyIds.push(c.id); }
+          else if (c.status === "bloqueado") blocked++;
+          else if (c.status === "teste") trial++;
+          else if (c.status === "cancelado") cancelled++;
+          if (c.next_due_date) {
+            const due = c.next_due_date.slice(0, 10);
             if (due >= todayStr && due <= thisWeekEnd) dueThisWeek++;
-            if (due < todayStr && a.payment_status !== "paid") overdue++;
+            if (due < todayStr && c.payment_status !== "paid") overdue++;
           }
         });
 
@@ -86,15 +84,15 @@ function WeazeDashboard() {
 
           const activeNames = new Map((activeCompanyData ?? []).map((t: any) => [t.id, t.name]));
 
-          const companyIds = activeCompanyIds.slice(0, 20);
+          const cids = activeCompanyIds.slice(0, 20);
           const batchResults = await Promise.all(
-            companyIds.flatMap(cid => [
+            cids.flatMap(cid => [
               supabase.from("posts").select("*", { count: "exact", head: true }).eq("company_id", cid),
               supabase.from("checkins").select("*", { count: "exact", head: true }).gte("start_time", startOfMonth).eq("company_id", cid),
             ])
           );
-          for (let i = 0; i < companyIds.length; i++) {
-            const cid = companyIds[i];
+          for (let i = 0; i < cids.length; i++) {
+            const cid = cids[i];
             const posts = batchResults[i * 2].count ?? 0;
             const checkins = batchResults[i * 2 + 1].count ?? 0;
             const name = activeNames.get(cid) ?? "?";

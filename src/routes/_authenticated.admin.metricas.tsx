@@ -28,26 +28,26 @@ function WeazeMetricas() {
         const [
           { count: totalB2C }, { count: totalOrders }, { count: totalCheckins },
           { count: totalPosts }, { count: totalInteractions },
-          { data: adminRows }, { count: totalCompanies }, { data: todayCheckins },
+          { data: companyRows }, { data: todayCheckins },
         ] = await Promise.all([
           supabase.from("customers").select("*", { count: "exact", head: true }),
           supabase.from("orders").select("*", { count: "exact", head: true }),
           supabase.from("checkins").select("*", { count: "exact", head: true }),
           supabase.from("posts").select("*", { count: "exact", head: true }),
           supabase.from("post_reactions").select("*", { count: "exact", head: true }),
-          supabase.from("company_admin").select("*"),
-          supabase.from("companies").select("id", { count: "exact", head: true }),
+          supabase.from("companies").select("id, status, monthly_fee, next_due_date, payment_status"),
           supabase.from("checkins").select("id").gte("start_time", today),
         ]);
 
-        const blockedCount = (adminRows ?? []).filter((a: any) => a.status === "blocked").length;
-        const nearDueCount = (adminRows ?? []).filter((a: any) => {
+        const companyList = companyRows ?? [];
+        const blockedCount = companyList.filter((a: any) => a.status === "bloqueado").length;
+        const nearDueCount = companyList.filter((a: any) => {
           if (!a.next_due_date) return false;
           const d = a.next_due_date.slice(0, 10);
           return d >= today && d <= nextWeek && a.payment_status !== "paid";
         }).length;
-        const totalMonthly = (adminRows ?? []).reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
-        const paidMonthly = (adminRows ?? []).filter((a: any) => a.payment_status === "paid").reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
+        const totalMonthly = companyList.reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
+        const paidMonthly = companyList.filter((a: any) => a.payment_status === "paid").reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
 
         setData({
           activeToday: todayCheckins?.length ?? 0, totalB2C: totalB2C ?? 0,
@@ -55,7 +55,7 @@ function WeazeMetricas() {
           totalPosts: totalPosts ?? 0, totalInteractions: totalInteractions ?? 0,
           predictedRevenue: totalMonthly, recurringRevenue: paidMonthly,
           blockedCount,
-          inactiveCount: Math.max(0, (totalCompanies ?? 0) - (adminRows ?? []).filter((a: any) => a.status === "active" || a.status === "trial").length),
+          inactiveCount: companyList.filter((a: any) => a.status !== "ativo" && a.status !== "teste").length,
           nearDueCount,
         });
       } catch { /* table may not exist */ }
