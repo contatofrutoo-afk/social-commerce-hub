@@ -215,7 +215,7 @@ function DashboardPage() {
       const { data } = await supabase
         .from("checkins")
         .select("context, source, created_at, customer_id, customer:customers(name)")
-        .eq("company_id", companyId)
+        .eq("company_id", companyId!)
         .order("created_at", { ascending: false });
       return data ?? [];
     },
@@ -228,7 +228,7 @@ function DashboardPage() {
       const { data } = await supabase
         .from("post_reactions")
         .select("type, created_at, customer_id, post:posts!inner(company_id)")
-        .eq("post.company_id", companyId);
+        .eq("post.company_id", companyId!);
       return data ?? [];
     },
     enabled: !!companyId,
@@ -240,7 +240,7 @@ function DashboardPage() {
       const { data } = await supabase
         .from("product_likes")
         .select("created_at, product_id, customer_id, product:products!inner(company_id)")
-        .eq("product.company_id", companyId);
+        .eq("product.company_id", companyId!);
       return data ?? [];
     },
     enabled: !!companyId,

@@ -30,11 +30,11 @@ function WeazeMetricas() {
           { count: totalPosts }, { count: totalInteractions },
           { data: adminRows }, { count: totalCompanies }, { data: todayCheckins },
         ] = await Promise.all([
-          supabase.from("b2c_customers").select("*", { count: "exact", head: true }),
+          supabase.from("customers").select("*", { count: "exact", head: true }),
           supabase.from("orders").select("*", { count: "exact", head: true }),
           supabase.from("checkins").select("*", { count: "exact", head: true }),
           supabase.from("posts").select("*", { count: "exact", head: true }),
-          supabase.from("customer_interactions").select("*", { count: "exact", head: true }),
+          supabase.from("post_reactions").select("*", { count: "exact", head: true }),
           supabase.from("company_admin").select("*"),
           supabase.from("companies").select("id", { count: "exact", head: true }),
           supabase.from("checkins").select("id").gte("start_time", today),
