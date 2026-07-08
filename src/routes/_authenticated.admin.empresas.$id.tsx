@@ -134,18 +134,26 @@ function WeazeEmpresaFicha() {
     } finally { setSaving(false); }
   }
 
-  async function toggleBlock(block: boolean) {
-    const newStatus = block ? "bloqueado" : "ativo";
+  async function updateStatus(newStatus: string) {
+    if (newStatus === form.status || isNew) return;
     setForm((prev) => ({ ...prev, status: newStatus }));
     setSaving(true);
     try {
       const { error } = await supabase.from("companies").update({ status: newStatus }).eq("id", id);
       if (error) throw error;
-      toast.success(block ? "Acesso bloqueado!" : "Acesso liberado!");
+      toast.success(
+        newStatus === "ativo" ? "Empresa ativada!" :
+        newStatus === "bloqueado" ? "Acesso bloqueado!" :
+        newStatus === "teste" ? "Status alterado para Teste" : "Empresa cancelada"
+      );
     } catch (err: any) {
-      toast.error(err.message ?? "Erro");
-      setForm((prev) => ({ ...prev, status: block ? "ativo" : "bloqueado" }));
+      toast.error(err.message ?? "Erro ao atualizar status");
+      setForm((prev) => ({ ...prev, status: form.status }));
     } finally { setSaving(false); }
+  }
+
+  async function toggleBlock(block: boolean) {
+    await updateStatus(block ? "bloqueado" : "ativo");
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
@@ -280,7 +288,7 @@ function WeazeEmpresaFicha() {
                 opt.value === "teste" ? "border-yellow-500 text-yellow-700 bg-yellow-50" :
                 "border-gray-400 text-gray-600 bg-gray-50";
               return (
-                <button key={opt.value} onClick={() => setForm((p) => ({ ...p, status: opt.value }))}
+                <button key={opt.value} onClick={() => updateStatus(opt.value)} disabled={saving || form.status === opt.value}
                   className={cn("px-4 py-2 rounded-lg text-sm border font-medium transition-colors",
                     active ? colorClass : "bg-background text-muted-foreground border-input hover:border-foreground"
                   )}>
