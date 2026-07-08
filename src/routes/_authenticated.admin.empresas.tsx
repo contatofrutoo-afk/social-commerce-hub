@@ -21,7 +21,7 @@ function WeazeEmpresas() {
     (async () => {
       setLoading(true);
       try {
-        const { data: adminRows } = await supabase.from("company_admin").select("*, company:companies(name, slug, city)");
+        const { data: adminRows } = await supabase.from("company_admin").select("*, company:companies(name, slug, city, responsible)");
         setCompanies(adminRows ?? []);
       } catch { /* table may not exist */ }
       setLoading(false);
@@ -74,13 +74,18 @@ function WeazeEmpresas() {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-display font-semibold">{c.company?.name ?? "—"}</h3>
-                      <p className="text-xs text-muted-foreground">{c.company?.city ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{c.company?.responsible ?? c.company?.city ?? "—"}</p>
                     </div>
                     <Badge variant={statusColor(c.status) as any}>{statusLabel(c.status)}</Badge>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>R$ {Number(c.monthly_fee).toFixed(2)}</span>
-                    <span>{paymentLabel(c.payment_status)}</span>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mt-2">
+                    <div><span className="block text-[10px] uppercase tracking-wider">Plano</span><span className="font-medium text-foreground">{c.plan_type}</span></div>
+                    <div><span className="block text-[10px] uppercase tracking-wider">Valor</span><span className="font-medium text-foreground">R$ {Number(c.monthly_fee).toFixed(2)}</span></div>
+                    <div><span className="block text-[10px] uppercase tracking-wider">Status</span><span className={cn("font-medium", c.payment_status === "paid" ? "text-green-600" : c.payment_status === "overdue" ? "text-destructive" : "text-muted-foreground")}>{paymentLabel(c.payment_status)}</span></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-1 pt-2 border-t border-border">
+                    <div><span className="block text-[10px] uppercase tracking-wider">Vencimento</span><span>{c.next_due_date ? new Date(c.next_due_date).toLocaleDateString("pt-BR") : "—"}</span></div>
+                    <div><span className="block text-[10px] uppercase tracking-wider">Último Pagamento</span><span>{c.last_payment_date ? new Date(c.last_payment_date).toLocaleDateString("pt-BR") : "—"}</span></div>
                   </div>
                 </CardContent>
               </Card>

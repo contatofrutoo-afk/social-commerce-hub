@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/financeiro")({
@@ -11,41 +12,48 @@ export const Route = createFileRoute("/_authenticated/admin/financeiro")({
   head: () => ({ meta: [{ title: "Financeiro — WEAZE Admin" }] }),
 });
 
+const paymentStatusLabel: Record<string, string> = {
+  paid: "Pago", pending: "Em Aberto", overdue: "Atrasado", cancelled: "Cancelado",
+};
+
+const paymentStatusColor: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  paid: "default", pending: "secondary", overdue: "destructive", cancelled: "outline",
+};
+
 function WeazeFinanceiro() {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
-    totalReceivable: 0, totalReceived: 0, totalOverdue: 0,
-    pendingCount: 0, overdueCount: 0, paidCount: 0, avgTicket: 0,
-    payments: [] as any[], recentPayments: [] as any[],
-  });
+  const [search, setSearch] = useState("");
+  const [rows, setRows] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const { data: adminRows } = await supabase.from("company_admin").select("company_id, monthly_fee, payment_status, next_due_date, companies!inner(name)");
-        const { data: payments } = await supabase.from("company_payments").select("*, company_id").order("created_at", { ascending: false }).limit(50);
-
-        let totalReceivable = 0, totalReceived = 0, paidCount = 0, pendingCount = 0, overdueCount = 0;
-
-        (adminRows ?? []).forEach((a: any) => {
-          const fee = Number(a.monthly_fee) || 0;
-          if (a.payment_status === "paid") { totalReceived += fee; paidCount++; }
-          else if (a.payment_status === "pending") { totalReceivable += fee; pendingCount++; }
-          else if (a.payment_status === "overdue") { totalReceivable += fee; overdueCount++; }
-        });
-
-        setData({
-          totalReceivable, totalReceived,
-          totalOverdue: (adminRows ?? []).filter((a: any) => a.payment_status === "overdue").reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0),
-          pendingCount, overdueCount, paidCount,
-          avgTicket: paidCount > 0 ? totalReceived / paidCount : 0,
-          payments: adminRows ?? [], recentPayments: payments ?? [],
-        });
+        const { data } = await supabase
+          .from("company_admin")
+          .select("company_id, monthly_fee, payment_status, payment_method, next_due_date, last_payment_date, plan_type, companies!inner(name, slug, city, responsible)")
+          .order("company_id");
+        setRows(data ?? []);
       } catch { /* table may not exist */ }
       setLoading(false);
     })();
   }, []);
+
+  const filtered = rows.filter((r: any) =>
+    !search || r.companies?.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const kpis = (() => {
+    let receivable = 0, received = 0, overdue = 0;
+    let pendingCount = 0, paidCount = 0, overdueCount = 0;
+    (rows ?? []).forEach((r: any) => {
+      const fee = Number(r.monthly_fee) || 0;
+      if (r.payment_status === "paid") { received += fee; paidCount++; }
+      else if (r.payment_status === "pending") { receivable += fee; pendingCount++; }
+      else if (r.payment_status === "overdue") { receivable += fee; overdueCount++; overdue += fee; }
+    });
+    return { receivable, received, overdue, pendingCount, paidCount, overdueCount, avgTicket: paidCount > 0 ? received / paidCount : 0 };
+  })();
 
   return (
     <div className={cn("space-y-6", loading && "opacity-50 pointer-events-none")}>
@@ -58,56 +66,86 @@ function WeazeFinanceiro() {
         <Card>
           <CardContent className="p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">A Receber</p>
-            <p className="font-display text-2xl mt-1">R$ {data.totalReceivable.toLocaleString("pt-BR")}</p>
-            <p className="text-xs text-muted-foreground mt-1">{data.pendingCount} pendentes</p>
+            <p className="font-display text-2xl mt-1">R$ {kpis.receivable.toLocaleString("pt-BR")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{kpis.pendingCount} pendentes</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Recebido</p>
-            <p className="font-display text-2xl mt-1">R$ {data.totalReceived.toLocaleString("pt-BR")}</p>
-            <p className="text-xs text-muted-foreground mt-1">{data.paidCount} pagos</p>
+            <p className="font-display text-2xl mt-1">R$ {kpis.received.toLocaleString("pt-BR")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{kpis.paidCount} pagos</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Em Atraso</p>
-            <p className="font-display text-2xl mt-1 text-destructive">R$ {data.totalOverdue.toLocaleString("pt-BR")}</p>
-            <p className="text-xs text-muted-foreground mt-1">{data.overdueCount} empresas</p>
+            <p className="font-display text-2xl mt-1 text-destructive">R$ {kpis.overdue.toLocaleString("pt-BR")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{kpis.overdueCount} empresas</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5">
             <p className="text-xs uppercase tracking-widest text-muted-foreground">Ticket Médio</p>
-            <p className="font-display text-2xl mt-1">R$ {data.avgTicket.toLocaleString("pt-BR")}</p>
+            <p className="font-display text-2xl mt-1">R$ {kpis.avgTicket.toLocaleString("pt-BR")}</p>
             <p className="text-xs text-muted-foreground mt-1">por empresa</p>
           </CardContent>
         </Card>
       </div>
 
-      {data.recentPayments.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="font-display text-base">Últimos Pagamentos</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y text-sm">
-              {data.recentPayments.slice(0, 20).map((p: any) => (
-                <div key={p.id} className="flex items-center justify-between px-5 py-3">
-                  <div>
-                    <span className="font-medium">R$ {Number(p.amount).toLocaleString("pt-BR")}</span>
-                    <span className="text-muted-foreground ml-2">{p.payment_method}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-muted-foreground">{new Date(p.payment_date).toLocaleDateString("pt-BR")}</span>
-                    <Badge variant={p.status === "paid" ? "default" : p.status === "overdue" ? "destructive" : "secondary"} className="ml-2">
-                      {p.status === "paid" ? "Pago" : p.status === "pending" ? "Pendente" : p.status === "overdue" ? "Atrasado" : "Cancelado"}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="font-display text-base">Todas as Empresas</CardTitle>
+            <div className="relative max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Buscar empresa..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {filtered.length === 0 ? (
+            <p className="p-5 text-sm text-muted-foreground text-center">Nenhum registro encontrado.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs uppercase text-muted-foreground">
+                    <th className="px-5 py-3 font-medium">Empresa</th>
+                    <th className="px-5 py-3 font-medium">Responsável</th>
+                    <th className="px-5 py-3 font-medium">Plano</th>
+                    <th className="px-5 py-3 font-medium">Valor</th>
+                    <th className="px-5 py-3 font-medium">Último Pagamento</th>
+                    <th className="px-5 py-3 font-medium">Vencimento</th>
+                    <th className="px-5 py-3 font-medium">Forma</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r: any) => (
+                    <tr key={r.company_id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-5 py-3">
+                        <Link to="/admin/empresas/$id" params={{ id: r.company_id }} className="font-medium hover:underline">
+                          {r.companies?.name ?? "—"}
+                        </Link>
+                      </td>
+                      <td className="px-5 py-3 text-muted-foreground">{r.companies?.responsible ?? "—"}</td>
+                      <td className="px-5 py-3">{r.plan_type}</td>
+                      <td className="px-5 py-3 font-medium">R$ {Number(r.monthly_fee).toFixed(2)}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{r.last_payment_date ? new Date(r.last_payment_date).toLocaleDateString("pt-BR") : "—"}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{r.next_due_date ? new Date(r.next_due_date).toLocaleDateString("pt-BR") : "—"}</td>
+                      <td className="px-5 py-3">{r.payment_method}</td>
+                      <td className="px-5 py-3">
+                        <Badge variant={paymentStatusColor[r.payment_status] ?? "secondary"}>{paymentStatusLabel[r.payment_status] ?? r.payment_status}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
