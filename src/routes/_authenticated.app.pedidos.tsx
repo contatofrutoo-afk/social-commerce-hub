@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { orderRepository, customerRepository } from "@/repositories";
 import type { Order } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
-import { formatBRL, relativeTime } from "@/lib/format";
-import { User, Clock, Heart, Users, Home, RefreshCw, Sparkles } from "lucide-react";
+import { formatBRL, relativeTime, formatDateTime } from "@/lib/format";
+import { User, Clock, Heart, Users, Home, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/pedidos")({
   component: OrdersPage,
@@ -16,7 +16,11 @@ function OrdersPage() {
   const { data: companyId } = useQuery({
     queryKey: ["my-company-id"],
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("company_id").limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("company_id")
+        .limit(1)
+        .maybeSingle();
       return data?.company_id as string | undefined;
     },
   });
@@ -46,6 +50,11 @@ function OrdersPage() {
 
   const advance = useMutation({
     mutationFn: (id: string) => orderRepository.updateStatus(id, "completed"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => orderRepository.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
 
@@ -88,8 +97,14 @@ function OrdersPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Pedidos</h1>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Column title="Recebidos" orders={received} action={advance} actionLabel="Concluir" />
-        <Column title="Concluídos" orders={completed} />
+        <Column
+          title="Recebidos"
+          orders={received}
+          action={advance}
+          actionLabel="Concluir"
+          onDelete={remove}
+        />
+        <Column title="Concluídos" orders={completed} onDelete={remove} />
       </div>
     </div>
   );
@@ -107,11 +122,13 @@ function Column({
   orders,
   action,
   actionLabel,
+  onDelete,
 }: {
   title: string;
   orders: any[];
   action?: { mutate: (id: string) => void };
   actionLabel?: string;
+  onDelete?: { mutate: (id: string) => void };
 }) {
   return (
     <div className="rounded-xl border bg-card p-4">
@@ -129,7 +146,9 @@ function Column({
               <div className="flex justify-between text-sm">
                 <span className="font-medium">
                   {o.customerName ?? "Cliente"}
-                  {o.tableLabel && <span className="ml-2 text-xs text-primary">· {o.tableLabel}</span>}
+                  {o.tableLabel && (
+                    <span className="ml-2 text-xs text-primary">· {o.tableLabel}</span>
+                  )}
                 </span>
                 <span className="font-bold">{formatBRL(o.total)}</span>
               </div>
@@ -138,7 +157,8 @@ function Column({
               </div>
               {o.note && <div className="mt-1 text-xs italic">"{o.note}"</div>}
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
-                <span>{relativeTime(o.createdAt)}</span>
+                <span title={formatDateTime(o.createdAt)}>{relativeTime(o.createdAt)}</span>
+                <span className="text-[9px] opacity-60">{formatDateTime(o.createdAt)}</span>
                 {ContextIcon && (
                   <span className="flex items-center gap-0.5 capitalize">
                     <ContextIcon className="size-3" /> {o.context}
@@ -159,11 +179,25 @@ function Column({
                     <RefreshCw className="size-3" /> Recorrente
                   </span>
                 )}
-                {action && (
-                  <Button size="sm" className="ml-auto" onClick={() => action.mutate(o.id)}>
-                    {actionLabel}
-                  </Button>
-                )}
+                <div className="ml-auto flex items-center gap-1">
+                  {action && (
+                    <Button size="sm" onClick={() => action.mutate(o.id)}>
+                      {actionLabel}
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Excluir pedido de ${o.customerName ?? "Cliente"}?`))
+                          onDelete.mutate(o.id);
+                      }}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                      title="Excluir pedido"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );

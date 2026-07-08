@@ -77,4 +77,9 @@ export const orderRepository = {
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
     if (error) throw error;
   },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    if (error) throw error;
+  },
 };
