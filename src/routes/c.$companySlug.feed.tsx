@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/c/$companySlug/feed")({
   component: FeedPage,
@@ -45,11 +46,28 @@ function FeedPage() {
     }
   }, [session, companySlug, navigate]);
 
-  if (!session) return null;
+  if (!session) {
+    return (
+      <div className="divide-y">
+        <SkeletonPostCard />
+        <SkeletonPostCard />
+        <SkeletonPostCard />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="divide-y">
+        <SkeletonPostCard />
+        <SkeletonPostCard />
+        <SkeletonPostCard />
+      </div>
+    );
+  }
 
   return (
     <div className="divide-y">
-      {isLoading && <div className="p-8 text-center text-muted-foreground">Carregando feed…</div>}
       {isError && (
         <div className="p-8 text-center text-destructive">
           Erro ao carregar feed: {(error as Error)?.message ?? "Erro desconhecido"}
@@ -75,6 +93,29 @@ function FeedPage() {
         />
       ))}
     </div>
+  );
+}
+
+function SkeletonPostCard() {
+  return (
+    <article className="bg-card">
+      <header className="flex items-center gap-3 px-4 py-3">
+        <Skeleton className="size-9 rounded-full" />
+        <div className="flex-1 space-y-1.5">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      </header>
+      <Skeleton className="h-64 w-full" />
+      <div className="px-4 py-3">
+        <Skeleton className="h-4 w-full" />
+      </div>
+      <div className="flex items-center gap-2 border-t px-4 py-3">
+        <Skeleton className="h-8 w-16 rounded-md" />
+        <Skeleton className="h-8 w-16 rounded-md" />
+        <Skeleton className="h-8 w-20 rounded-md" />
+      </div>
+    </article>
   );
 }
 
