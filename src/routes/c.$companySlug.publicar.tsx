@@ -40,6 +40,7 @@ function PublishPage() {
       return postRepository.createCustomerPost({
         companyId: company.id,
         customerId: session.customerId,
+        sessionToken: session.sessionToken,
         text,
         imageUrl: imageUrl || null,
         category: category ?? undefined,
