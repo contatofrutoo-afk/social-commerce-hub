@@ -23,6 +23,7 @@ import {
   ShoppingBag,
   ChevronRight,
   LogOut,
+  Trash2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/atendimento")({
@@ -227,6 +228,7 @@ function MesasView({ companyId }: { companyId: string }) {
 // ======= LOJA VIEW =======
 
 function LojaView({ companyId }: { companyId: string }) {
+  const qc = useQueryClient();
   const [selectedCheckin, setSelectedCheckin] = useState<any>(null);
 
   const { data: present } = useQuery({
@@ -236,6 +238,14 @@ function LojaView({ companyId }: { companyId: string }) {
   });
 
   const lojaCustomers = (present ?? []).filter((c: any) => !c.table_id);
+
+  const removeCheckin = useMutation({
+    mutationFn: (id: string) => checkinRepository.deleteByIds([id]),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["present", companyId] });
+      setSelectedCheckin(null);
+    },
+  });
 
   if (selectedCheckin) {
     return (
@@ -266,30 +276,41 @@ function LojaView({ companyId }: { companyId: string }) {
           const avatar = c.customer?.avatar_url;
           const name = c.customer?.name ?? "";
           return (
-            <button
-              key={c.id}
-              onClick={() => setSelectedCheckin(c)}
-              className="flex w-full items-center gap-3 p-3 text-left hover:bg-muted transition-colors"
-            >
-              {avatar ? (
-                <img src={avatar} alt="" className="size-10 shrink-0 rounded-full object-cover" />
-              ) : (
-                <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                  {name.charAt(0).toUpperCase()}
+            <div key={c.id} className="group relative flex items-center gap-3 p-3 text-left transition-colors">
+              <button
+                onClick={() => setSelectedCheckin(c)}
+                className="flex flex-1 items-center gap-3 min-w-0"
+              >
+                {avatar ? (
+                  <img src={avatar} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                    {name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {c.context} · {relativeTime(c.created_at)}
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {c.context} · {relativeTime(c.created_at)}
-                </div>
-              </div>
-            </button>
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm(`Remover ${name} da loja?`)) removeCheckin.mutate(c.id);
+                }}
+                disabled={removeCheckin.isPending}
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 disabled:opacity-50"
+                title="Remover da loja"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           );
         })}
       </div>
       <div className="hidden rounded-xl border bg-card p-6 text-sm text-muted-foreground lg:block">
-        Selecione um cliente presente.
+        Toque em um cliente ao lado para ver o perfil completo e histórico.
       </div>
     </div>
   );
