@@ -134,23 +134,27 @@ function MesasView({ companyId }: { companyId: string }) {
             {occupations.length > 0 ? (
               <div className="mt-2 space-y-1.5">
                 {occupations.map((o: any) => {
-                  const Icon = contextIcons[o.context];
+                  const avatar = o.customer?.avatar_url;
+                  const name = o.customer?.name ?? "";
                   return (
                     <button
                       key={o.id}
                       onClick={() => setSelectedCheckin(o)}
                       className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-card transition-colors"
                     >
-                      <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10">
-                        {Icon && <Icon className="size-4 text-primary" />}
-                      </div>
+                      {avatar ? (
+                        <img src={avatar} alt="" className="size-8 shrink-0 rounded-full object-cover" />
+                      ) : (
+                        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                          {name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate">{o.customer?.name}</div>
+                        <div className="text-sm font-medium truncate">{name}</div>
                         <div className="text-xs text-muted-foreground">
                           {relativeTime(o.created_at)}
                         </div>
                       </div>
-                      <Sparkles className="size-3.5 shrink-0 text-muted-foreground" />
                     </button>
                   );
                 })}
@@ -202,23 +206,27 @@ function LojaView({ companyId }: { companyId: string }) {
           <p className="p-6 text-sm text-muted-foreground">Ninguém no local agora.</p>
         )}
         {present?.map((c: any) => {
-          const Icon = contextIcons[c.context];
+          const avatar = c.customer?.avatar_url;
+          const name = c.customer?.name ?? "";
           return (
             <button
               key={c.id}
               onClick={() => setSelectedCheckin(c)}
-              className={`flex w-full items-center gap-3 p-3 text-left hover:bg-muted transition-colors`}
+              className="flex w-full items-center gap-3 p-3 text-left hover:bg-muted transition-colors"
             >
-              <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10">
-                <Icon className="size-4 text-primary" />
-              </div>
+              {avatar ? (
+                <img src={avatar} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                  {name.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{c.customer?.name}</div>
+                <div className="text-sm font-medium">{name}</div>
                 <div className="text-xs text-muted-foreground">
                   {c.context} · {relativeTime(c.created_at)}
                 </div>
               </div>
-              <Sparkles className="size-3.5 shrink-0 text-muted-foreground" />
             </button>
           );
         })}
