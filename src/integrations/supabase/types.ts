@@ -818,6 +818,13 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       list_customer_orders: {
         Args: { _customer_id: string; _token: string }
         Returns: Json[]
