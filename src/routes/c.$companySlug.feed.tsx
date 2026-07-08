@@ -219,7 +219,7 @@ function CommentsSection({ postId, customerId, sessionToken }: { postId: string;
     queryFn: () => commentRepository.listByPost(postId),
   });
   const add = useMutation({
-    mutationFn: () => commentRepository.create({ postId, customerId, text: text.trim(), imageUrl: commentImage }),
+    mutationFn: () => commentRepository.create({ postId, customerId, sessionToken, text: text.trim(), imageUrl: commentImage }),
     onSuccess: () => {
       setText("");
       setCommentImage(null);
