@@ -149,18 +149,21 @@ export const commentRepository = {
     }));
   },
 
-  async create(input: { postId: string; customerId: string; text: string; imageUrl?: string | null }) {
-    const { data, error } = await supabase
-      .from("comments")
-      .insert({
-        post_id: input.postId,
-        customer_id: input.customerId,
-        text: input.text,
-        image_url: input.imageUrl ?? null,
-      })
-      .select()
-      .single();
+  async create(input: {
+    postId: string;
+    customerId: string;
+    sessionToken: string;
+    text: string;
+    imageUrl?: string | null;
+  }) {
+    const { data, error } = await supabase.rpc("create_customer_comment" as any, {
+      _customer_id: input.customerId,
+      _token: input.sessionToken,
+      _post_id: input.postId,
+      _text: input.text,
+      _image_url: input.imageUrl ?? null,
+    });
     if (error) throw error;
-    return data;
+    return { id: data as string };
   },
 };
