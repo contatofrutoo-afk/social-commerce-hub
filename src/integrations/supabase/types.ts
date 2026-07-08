@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          admin_contact: string | null
+          blocked_message: string | null
+          default_plan_value: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_contact?: string | null
+          blocked_message?: string | null
+          default_plan_value?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_contact?: string | null
+          blocked_message?: string | null
+          default_plan_value?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       checkins: {
         Row: {
           company_id: string
@@ -137,6 +161,150 @@ export type Database = {
           welcome_message?: string | null
         }
         Relationships: []
+      }
+      company_admin: {
+        Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
+          company_id: string
+          created_at: string
+          id: string
+          internal_notes: string | null
+          last_payment_date: string | null
+          monthly_fee: number
+          next_due_date: string | null
+          payment_method: string
+          payment_status: string
+          plan_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          last_payment_date?: string | null
+          monthly_fee?: number
+          next_due_date?: string | null
+          payment_method?: string
+          payment_status?: string
+          plan_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          internal_notes?: string | null
+          last_payment_date?: string | null
+          monthly_fee?: number
+          next_due_date?: string | null
+          payment_method?: string
+          payment_status?: string
+          plan_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_admin_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_licenses: {
+        Row: {
+          company_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          monthly_fee: number
+          notes: string | null
+          plan_type: string
+          start_date: string
+          status: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          monthly_fee?: number
+          notes?: string | null
+          plan_type?: string
+          start_date: string
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          monthly_fee?: number
+          notes?: string | null
+          plan_type?: string
+          start_date?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_licenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_payments: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date: string
+          payment_method?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -650,6 +818,13 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       list_customer_orders: {
         Args: { _customer_id: string; _token: string }
         Returns: Json[]
@@ -705,7 +880,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "owner" | "staff"
+      app_role: "owner" | "staff" | "admin"
       order_status: "received" | "completed"
       post_author_type: "business" | "customer"
       reaction_type: "love" | "dislike"
@@ -837,7 +1012,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "staff"],
+      app_role: ["owner", "staff", "admin"],
       order_status: ["received", "completed"],
       post_author_type: ["business", "customer"],
       reaction_type: ["love", "dislike"],
