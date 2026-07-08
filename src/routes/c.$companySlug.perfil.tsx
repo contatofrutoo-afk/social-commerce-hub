@@ -1,12 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { customerRepository, orderRepository } from "@/repositories";
+import { customerRepository } from "@/repositories";
 import { getSessionForCompany, clearSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatBRL, relativeTime } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -25,12 +24,6 @@ function ProfilePage() {
     queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
     enabled: !!session,
   });
-  const { data: orders } = useQuery({
-    queryKey: ["orders", "customer", session?.customerId],
-    queryFn: () => orderRepository.listByCustomer(session!.customerId, session!.sessionToken),
-    enabled: !!session,
-  });
-
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -136,33 +129,6 @@ function ProfilePage() {
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           Salvar
         </Button>
-      </div>
-
-      <div>
-        <h2 className="mb-2 font-semibold">Seus últimos pedidos</h2>
-        {orders?.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum pedido ainda.</p>
-        )}
-        <div className="space-y-2">
-          {orders?.map((o) => (
-            <div key={o.id} className="rounded-xl border p-3">
-              <div className="flex justify-between text-sm">
-                <span>{relativeTime(o.createdAt)}</span>
-                <span className="font-semibold">{formatBRL(o.total)}</span>
-              </div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {o.items.map((i) => `${i.quantity}× ${i.productName}`).join(", ")}
-              </div>
-              <span
-                className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs ${
-                  o.status === "received" ? "bg-accent text-accent-foreground" : "bg-muted"
-                }`}
-              >
-                {o.status === "received" ? "Recebido" : "Concluído"}
-              </span>
-            </div>
-          ))}
-        </div>
       </div>
 
       <Button
