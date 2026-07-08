@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User, Heart, Users, Home } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/c/$companySlug/m/$tableSlug")({
   component: TableCheckin,
@@ -91,7 +92,37 @@ function TableCheckin() {
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
 
-  if (!company || !table) return <div className="p-8 text-center">Carregando…</div>;
+  if (!company || !table) {
+    return (
+      <div className="px-6 py-8">
+        <div className="mb-6 text-center space-y-3">
+          <Skeleton className="mx-auto h-6 w-24 rounded-full" />
+          <Skeleton className="mx-auto h-8 w-64" />
+          <Skeleton className="mx-auto h-4 w-32" />
+        </div>
+        <div className="space-y-4">
+          <div>
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="mt-1.5 h-10 w-full rounded-md" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="mt-1.5 h-10 w-full rounded-md" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-56" />
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+            </div>
+          </div>
+          <Skeleton className="h-12 w-full rounded-md" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6 py-8">
