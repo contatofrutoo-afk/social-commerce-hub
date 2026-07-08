@@ -113,6 +113,11 @@ export const checkinRepository = {
     return data ?? [];
   },
 
+  async deleteByIds(ids: string[]): Promise<void> {
+    const { error } = await supabase.from("checkins").delete().in("id", ids);
+    if (error) throw error;
+  },
+
   async listPresentByCompany(companyId: string, minutes = 180) {
     const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
     const { data, error } = await supabase

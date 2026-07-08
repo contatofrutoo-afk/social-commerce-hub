@@ -1,19 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  tableRepository,
-  checkinRepository,
-  crmRepository,
-} from "@/repositories";
+import { tableRepository, checkinRepository, crmRepository } from "@/repositories";
 import type { CustomerServiceProfile } from "@/repositories/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { relativeTime, formatBRL } from "@/lib/format";
 import {
-  User, Heart, Users, Home, Clock, ShoppingCart, Sparkles,
-  TrendingUp, Star, Gift, Lightbulb, RefreshCw, Target,
-  ShoppingBag, ChevronRight,
+  User,
+  Heart,
+  Users,
+  Home,
+  Clock,
+  ShoppingCart,
+  Sparkles,
+  TrendingUp,
+  Star,
+  Gift,
+  Lightbulb,
+  RefreshCw,
+  Target,
+  ShoppingBag,
+  ChevronRight,
+  LogOut,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/atendimento")({
@@ -42,10 +51,26 @@ const contextEmojis: Record<string, string> = {
 };
 
 const classificationConfig: Record<string, { label: string; class: string; dot: string }> = {
-  new: { label: "Novo Cliente", class: "bg-blue-500/10 text-blue-600 border-blue-500/30", dot: "🟢" },
-  frequent: { label: "Cliente Frequente", class: "bg-green-500/10 text-green-600 border-green-500/30", dot: "🔵" },
-  vip: { label: "Cliente VIP", class: "bg-amber-500/10 text-amber-600 border-amber-500/30", dot: "🟣" },
-  at_risk: { label: "Risco", class: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30", dot: "🟡" },
+  new: {
+    label: "Novo Cliente",
+    class: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+    dot: "🟢",
+  },
+  frequent: {
+    label: "Cliente Frequente",
+    class: "bg-green-500/10 text-green-600 border-green-500/30",
+    dot: "🔵",
+  },
+  vip: {
+    label: "Cliente VIP",
+    class: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    dot: "🟣",
+  },
+  at_risk: {
+    label: "Risco",
+    class: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
+    dot: "🟡",
+  },
   inactive: { label: "Inativo", class: "bg-red-500/10 text-red-600 border-red-500/30", dot: "🔴" },
 };
 
@@ -55,7 +80,11 @@ function ServicePage() {
   const { data: companyId } = useQuery({
     queryKey: ["my-company-id"],
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("company_id").limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("company_id")
+        .limit(1)
+        .maybeSingle();
       return data?.company_id as string | undefined;
     },
   });
@@ -68,12 +97,8 @@ function ServicePage() {
           <TabsTrigger value="mesas">Mesas</TabsTrigger>
           <TabsTrigger value="loja">Loja</TabsTrigger>
         </TabsList>
-        <TabsContent value="mesas">
-          {companyId && <MesasView companyId={companyId} />}
-        </TabsContent>
-        <TabsContent value="loja">
-          {companyId && <LojaView companyId={companyId} />}
-        </TabsContent>
+        <TabsContent value="mesas">{companyId && <MesasView companyId={companyId} />}</TabsContent>
+        <TabsContent value="loja">{companyId && <LojaView companyId={companyId} />}</TabsContent>
       </Tabs>
     </div>
   );
@@ -82,6 +107,7 @@ function ServicePage() {
 // ======= MESAS VIEW =======
 
 function MesasView({ companyId }: { companyId: string }) {
+  const qc = useQueryClient();
   const [selectedCheckin, setSelectedCheckin] = useState<any>(null);
 
   const { data: tables } = useQuery({
@@ -92,6 +118,13 @@ function MesasView({ companyId }: { companyId: string }) {
     queryKey: ["present", companyId],
     queryFn: () => checkinRepository.listPresentByCompany(companyId),
     refetchInterval: 15000,
+  });
+
+  const clearTable = useMutation({
+    mutationFn: (ids: string[]) => checkinRepository.deleteByIds(ids),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["present", companyId] });
+    },
   });
 
   if (selectedCheckin) {
@@ -125,11 +158,27 @@ function MesasView({ companyId }: { companyId: string }) {
           >
             <div className="flex items-center justify-between">
               <div className="text-lg font-bold">{t.label}</div>
-              {occupations.length > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {occupations.length} {occupations.length === 1 ? "pessoa" : "pessoas"}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {occupations.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {occupations.length} {occupations.length === 1 ? "pessoa" : "pessoas"}
+                  </span>
+                )}
+                {occupations.length > 0 && (
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`Liberar ${t.label}? Todas as pessoas serão removidas.`)) {
+                        clearTable.mutate(occupations.map((o: any) => o.id));
+                      }
+                    }}
+                    disabled={clearTable.isPending}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors disabled:opacity-50"
+                    title="Liberar mesa"
+                  >
+                    <LogOut className="size-4" />
+                  </button>
+                )}
+              </div>
             </div>
             {occupations.length > 0 ? (
               <div className="mt-2 space-y-1.5">
@@ -143,7 +192,11 @@ function MesasView({ companyId }: { companyId: string }) {
                       className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-card transition-colors"
                     >
                       {avatar ? (
-                        <img src={avatar} alt="" className="size-8 shrink-0 rounded-full object-cover" />
+                        <img
+                          src={avatar}
+                          alt=""
+                          className="size-8 shrink-0 rounded-full object-cover"
+                        />
                       ) : (
                         <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                           {name.charAt(0).toUpperCase()}
@@ -258,12 +311,19 @@ function CustomerPanel({
     queryFn: () => crmRepository.getCustomerServiceProfile(customerId),
   });
 
-  if (isError) return <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Erro ao carregar perfil.</div>;
+  if (isError)
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Erro ao carregar perfil.
+      </div>
+    );
   if (!p) return <div className="rounded-xl border bg-card p-6">Carregando...</div>;
 
   const cc = classificationConfig[p.classification] ?? classificationConfig.frequent;
   const ContextIcon = p.currentContext ? contextIcons[p.currentContext] : null;
-  const checkinMinutes = checkinAt ? Math.floor((Date.now() - new Date(checkinAt).getTime()) / 60000) : null;
+  const checkinMinutes = checkinAt
+    ? Math.floor((Date.now() - new Date(checkinAt).getTime()) / 60000)
+    : null;
 
   return (
     <div className="space-y-3">
@@ -280,11 +340,15 @@ function CustomerPanel({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-bold">{p.name}</h2>
-              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}
+              >
                 {cc.dot} {cc.label}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">Cliente desde {new Date(p.customerSince).toLocaleDateString("pt-BR")}</p>
+            <p className="text-xs text-muted-foreground">
+              Cliente desde {new Date(p.customerSince).toLocaleDateString("pt-BR")}
+            </p>
           </div>
         </div>
 
@@ -292,7 +356,8 @@ function CustomerPanel({
           {p.currentContext && ContextIcon && (
             <span className="flex items-center gap-1">
               <ContextIcon className="size-3.5" />
-              {contextEmojis[p.currentContext] ?? ""} {contextLabels[p.currentContext] ?? p.currentContext}
+              {contextEmojis[p.currentContext] ?? ""}{" "}
+              {contextLabels[p.currentContext] ?? p.currentContext}
             </span>
           )}
           {mode === "mesas" && tableLabel && (
@@ -323,11 +388,15 @@ function CustomerPanel({
           </div>
           <div className="rounded-lg bg-muted p-2">
             <div className="text-muted-foreground">Último pedido</div>
-            <div className="font-semibold">{p.lastOrder ? relativeTime(p.lastOrder) : "Nenhum"}</div>
+            <div className="font-semibold">
+              {p.lastOrder ? relativeTime(p.lastOrder) : "Nenhum"}
+            </div>
           </div>
           <div className="rounded-lg bg-muted p-2">
             <div className="text-muted-foreground">Ticket médio</div>
-            <div className="font-semibold">{p.avgOrderValue > 0 ? formatBRL(p.avgOrderValue) : "—"}</div>
+            <div className="font-semibold">
+              {p.avgOrderValue > 0 ? formatBRL(p.avgOrderValue) : "—"}
+            </div>
           </div>
         </div>
       </Section>
@@ -335,7 +404,9 @@ function CustomerPanel({
       {/* ===== BLOCO 3: PREFERÊNCIAS ===== */}
       <Section title="Preferências" icon={Star}>
         {p.totalOrders === 0 && p.likedProducts.length === 0 && p.wishedProducts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Ainda estamos conhecendo as preferências deste cliente.</p>
+          <p className="text-sm text-muted-foreground">
+            Ainda estamos conhecendo as preferências deste cliente.
+          </p>
         ) : (
           <div className="space-y-2">
             {p.mostOrderedProduct && (
@@ -351,19 +422,29 @@ function CustomerPanel({
               </p>
             )}
             {p.favoriteCategories.length === 0 && p.totalOrders > 0 && (
-              <p className="text-xs text-muted-foreground">Ainda estamos conhecendo as preferências deste cliente.</p>
+              <p className="text-xs text-muted-foreground">
+                Ainda estamos conhecendo as preferências deste cliente.
+              </p>
             )}
             <div className="flex flex-wrap gap-1">
               {p.recentlyLikedProducts.length > 0 && (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] flex items-center gap-1">
                   <Heart className="size-2.5 text-red-400" />
-                  Curtiu recentemente: {p.recentlyLikedProducts.slice(0, 3).map((l) => l.name).join(", ")}
+                  Curtiu recentemente:{" "}
+                  {p.recentlyLikedProducts
+                    .slice(0, 3)
+                    .map((l) => l.name)
+                    .join(", ")}
                 </span>
               )}
               {p.wishedProducts.length > 0 && (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] flex items-center gap-1">
                   <Gift className="size-2.5 text-amber-400" />
-                  Desejou: {p.wishedProducts.slice(0, 3).map((w) => w.name).join(", ")}
+                  Desejou:{" "}
+                  {p.wishedProducts
+                    .slice(0, 3)
+                    .map((w) => w.name)
+                    .join(", ")}
                 </span>
               )}
             </div>
@@ -373,7 +454,9 @@ function CustomerPanel({
 
       {/* ===== BLOCO 4: INTERESSE ATUAL ===== */}
       <Section title="Interesse atual" icon={Target}>
-        {p.recentlyLikedProducts.length === 0 && p.likedButNotOrdered.length === 0 && p.wishedProducts.length === 0 ? (
+        {p.recentlyLikedProducts.length === 0 &&
+        p.likedButNotOrdered.length === 0 &&
+        p.wishedProducts.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum interesse recente registrado.</p>
         ) : (
           <div className="space-y-1.5 text-sm">
@@ -382,7 +465,9 @@ function CustomerPanel({
                 <Heart className="mt-0.5 size-3.5 shrink-0 text-red-400" />
                 <div>
                   <span className="text-muted-foreground text-xs">Curtiu:</span>
-                  <div className="font-medium">{p.recentlyLikedProducts.map((l) => l.name).join(", ")}</div>
+                  <div className="font-medium">
+                    {p.recentlyLikedProducts.map((l) => l.name).join(", ")}
+                  </div>
                 </div>
               </div>
             )}
@@ -391,7 +476,12 @@ function CustomerPanel({
                 <Heart className="mt-0.5 size-3.5 shrink-0 text-red-400" />
                 <div>
                   <span className="text-muted-foreground text-xs">Já curtiu:</span>
-                  <div className="font-medium">{p.likedButNotOrdered.slice(0, 3).map((l) => l.name).join(", ")}</div>
+                  <div className="font-medium">
+                    {p.likedButNotOrdered
+                      .slice(0, 3)
+                      .map((l) => l.name)
+                      .join(", ")}
+                  </div>
                 </div>
               </div>
             )}
@@ -400,7 +490,12 @@ function CustomerPanel({
                 <Gift className="mt-0.5 size-3.5 shrink-0 text-amber-400" />
                 <div>
                   <span className="text-muted-foreground text-xs">Desejou:</span>
-                  <div className="font-medium">{p.wishedProducts.slice(0, 3).map((w) => w.name).join(", ")}</div>
+                  <div className="font-medium">
+                    {p.wishedProducts
+                      .slice(0, 3)
+                      .map((w) => w.name)
+                      .join(", ")}
+                  </div>
                 </div>
               </div>
             )}
@@ -409,7 +504,12 @@ function CustomerPanel({
                 <ShoppingBag className="mt-0.5 size-3.5 shrink-0 text-blue-400" />
                 <div>
                   <span className="text-muted-foreground text-xs">Nunca comprou:</span>
-                  <div className="font-medium">{p.likedButNotOrdered.slice(0, 3).map((l) => l.name).join(", ")}</div>
+                  <div className="font-medium">
+                    {p.likedButNotOrdered
+                      .slice(0, 3)
+                      .map((l) => l.name)
+                      .join(", ")}
+                  </div>
                 </div>
               </div>
             )}
@@ -471,7 +571,15 @@ function CustomerPanel({
 
 // ======= SECTION COMPONENT =======
 
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: any;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border bg-card p-4">
       <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
