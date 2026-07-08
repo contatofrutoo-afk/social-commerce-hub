@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/weaze/financeiro")({
+export const Route = createFileRoute("/_authenticated/admin/financeiro")({
   component: WeazeFinanceiro,
   head: () => ({ meta: [{ title: "Financeiro — WEAZE Admin" }] }),
 });

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/weaze/metricas")({
+export const Route = createFileRoute("/_authenticated/admin/metricas")({
   component: WeazeMetricas,
   head: () => ({ meta: [{ title: "Métricas — WEAZE Admin" }] }),
 });

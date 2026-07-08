@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Ban, CheckCircle, Lock, Unlock, Save, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/weaze/empresas/$id")({
+export const Route = createFileRoute("/_authenticated/admin/empresas/$id")({
   component: WeazeEmpresaFicha,
   head: () => ({ meta: [{ title: "Empresa — WEAZE Admin" }] }),
 });
@@ -33,7 +33,7 @@ const paymentStatuses = [
 ];
 
 function WeazeEmpresaFicha() {
-  const { id } = useParams({ from: "/_authenticated/weaze/empresas/$id" });
+  const { id } = useParams({ from: "/_authenticated/admin/empresas/$id" });
   const nav = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,7 +54,7 @@ function WeazeEmpresaFicha() {
       try {
         const { data: tenantData } = await supabase.from("companies").select("*").eq("id", id).single();
         if (cancelled) return;
-        if (!tenantData) { nav({ to: "/weaze/empresas" }); return; }
+        if (!tenantData) { nav({ to: "/admin/empresas" }); return; }
         setTenant(tenantData);
 
         let adminData: any = null;
@@ -151,7 +151,7 @@ function WeazeEmpresaFicha() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <button onClick={() => nav({ to: "/weaze/empresas" })} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+      <button onClick={() => nav({ to: "/admin/empresas" })} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Voltar para Empresas
       </button>
 

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, Building2, DollarSign, FileText, Settings, TrendingUp, LogOut, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/weaze")({
+export const Route = createFileRoute("/_authenticated/admin")({
   component: WeazeLayout,
   beforeLoad: async () => {
     const { data: roles } = await supabase
@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/weaze")({
 });
 
 const items = [
-  { to: "/weaze", label: "Dashboard", icon: BarChart3, exact: true },
-  { to: "/weaze/empresas", label: "Empresas", icon: Building2 },
-  { to: "/weaze/financeiro", label: "Financeiro", icon: DollarSign },
-  { to: "/weaze/licencas", label: "Licenças", icon: FileText },
-  { to: "/weaze/metricas", label: "Métricas", icon: TrendingUp },
-  { to: "/weaze/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
+  { to: "/admin/empresas", label: "Empresas", icon: Building2 },
+  { to: "/admin/financeiro", label: "Financeiro", icon: DollarSign },
+  { to: "/admin/licencas", label: "Licenças", icon: FileText },
+  { to: "/admin/metricas", label: "Métricas", icon: TrendingUp },
+  { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 function WeazeLayout() {

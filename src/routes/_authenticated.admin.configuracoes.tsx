@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Save } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/weaze/configuracoes")({
+export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   component: WeazeConfiguracoes,
   head: () => ({ meta: [{ title: "Configurações — WEAZE Admin" }] }),
 });

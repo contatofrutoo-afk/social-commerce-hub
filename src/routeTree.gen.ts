@@ -13,28 +13,28 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
-import { Route as AuthenticatedWeazeRouteImport } from './routes/_authenticated.weaze'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
-import { Route as AuthenticatedWeazeIndexRouteImport } from './routes/_authenticated.weaze.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.sacola'
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
 import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.perfil'
 import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
-import { Route as AuthenticatedWeazeMetricasRouteImport } from './routes/_authenticated.weaze.metricas'
-import { Route as AuthenticatedWeazeLicencasRouteImport } from './routes/_authenticated.weaze.licencas'
-import { Route as AuthenticatedWeazeFinanceiroRouteImport } from './routes/_authenticated.weaze.financeiro'
-import { Route as AuthenticatedWeazeEmpresasRouteImport } from './routes/_authenticated.weaze.empresas'
-import { Route as AuthenticatedWeazeConfiguracoesRouteImport } from './routes/_authenticated.weaze.configuracoes'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated.app.produtos'
 import { Route as AuthenticatedAppPedidosRouteImport } from './routes/_authenticated.app.pedidos'
 import { Route as AuthenticatedAppFeedRouteImport } from './routes/_authenticated.app.feed'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated.app.configuracoes'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated.app.clientes'
 import { Route as AuthenticatedAppAtendimentoRouteImport } from './routes/_authenticated.app.atendimento'
+import { Route as AuthenticatedAdminMetricasRouteImport } from './routes/_authenticated.admin.metricas'
+import { Route as AuthenticatedAdminLicencasRouteImport } from './routes/_authenticated.admin.licencas'
+import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_authenticated.admin.financeiro'
+import { Route as AuthenticatedAdminEmpresasRouteImport } from './routes/_authenticated.admin.empresas'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated.admin.configuracoes'
 import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
-import { Route as AuthenticatedWeazeEmpresasIdRouteImport } from './routes/_authenticated.weaze.empresas.$id'
+import { Route as AuthenticatedAdminEmpresasIdRouteImport } from './routes/_authenticated.admin.empresas.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -55,14 +55,14 @@ const CCompanySlugRoute = CCompanySlugRouteImport.update({
   path: '/c/$companySlug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedWeazeRoute = AuthenticatedWeazeRouteImport.update({
-  id: '/weaze',
-  path: '/weaze',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const CCompanySlugIndexRoute = CCompanySlugIndexRouteImport.update({
@@ -70,15 +70,15 @@ const CCompanySlugIndexRoute = CCompanySlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
-const AuthenticatedWeazeIndexRoute = AuthenticatedWeazeIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedWeazeRoute,
-} as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const CCompanySlugSacolaRoute = CCompanySlugSacolaRouteImport.update({
   id: '/sacola',
@@ -100,36 +100,6 @@ const CCompanySlugFeedRoute = CCompanySlugFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
-const AuthenticatedWeazeMetricasRoute =
-  AuthenticatedWeazeMetricasRouteImport.update({
-    id: '/metricas',
-    path: '/metricas',
-    getParentRoute: () => AuthenticatedWeazeRoute,
-  } as any)
-const AuthenticatedWeazeLicencasRoute =
-  AuthenticatedWeazeLicencasRouteImport.update({
-    id: '/licencas',
-    path: '/licencas',
-    getParentRoute: () => AuthenticatedWeazeRoute,
-  } as any)
-const AuthenticatedWeazeFinanceiroRoute =
-  AuthenticatedWeazeFinanceiroRouteImport.update({
-    id: '/financeiro',
-    path: '/financeiro',
-    getParentRoute: () => AuthenticatedWeazeRoute,
-  } as any)
-const AuthenticatedWeazeEmpresasRoute =
-  AuthenticatedWeazeEmpresasRouteImport.update({
-    id: '/empresas',
-    path: '/empresas',
-    getParentRoute: () => AuthenticatedWeazeRoute,
-  } as any)
-const AuthenticatedWeazeConfiguracoesRoute =
-  AuthenticatedWeazeConfiguracoesRouteImport.update({
-    id: '/configuracoes',
-    path: '/configuracoes',
-    getParentRoute: () => AuthenticatedWeazeRoute,
-  } as any)
 const AuthenticatedAppProdutosRoute =
   AuthenticatedAppProdutosRouteImport.update({
     id: '/produtos',
@@ -164,67 +134,97 @@ const AuthenticatedAppAtendimentoRoute =
     path: '/atendimento',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAdminMetricasRoute =
+  AuthenticatedAdminMetricasRouteImport.update({
+    id: '/metricas',
+    path: '/metricas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminLicencasRoute =
+  AuthenticatedAdminLicencasRouteImport.update({
+    id: '/licencas',
+    path: '/licencas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminFinanceiroRoute =
+  AuthenticatedAdminFinanceiroRouteImport.update({
+    id: '/financeiro',
+    path: '/financeiro',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminEmpresasRoute =
+  AuthenticatedAdminEmpresasRouteImport.update({
+    id: '/empresas',
+    path: '/empresas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
   id: '/m/$tableSlug',
   path: '/m/$tableSlug',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
-const AuthenticatedWeazeEmpresasIdRoute =
-  AuthenticatedWeazeEmpresasIdRouteImport.update({
+const AuthenticatedAdminEmpresasIdRoute =
+  AuthenticatedAdminEmpresasIdRouteImport.update({
     id: '/$id',
     path: '/$id',
-    getParentRoute: () => AuthenticatedWeazeEmpresasRoute,
+    getParentRoute: () => AuthenticatedAdminEmpresasRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
-  '/weaze': typeof AuthenticatedWeazeRouteWithChildren
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
+  '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/admin/licencas': typeof AuthenticatedAdminLicencasRoute
+  '/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
-  '/weaze/configuracoes': typeof AuthenticatedWeazeConfiguracoesRoute
-  '/weaze/empresas': typeof AuthenticatedWeazeEmpresasRouteWithChildren
-  '/weaze/financeiro': typeof AuthenticatedWeazeFinanceiroRoute
-  '/weaze/licencas': typeof AuthenticatedWeazeLicencasRoute
-  '/weaze/metricas': typeof AuthenticatedWeazeMetricasRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
-  '/weaze/': typeof AuthenticatedWeazeIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
-  '/weaze/empresas/$id': typeof AuthenticatedWeazeEmpresasIdRoute
+  '/admin/empresas/$id': typeof AuthenticatedAdminEmpresasIdRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
+  '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/admin/licencas': typeof AuthenticatedAdminLicencasRoute
+  '/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
-  '/weaze/configuracoes': typeof AuthenticatedWeazeConfiguracoesRoute
-  '/weaze/empresas': typeof AuthenticatedWeazeEmpresasRouteWithChildren
-  '/weaze/financeiro': typeof AuthenticatedWeazeFinanceiroRoute
-  '/weaze/licencas': typeof AuthenticatedWeazeLicencasRoute
-  '/weaze/metricas': typeof AuthenticatedWeazeMetricasRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
-  '/weaze': typeof AuthenticatedWeazeIndexRoute
   '/c/$companySlug': typeof CCompanySlugIndexRoute
-  '/weaze/empresas/$id': typeof AuthenticatedWeazeEmpresasIdRoute
+  '/admin/empresas/$id': typeof AuthenticatedAdminEmpresasIdRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesById {
@@ -232,28 +232,28 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
-  '/_authenticated/weaze': typeof AuthenticatedWeazeRouteWithChildren
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
+  '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/_authenticated/admin/licencas': typeof AuthenticatedAdminLicencasRoute
+  '/_authenticated/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/_authenticated/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/feed': typeof AuthenticatedAppFeedRoute
   '/_authenticated/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
-  '/_authenticated/weaze/configuracoes': typeof AuthenticatedWeazeConfiguracoesRoute
-  '/_authenticated/weaze/empresas': typeof AuthenticatedWeazeEmpresasRouteWithChildren
-  '/_authenticated/weaze/financeiro': typeof AuthenticatedWeazeFinanceiroRoute
-  '/_authenticated/weaze/licencas': typeof AuthenticatedWeazeLicencasRoute
-  '/_authenticated/weaze/metricas': typeof AuthenticatedWeazeMetricasRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
-  '/_authenticated/weaze/': typeof AuthenticatedWeazeIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
-  '/_authenticated/weaze/empresas/$id': typeof AuthenticatedWeazeEmpresasIdRoute
+  '/_authenticated/admin/empresas/$id': typeof AuthenticatedAdminEmpresasIdRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRouteTypes {
@@ -261,80 +261,80 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/app'
-    | '/weaze'
     | '/c/$companySlug'
+    | '/admin/configuracoes'
+    | '/admin/empresas'
+    | '/admin/financeiro'
+    | '/admin/licencas'
+    | '/admin/metricas'
     | '/app/atendimento'
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
     | '/app/pedidos'
     | '/app/produtos'
-    | '/weaze/configuracoes'
-    | '/weaze/empresas'
-    | '/weaze/financeiro'
-    | '/weaze/licencas'
-    | '/weaze/metricas'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
+    | '/admin/'
     | '/app/'
-    | '/weaze/'
     | '/c/$companySlug/'
-    | '/weaze/empresas/$id'
+    | '/admin/empresas/$id'
     | '/c/$companySlug/m/$tableSlug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/admin/configuracoes'
+    | '/admin/empresas'
+    | '/admin/financeiro'
+    | '/admin/licencas'
+    | '/admin/metricas'
     | '/app/atendimento'
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
     | '/app/pedidos'
     | '/app/produtos'
-    | '/weaze/configuracoes'
-    | '/weaze/empresas'
-    | '/weaze/financeiro'
-    | '/weaze/licencas'
-    | '/weaze/metricas'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
+    | '/admin'
     | '/app'
-    | '/weaze'
     | '/c/$companySlug'
-    | '/weaze/empresas/$id'
+    | '/admin/empresas/$id'
     | '/c/$companySlug/m/$tableSlug'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/app'
-    | '/_authenticated/weaze'
     | '/c/$companySlug'
+    | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/empresas'
+    | '/_authenticated/admin/financeiro'
+    | '/_authenticated/admin/licencas'
+    | '/_authenticated/admin/metricas'
     | '/_authenticated/app/atendimento'
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/feed'
     | '/_authenticated/app/pedidos'
     | '/_authenticated/app/produtos'
-    | '/_authenticated/weaze/configuracoes'
-    | '/_authenticated/weaze/empresas'
-    | '/_authenticated/weaze/financeiro'
-    | '/_authenticated/weaze/licencas'
-    | '/_authenticated/weaze/metricas'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
+    | '/_authenticated/admin/'
     | '/_authenticated/app/'
-    | '/_authenticated/weaze/'
     | '/c/$companySlug/'
-    | '/_authenticated/weaze/empresas/$id'
+    | '/_authenticated/admin/empresas/$id'
     | '/c/$companySlug/m/$tableSlug'
   fileRoutesById: FileRoutesById
 }
@@ -375,18 +375,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCompanySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/weaze': {
-      id: '/_authenticated/weaze'
-      path: '/weaze'
-      fullPath: '/weaze'
-      preLoaderRoute: typeof AuthenticatedWeazeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/c/$companySlug/': {
@@ -396,19 +396,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCompanySlugIndexRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
-    '/_authenticated/weaze/': {
-      id: '/_authenticated/weaze/'
-      path: '/'
-      fullPath: '/weaze/'
-      preLoaderRoute: typeof AuthenticatedWeazeIndexRouteImport
-      parentRoute: typeof AuthenticatedWeazeRoute
-    }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/c/$companySlug/sacola': {
       id: '/c/$companySlug/sacola'
@@ -437,41 +437,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/c/$companySlug/feed'
       preLoaderRoute: typeof CCompanySlugFeedRouteImport
       parentRoute: typeof CCompanySlugRoute
-    }
-    '/_authenticated/weaze/metricas': {
-      id: '/_authenticated/weaze/metricas'
-      path: '/metricas'
-      fullPath: '/weaze/metricas'
-      preLoaderRoute: typeof AuthenticatedWeazeMetricasRouteImport
-      parentRoute: typeof AuthenticatedWeazeRoute
-    }
-    '/_authenticated/weaze/licencas': {
-      id: '/_authenticated/weaze/licencas'
-      path: '/licencas'
-      fullPath: '/weaze/licencas'
-      preLoaderRoute: typeof AuthenticatedWeazeLicencasRouteImport
-      parentRoute: typeof AuthenticatedWeazeRoute
-    }
-    '/_authenticated/weaze/financeiro': {
-      id: '/_authenticated/weaze/financeiro'
-      path: '/financeiro'
-      fullPath: '/weaze/financeiro'
-      preLoaderRoute: typeof AuthenticatedWeazeFinanceiroRouteImport
-      parentRoute: typeof AuthenticatedWeazeRoute
-    }
-    '/_authenticated/weaze/empresas': {
-      id: '/_authenticated/weaze/empresas'
-      path: '/empresas'
-      fullPath: '/weaze/empresas'
-      preLoaderRoute: typeof AuthenticatedWeazeEmpresasRouteImport
-      parentRoute: typeof AuthenticatedWeazeRoute
-    }
-    '/_authenticated/weaze/configuracoes': {
-      id: '/_authenticated/weaze/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/weaze/configuracoes'
-      preLoaderRoute: typeof AuthenticatedWeazeConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedWeazeRoute
     }
     '/_authenticated/app/produtos': {
       id: '/_authenticated/app/produtos'
@@ -515,6 +480,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAtendimentoRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/admin/metricas': {
+      id: '/_authenticated/admin/metricas'
+      path: '/metricas'
+      fullPath: '/admin/metricas'
+      preLoaderRoute: typeof AuthenticatedAdminMetricasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/licencas': {
+      id: '/_authenticated/admin/licencas'
+      path: '/licencas'
+      fullPath: '/admin/licencas'
+      preLoaderRoute: typeof AuthenticatedAdminLicencasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/financeiro': {
+      id: '/_authenticated/admin/financeiro'
+      path: '/financeiro'
+      fullPath: '/admin/financeiro'
+      preLoaderRoute: typeof AuthenticatedAdminFinanceiroRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/empresas': {
+      id: '/_authenticated/admin/empresas'
+      path: '/empresas'
+      fullPath: '/admin/empresas'
+      preLoaderRoute: typeof AuthenticatedAdminEmpresasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/c/$companySlug/m/$tableSlug': {
       id: '/c/$companySlug/m/$tableSlug'
       path: '/m/$tableSlug'
@@ -522,15 +522,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCompanySlugMTableSlugRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
-    '/_authenticated/weaze/empresas/$id': {
-      id: '/_authenticated/weaze/empresas/$id'
+    '/_authenticated/admin/empresas/$id': {
+      id: '/_authenticated/admin/empresas/$id'
       path: '/$id'
-      fullPath: '/weaze/empresas/$id'
-      preLoaderRoute: typeof AuthenticatedWeazeEmpresasIdRouteImport
-      parentRoute: typeof AuthenticatedWeazeEmpresasRoute
+      fullPath: '/admin/empresas/$id'
+      preLoaderRoute: typeof AuthenticatedAdminEmpresasIdRouteImport
+      parentRoute: typeof AuthenticatedAdminEmpresasRoute
     }
   }
 }
+
+interface AuthenticatedAdminEmpresasRouteChildren {
+  AuthenticatedAdminEmpresasIdRoute: typeof AuthenticatedAdminEmpresasIdRoute
+}
+
+const AuthenticatedAdminEmpresasRouteChildren: AuthenticatedAdminEmpresasRouteChildren =
+  {
+    AuthenticatedAdminEmpresasIdRoute: AuthenticatedAdminEmpresasIdRoute,
+  }
+
+const AuthenticatedAdminEmpresasRouteWithChildren =
+  AuthenticatedAdminEmpresasRoute._addFileChildren(
+    AuthenticatedAdminEmpresasRouteChildren,
+  )
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminEmpresasRoute: typeof AuthenticatedAdminEmpresasRouteWithChildren
+  AuthenticatedAdminFinanceiroRoute: typeof AuthenticatedAdminFinanceiroRoute
+  AuthenticatedAdminLicencasRoute: typeof AuthenticatedAdminLicencasRoute
+  AuthenticatedAdminMetricasRoute: typeof AuthenticatedAdminMetricasRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+  AuthenticatedAdminEmpresasRoute: AuthenticatedAdminEmpresasRouteWithChildren,
+  AuthenticatedAdminFinanceiroRoute: AuthenticatedAdminFinanceiroRoute,
+  AuthenticatedAdminLicencasRoute: AuthenticatedAdminLicencasRoute,
+  AuthenticatedAdminMetricasRoute: AuthenticatedAdminMetricasRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAtendimentoRoute: typeof AuthenticatedAppAtendimentoRoute
@@ -555,49 +590,14 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
 const AuthenticatedAppRouteWithChildren =
   AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
 
-interface AuthenticatedWeazeEmpresasRouteChildren {
-  AuthenticatedWeazeEmpresasIdRoute: typeof AuthenticatedWeazeEmpresasIdRoute
-}
-
-const AuthenticatedWeazeEmpresasRouteChildren: AuthenticatedWeazeEmpresasRouteChildren =
-  {
-    AuthenticatedWeazeEmpresasIdRoute: AuthenticatedWeazeEmpresasIdRoute,
-  }
-
-const AuthenticatedWeazeEmpresasRouteWithChildren =
-  AuthenticatedWeazeEmpresasRoute._addFileChildren(
-    AuthenticatedWeazeEmpresasRouteChildren,
-  )
-
-interface AuthenticatedWeazeRouteChildren {
-  AuthenticatedWeazeConfiguracoesRoute: typeof AuthenticatedWeazeConfiguracoesRoute
-  AuthenticatedWeazeEmpresasRoute: typeof AuthenticatedWeazeEmpresasRouteWithChildren
-  AuthenticatedWeazeFinanceiroRoute: typeof AuthenticatedWeazeFinanceiroRoute
-  AuthenticatedWeazeLicencasRoute: typeof AuthenticatedWeazeLicencasRoute
-  AuthenticatedWeazeMetricasRoute: typeof AuthenticatedWeazeMetricasRoute
-  AuthenticatedWeazeIndexRoute: typeof AuthenticatedWeazeIndexRoute
-}
-
-const AuthenticatedWeazeRouteChildren: AuthenticatedWeazeRouteChildren = {
-  AuthenticatedWeazeConfiguracoesRoute: AuthenticatedWeazeConfiguracoesRoute,
-  AuthenticatedWeazeEmpresasRoute: AuthenticatedWeazeEmpresasRouteWithChildren,
-  AuthenticatedWeazeFinanceiroRoute: AuthenticatedWeazeFinanceiroRoute,
-  AuthenticatedWeazeLicencasRoute: AuthenticatedWeazeLicencasRoute,
-  AuthenticatedWeazeMetricasRoute: AuthenticatedWeazeMetricasRoute,
-  AuthenticatedWeazeIndexRoute: AuthenticatedWeazeIndexRoute,
-}
-
-const AuthenticatedWeazeRouteWithChildren =
-  AuthenticatedWeazeRoute._addFileChildren(AuthenticatedWeazeRouteChildren)
-
 interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
-  AuthenticatedWeazeRoute: typeof AuthenticatedWeazeRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
-  AuthenticatedWeazeRoute: AuthenticatedWeazeRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

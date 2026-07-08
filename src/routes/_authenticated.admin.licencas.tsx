@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/weaze/licencas")({
+export const Route = createFileRoute("/_authenticated/admin/licencas")({
   component: WeazeLicencas,
   head: () => ({ meta: [{ title: "Licenças — WEAZE Admin" }] }),
 });

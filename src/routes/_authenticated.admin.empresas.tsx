@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Building2, Search, Ban, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/weaze/empresas")({
+export const Route = createFileRoute("/_authenticated/admin/empresas")({
   component: WeazeEmpresas,
   head: () => ({ meta: [{ title: "Empresas — WEAZE Admin" }] }),
 });
@@ -68,7 +68,7 @@ function WeazeEmpresas() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((c: any) => (
-            <Link key={c.id} to="/weaze/empresas/$id" params={{ id: c.company_id }} className="block">
+            <Link key={c.id} to="/admin/empresas/$id" params={{ id: c.company_id }} className="block">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">

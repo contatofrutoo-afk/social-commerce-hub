@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Building2, Users, Ban, Clock, DollarSign, AlertTriangle, TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/weaze/")({
+export const Route = createFileRoute("/_authenticated/admin/")({
   component: WeazeDashboard,
   head: () => ({ meta: [{ title: "Dashboard — WEAZE Admin" }] }),
 });
