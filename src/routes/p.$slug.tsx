@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { productRepository, companyRepository } from "@/repositories";
+import { productRepository } from "@/repositories";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
@@ -50,8 +50,6 @@ function ProductPage() {
     productRepository.incrementCounter(product.id, "cart_additions_count").catch(() => {});
   }
 
-  const productUrl = typeof window !== "undefined" ? window.location.href : "";
-
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur-xl">
@@ -60,7 +58,7 @@ function ProductPage() {
             <ArrowLeft className="size-4" />
             Voltar
           </Link>
-          <Link to={`/c/${slug.split("-")[0]}/sacola`} className="relative">
+          <Link to={`/c/${product.companySlug ?? slug.split("-")[0]}/sacola`} className="relative">
             <ShoppingCart className="size-5" />
             {cart.count > 0 && (
               <span className="absolute -right-2 -top-2 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">

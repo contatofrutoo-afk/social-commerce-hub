@@ -5,6 +5,7 @@ function map(r: any): Product {
   return {
     id: r.id,
     companyId: r.company_id,
+    companySlug: r.company_slug ?? undefined,
     name: r.name,
     slug: r.slug,
     category: r.category,

@@ -40,6 +40,7 @@ CREATE INDEX IF NOT EXISTS idx_product_events_type ON public.product_events(even
 -- RLS
 ALTER TABLE public.product_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Company members manage product_events" ON public.product_events;
 CREATE POLICY "Company members manage product_events"
   ON public.product_events
   FOR ALL TO authenticated
@@ -47,6 +48,7 @@ CREATE POLICY "Company members manage product_events"
   WITH CHECK (private.has_company_access(auth.uid(), company_id));
 
 -- Anon pode inserir eventos (para rastrear visoes do QR)
+DROP POLICY IF EXISTS "Anyone can insert product_events" ON public.product_events;
 CREATE POLICY "Anyone can insert product_events"
   ON public.product_events
   FOR INSERT TO anon, authenticated
@@ -106,6 +108,7 @@ BEGIN
   SELECT jsonb_build_object(
     'id', p.id,
     'company_id', p.company_id,
+    'company_slug', c.slug,
     'name', p.name,
     'slug', p.slug,
     'category', p.category,
@@ -125,6 +128,7 @@ BEGIN
     'unique_customers', p.unique_customers
   ) INTO v_result
   FROM products p
+  JOIN companies c ON c.id = p.company_id
   WHERE p.slug = _slug
     AND p.status = 'active';
 

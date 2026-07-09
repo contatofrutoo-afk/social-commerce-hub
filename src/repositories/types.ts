@@ -45,6 +45,7 @@ export type ProductStatus = "active" | "inactive";
 export interface Product {
   id: string;
   companyId: string;
+  companySlug?: string;
   name: string;
   slug: string;
   category: string | null;
