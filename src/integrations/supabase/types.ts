@@ -836,6 +836,17 @@ export type Database = {
         }
         Returns: string
       }
+      get_company_public: {
+        Args: { _slug: string }
+        Returns: {
+          id: string
+          logo_url: string
+          name: string
+          primary_color: string
+          slug: string
+          welcome_message: string
+        }[]
+      }
       get_customer_self: {
         Args: { _customer_id: string; _token: string }
         Returns: {
