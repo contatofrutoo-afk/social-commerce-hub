@@ -95,8 +95,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento." },
       { property: "og:description", content: "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento." },
       { name: "twitter:description", content: "WEAZE conecta clientes e negócios físicos: check-in, feed social, sacola e inteligência de relacionamento." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7e7d6504-1f19-44a8-b979-25466b66c704/id-preview-e99893fd--7e6811d8-8d08-4231-8b1a-581f3d6721fa.lovable.app-1783229833085.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7e7d6504-1f19-44a8-b979-25466b66c704/id-preview-e99893fd--7e6811d8-8d08-4231-8b1a-581f3d6721fa.lovable.app-1783229833085.png" },
+      { property: "og:image", content: "/og-image.png" },
+      { name: "twitter:image", content: "/og-image.png" },
     ],
     links: [
       {
