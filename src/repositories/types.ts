@@ -40,15 +40,38 @@ export interface Checkin {
   createdAt: string;
 }
 
+export type ProductStatus = "active" | "inactive";
+
 export interface Product {
   id: string;
   companyId: string;
   name: string;
+  slug: string;
   category: string | null;
   price: number;
   imageUrl: string | null;
   available: boolean;
   description: string | null;
+  status: ProductStatus;
+  stockQuantity: number | null;
+  sku: string | null;
+  internalCode: string | null;
+  viewsCount: number;
+  scanCount: number;
+  cartAdditionsCount: number;
+  orderCount: number;
+  revenue: number;
+  uniqueCustomers: number;
+}
+
+export interface ProductEvent {
+  id: string;
+  productId: string;
+  companyId: string;
+  customerId: string | null;
+  eventType: "view" | "scan" | "cart_add" | "cart_remove" | "purchase";
+  metadata: Record<string, unknown>;
+  createdAt: string;
 }
 
 export interface Post {

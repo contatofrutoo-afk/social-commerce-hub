@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
@@ -27,6 +28,7 @@ import { Route as AuthenticatedAppPedidosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppFeedRouteImport } from './routes/_authenticated.app.feed'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated.app.configuracoes'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated.app.clientes'
+import { Route as AuthenticatedAppCatalogoRouteImport } from './routes/_authenticated.app.catalogo'
 import { Route as AuthenticatedAppAtendimentoRouteImport } from './routes/_authenticated.app.atendimento'
 import { Route as AuthenticatedAdminMetricasRouteImport } from './routes/_authenticated.admin.metricas'
 import { Route as AuthenticatedAdminLicencasRouteImport } from './routes/_authenticated.admin.licencas'
@@ -48,6 +50,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CCompanySlugRoute = CCompanySlugRouteImport.update({
@@ -128,6 +135,12 @@ const AuthenticatedAppClientesRoute =
     path: '/clientes',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppCatalogoRoute =
+  AuthenticatedAppCatalogoRouteImport.update({
+    id: '/catalogo',
+    path: '/catalogo',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppAtendimentoRoute =
   AuthenticatedAppAtendimentoRouteImport.update({
     id: '/atendimento',
@@ -182,12 +195,14 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/p/$slug': typeof PSlugRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/admin/licencas': typeof AuthenticatedAdminLicencasRoute
   '/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
+  '/app/catalogo': typeof AuthenticatedAppCatalogoRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
@@ -206,12 +221,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/p/$slug': typeof PSlugRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/admin/licencas': typeof AuthenticatedAdminLicencasRoute
   '/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
+  '/app/catalogo': typeof AuthenticatedAppCatalogoRoute
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
@@ -235,12 +252,14 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
+  '/p/$slug': typeof PSlugRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
   '/_authenticated/admin/licencas': typeof AuthenticatedAdminLicencasRoute
   '/_authenticated/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/_authenticated/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
+  '/_authenticated/app/catalogo': typeof AuthenticatedAppCatalogoRoute
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/feed': typeof AuthenticatedAppFeedRoute
@@ -264,12 +283,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/c/$companySlug'
+    | '/p/$slug'
     | '/admin/configuracoes'
     | '/admin/empresas'
     | '/admin/financeiro'
     | '/admin/licencas'
     | '/admin/metricas'
     | '/app/atendimento'
+    | '/app/catalogo'
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
@@ -288,12 +309,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/p/$slug'
     | '/admin/configuracoes'
     | '/admin/empresas'
     | '/admin/financeiro'
     | '/admin/licencas'
     | '/admin/metricas'
     | '/app/atendimento'
+    | '/app/catalogo'
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
@@ -316,12 +339,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/c/$companySlug'
+    | '/p/$slug'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/empresas'
     | '/_authenticated/admin/financeiro'
     | '/_authenticated/admin/licencas'
     | '/_authenticated/admin/metricas'
     | '/_authenticated/app/atendimento'
+    | '/_authenticated/app/catalogo'
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/feed'
@@ -343,6 +368,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   CCompanySlugRoute: typeof CCompanySlugRouteWithChildren
+  PSlugRoute: typeof PSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -366,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$companySlug': {
@@ -473,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppClientesRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/catalogo': {
+      id: '/_authenticated/app/catalogo'
+      path: '/catalogo'
+      fullPath: '/app/catalogo'
+      preLoaderRoute: typeof AuthenticatedAppCatalogoRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/atendimento': {
       id: '/_authenticated/app/atendimento'
       path: '/atendimento'
@@ -569,6 +609,7 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAtendimentoRoute: typeof AuthenticatedAppAtendimentoRoute
+  AuthenticatedAppCatalogoRoute: typeof AuthenticatedAppCatalogoRoute
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppFeedRoute: typeof AuthenticatedAppFeedRoute
@@ -579,6 +620,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAtendimentoRoute: AuthenticatedAppAtendimentoRoute,
+  AuthenticatedAppCatalogoRoute: AuthenticatedAppCatalogoRoute,
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppFeedRoute: AuthenticatedAppFeedRoute,
@@ -631,7 +673,18 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   CCompanySlugRoute: CCompanySlugRouteWithChildren,
+  PSlugRoute: PSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -13,6 +13,7 @@ import {
   LogOut,
   ShieldAlert,
   MessageCircle,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -137,6 +138,7 @@ function AppLayout() {
     { to: "/app/clientes", label: "Clientes", icon: Users },
     { to: "/app/feed", label: "Publicações", icon: Newspaper },
     { to: "/app/produtos", label: "Produtos", icon: Package },
+    { to: "/app/catalogo", label: "Catálogo Inteligente", icon: QrCode },
     { to: "/app/pedidos", label: "Pedidos", icon: ShoppingCart },
     { to: "/app/atendimento", label: "Atendimento", icon: Store },
     { to: "/app/configuracoes", label: "Configurações", icon: Settings },
