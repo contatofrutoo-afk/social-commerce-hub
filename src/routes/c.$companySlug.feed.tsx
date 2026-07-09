@@ -170,9 +170,16 @@ function PostCard({
         )}
       </header>
 
-      {post.imageUrl && (
+      {post.videoUrl ? (
+        <video
+          src={post.videoUrl}
+          className="w-full max-h-[520px] object-cover"
+          controls
+          playsInline
+        />
+      ) : post.imageUrl ? (
         <img src={post.imageUrl} alt="" className="w-full max-h-[520px] object-cover" />
-      )}
+      ) : null}
 
       {post.text && <p className="px-4 py-3 text-sm">{post.text}</p>}
 
