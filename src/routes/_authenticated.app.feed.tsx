@@ -265,12 +265,14 @@ function PostDetail({
       </DialogHeader>
       <div className="mt-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</div>
       {post.videoUrl ? (
-        <video
-          src={post.videoUrl}
-          className="mt-3 max-h-80 w-full rounded-lg object-cover"
-          controls
-          playsInline
-        />
+        <div className="mt-3 aspect-[9/16] w-full overflow-hidden rounded-lg">
+          <video
+            src={post.videoUrl}
+            className="size-full object-cover"
+            controls
+            playsInline
+          />
+        </div>
       ) : post.imageUrl ? (
         <img src={post.imageUrl} alt="" className="mt-3 max-h-80 w-full rounded-lg object-cover" />
       ) : null}

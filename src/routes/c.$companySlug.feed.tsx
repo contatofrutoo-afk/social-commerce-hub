@@ -171,12 +171,14 @@ function PostCard({
       </header>
 
       {post.videoUrl ? (
-        <video
-          src={post.videoUrl}
-          className="w-full max-h-[520px] object-cover"
-          controls
-          playsInline
-        />
+        <div className="aspect-[9/16] w-full">
+          <video
+            src={post.videoUrl}
+            className="size-full object-cover"
+            controls
+            playsInline
+          />
+        </div>
       ) : post.imageUrl ? (
         <img src={post.imageUrl} alt="" className="w-full max-h-[520px] object-cover" />
       ) : null}
