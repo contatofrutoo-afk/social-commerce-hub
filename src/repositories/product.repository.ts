@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Product } from "./types";
+import type { Product, ProductStatus } from "./types";
 
 function map(r: any): Product {
   return {
@@ -59,22 +59,32 @@ export const productRepository = {
     return data ? map(data) : null;
   },
 
-  async create(companyId: string, p: Omit<Product, "id" | "companyId" | "viewsCount" | "scanCount" | "cartAdditionsCount" | "orderCount" | "revenue" | "uniqueCustomers">) {
+  async create(
+    companyId: string,
+    p: Omit<Product, "id" | "companyId" | "viewsCount" | "scanCount" | "cartAdditionsCount" | "orderCount" | "revenue" | "uniqueCustomers" | "slug" | "status" | "stockQuantity" | "sku" | "internalCode"> & {
+      slug?: string;
+      status?: ProductStatus;
+      stockQuantity?: number | null;
+      sku?: string | null;
+      internalCode?: string | null;
+    },
+  ) {
+    const slug = p.slug ?? p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const { data, error } = await supabase
       .from("products")
       .insert({
         company_id: companyId,
         name: p.name,
-        slug: p.slug,
+        slug,
         category: p.category,
         price: p.price,
         image_url: p.imageUrl,
         available: p.available,
         description: p.description,
-        status: p.status,
-        stock_quantity: p.stockQuantity,
-        sku: p.sku,
-        internal_code: p.internalCode,
+        status: p.status ?? "active" as const,
+        stock_quantity: p.stockQuantity ?? null,
+        sku: p.sku ?? null,
+        internal_code: p.internalCode ?? null,
       })
       .select()
       .single();
