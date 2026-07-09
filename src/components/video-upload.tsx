@@ -23,6 +23,45 @@ export function VideoUpload({ value, onChange, folder = "general", className }: 
     setPreview(value);
   }, [value]);
 
+  async function validateVideo(file: File): Promise<boolean> {
+    return new Promise((resolve) => {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+
+        const { videoWidth, videoHeight, duration } = video;
+
+        const ratio = videoWidth / videoHeight;
+        const expectedRatio = 9 / 16;
+        const ratioTolerance = 0.05;
+
+        if (Math.abs(ratio - expectedRatio) > ratioTolerance) {
+          toast.error(`Proporção inválida: ${videoWidth}×${videoHeight}. Use 9:16 (1080×1920).`);
+          resolve(false);
+          return;
+        }
+
+        if (duration > 180) {
+          toast.error(`Vídeo muito longo: ${Math.round(duration)}s. Máximo 180 segundos.`);
+          resolve(false);
+          return;
+        }
+
+        resolve(true);
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        toast.error("Não foi possível ler o arquivo de vídeo.");
+        resolve(false);
+      };
+
+      video.src = URL.createObjectURL(file);
+    });
+  }
+
   async function handleFile(file: File | undefined) {
     if (!file) return;
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -33,6 +72,10 @@ export function VideoUpload({ value, onChange, folder = "general", className }: 
       toast.error("Arquivo muito grande. Máximo 50MB.");
       return;
     }
+
+    const valid = await validateVideo(file);
+    if (!valid) return;
+
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "mp4";
