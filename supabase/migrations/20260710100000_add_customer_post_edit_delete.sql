@@ -1,8 +1,11 @@
 -- ============================================================
 -- Editar e excluir postagens via RPC (session-token)
+-- Regras:
+--   Editar: autor do post (customer) OU company member (business)
+--   Excluir: autor do post OU company member (moderação)
 -- ============================================================
 
--- 1. RPC: editar postagem (valida token + ownership)
+-- 1. RPC: editar postagem
 CREATE OR REPLACE FUNCTION private.update_customer_post(
   _customer_id uuid,
   _token uuid,
@@ -30,11 +33,7 @@ BEGIN
   SELECT company_id INTO cust_company FROM public.customers WHERE id = _customer_id;
 
   IF post_row.author_type = 'customer' THEN
-    IF cust_company IS NOT NULL AND cust_company = post_row.company_id THEN
-      NULL;
-    ELSIF post_row.customer_id = _customer_id THEN
-      NULL;
-    ELSE
+    IF post_row.customer_id <> _customer_id THEN
       RAISE EXCEPTION 'not allowed';
     END IF;
   ELSIF post_row.author_type = 'business' THEN
@@ -62,7 +61,7 @@ $$;
 REVOKE ALL ON FUNCTION public.update_customer_post(uuid, uuid, uuid, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.update_customer_post(uuid, uuid, uuid, text, text) TO anon, authenticated;
 
--- 2. RPC: excluir postagem (valida token + ownership)
+-- 2. RPC: excluir postagem (autor OU company member para moderação)
 CREATE OR REPLACE FUNCTION private.delete_customer_post(
   _customer_id uuid,
   _token uuid,
@@ -88,9 +87,9 @@ BEGIN
   SELECT company_id INTO cust_company FROM public.customers WHERE id = _customer_id;
 
   IF post_row.author_type = 'customer' THEN
-    IF cust_company IS NOT NULL AND cust_company = post_row.company_id THEN
+    IF post_row.customer_id = _customer_id THEN
       NULL;
-    ELSIF post_row.customer_id = _customer_id THEN
+    ELSIF cust_company IS NOT NULL AND cust_company = post_row.company_id THEN
       NULL;
     ELSE
       RAISE EXCEPTION 'not allowed';

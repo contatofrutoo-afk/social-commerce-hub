@@ -165,7 +165,19 @@ function PostCard({
   const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const isOwner = post.companyId === companyId;
+  const isCompanyMember = post.companyId === companyId;
+  const isPostAuthor = post.authorType === "customer" && post.customerId === customerId;
+
+  const canEdit =
+    (post.authorType === "customer" && isPostAuthor) ||
+    (post.authorType === "business" && isCompanyMember);
+
+  const canDelete =
+    isPostAuthor ||
+    (post.authorType === "customer" && isCompanyMember) ||
+    (post.authorType === "business" && isCompanyMember);
+
+  const showMenu = canEdit || canDelete;
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
@@ -234,7 +246,7 @@ function PostCard({
             {post.companions}
           </span>
         )}
-        {isOwner && (
+        {showMenu && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="size-8 shrink-0">
@@ -242,21 +254,25 @@ function PostCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditText(post.text ?? "");
-                  setEditImageUrl(post.imageUrl);
-                  setEditingPost(true);
-                }}
-              >
-                <Pencil className="size-4" /> Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setConfirmDelete(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="size-4" /> Excluir
-              </DropdownMenuItem>
+              {canEdit && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditText(post.text ?? "");
+                    setEditImageUrl(post.imageUrl);
+                    setEditingPost(true);
+                  }}
+                >
+                  <Pencil className="size-4" /> Editar
+                </DropdownMenuItem>
+              )}
+              {canDelete && (
+                <DropdownMenuItem
+                  onClick={() => setConfirmDelete(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="size-4" /> Excluir
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
