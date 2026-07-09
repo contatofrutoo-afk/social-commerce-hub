@@ -42,6 +42,12 @@ export const Route = createFileRoute("/_authenticated/app/clientes")({
   head: () => ({ meta: [{ title: "Clientes — WEAZE" }] }),
 });
 
+const PRESENCE_WINDOW_MS = 8 * 60 * 60 * 1000;
+
+function isPresent(lastVisitAt: string): boolean {
+  return Date.now() - new Date(lastVisitAt).getTime() < PRESENCE_WINDOW_MS;
+}
+
 const contextIcons: Record<string, any> = {
   sozinho: User,
   casal: Heart,
@@ -168,17 +174,24 @@ function CustomersPage() {
                 className="flex flex-1 items-center gap-2 min-w-0"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  {c.avatarUrl ? (
-                    <img
-                      src={c.avatarUrl}
-                      alt=""
-                      className="size-8 rounded-full object-cover shrink-0"
+                  <div className="relative shrink-0">
+                    {c.avatarUrl ? (
+                      <img
+                        src={c.avatarUrl}
+                        alt=""
+                        className="size-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                        {c.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span
+                      className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background ${
+                        isPresent(c.lastVisitAt) ? "bg-green-500" : "bg-gray-400"
+                      }`}
                     />
-                  ) : (
-                    <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                      {c.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  </div>
                   <div className="min-w-0">
                     <div className="text-sm font-medium truncate">{c.name}</div>
                     <div className="text-xs text-muted-foreground truncate">{c.whatsapp}</div>
