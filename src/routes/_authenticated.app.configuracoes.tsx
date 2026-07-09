@@ -99,11 +99,15 @@ function SettingsPage() {
   });
   const companyId = role?.company_id as string | undefined;
 
-  const { data: company } = useQuery({
-    queryKey: ["company-full", companyId],
-    queryFn: () => companyRepository.findById(companyId!),
-    enabled: !!companyId,
-  });
+  const company = role?.company ? {
+    id: role.company.id,
+    name: role.company.name,
+    slug: role.company.slug,
+    logoUrl: role.company.logo_url,
+    primaryColor: role.company.primary_color ?? "#8800AA",
+    welcomeMessage: role.company.welcome_message ?? "Bem-vindo!",
+  } : undefined;
+
   const { data: tables } = useQuery({
     queryKey: ["tables", companyId],
     queryFn: () => tableRepository.listByCompany(companyId!),
