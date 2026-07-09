@@ -55,9 +55,7 @@ function ClientLayout() {
             </div>
           </Link>
           <Link to="/c/$companySlug/perfil" params={{ companySlug }}>
-            <div className="grid size-9 place-items-center rounded-full bg-accent text-accent-foreground">
-              <User className="size-4" />
-            </div>
+            <Logo className="h-8" />
           </Link>
         </div>
       </header>
