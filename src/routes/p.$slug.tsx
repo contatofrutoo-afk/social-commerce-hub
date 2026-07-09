@@ -16,7 +16,7 @@ function ProductPage() {
   const { slug } = Route.useParams();
   const [qty, setQty] = useState(1);
 
-  const { data: product } = useQuery({
+  const { data: product, isPending } = useQuery({
     queryKey: ["product-by-slug", slug],
     queryFn: () => productRepository.findBySlug(slug),
   });
@@ -29,6 +29,17 @@ function ProductPage() {
       productRepository.incrementCounter(product.id, "views_count").catch(() => {});
     }
   }, [product?.id]);
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-pulse text-center text-muted-foreground">
+          <Package className="mx-auto mb-4 size-12" />
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
