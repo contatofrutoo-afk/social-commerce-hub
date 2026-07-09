@@ -31,6 +31,12 @@ export const Route = createFileRoute("/_authenticated/app/atendimento")({
   head: () => ({ meta: [{ title: "Atendimento — WEAZE" }] }),
 });
 
+const PRESENCE_WINDOW_MS = 8 * 60 * 60 * 1000;
+
+function isPresent(createdAt: string): boolean {
+  return Date.now() - new Date(createdAt).getTime() < PRESENCE_WINDOW_MS;
+}
+
 const contextIcons: Record<string, any> = {
   sozinho: User,
   casal: Heart,
@@ -195,17 +201,24 @@ function MesasView({ companyId }: { companyId: string }) {
                       onClick={() => setSelectedCheckin(o)}
                       className="flex w-full items-center gap-2 rounded-lg p-2 text-left hover:bg-card transition-colors"
                     >
-                      {avatar ? (
-                        <img
-                          src={avatar}
-                          alt=""
-                          className="size-8 shrink-0 rounded-full object-cover"
+                      <div className="relative shrink-0">
+                        {avatar ? (
+                          <img
+                            src={avatar}
+                            alt=""
+                            className="size-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                            {name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span
+                          className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background ${
+                            isPresent(o.created_at) ? "bg-green-500" : "bg-gray-400"
+                          }`}
                         />
-                      ) : (
-                        <div className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                          {name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium truncate">{name}</div>
                         <div className="text-xs text-muted-foreground">
@@ -282,13 +295,20 @@ function LojaView({ companyId }: { companyId: string }) {
                 onClick={() => setSelectedCheckin(c)}
                 className="flex flex-1 items-center gap-3 min-w-0"
               >
-                {avatar ? (
-                  <img src={avatar} alt="" className="size-10 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <div className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                    {name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="relative shrink-0">
+                  {avatar ? (
+                    <img src={avatar} alt="" className="size-10 rounded-full object-cover" />
+                  ) : (
+                    <div className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span
+                    className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background ${
+                      isPresent(c.created_at) ? "bg-green-500" : "bg-gray-400"
+                    }`}
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{name}</div>
                   <div className="text-xs text-muted-foreground">
