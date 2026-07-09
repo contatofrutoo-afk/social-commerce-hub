@@ -134,15 +134,6 @@ function ProductPage() {
                 <Plus className="size-4" />
               </button>
             </div>
-            <Button
-              className="flex-1"
-              size="lg"
-              onClick={addToCart}
-              disabled={!product.available}
-            >
-              <ShoppingCart className="mr-2 size-5" />
-              {product.available ? "Adicionar à Sacola" : "Indisponível"}
-            </Button>
           </div>
         </div>
       </main>
