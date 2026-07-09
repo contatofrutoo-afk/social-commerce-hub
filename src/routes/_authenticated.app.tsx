@@ -103,7 +103,9 @@ function AppLayout() {
   });
 
   const isBlocked = companyStatus?.status === "bloqueado";
-  const blockedMessage = settings?.blocked_message || "Seu acesso à plataforma encontra-se temporariamente bloqueado. Para mais informações entre em contato com o administrador da WEAZE.";
+  const blockedMessage =
+    settings?.blocked_message ||
+    "Seu acesso à plataforma encontra-se temporariamente bloqueado. Para mais informações entre em contato com o administrador da WEAZE.";
   const adminContact = settings?.admin_contact || "";
 
   if (isBlocked) {
@@ -114,13 +116,9 @@ function AppLayout() {
           <h1 className="font-display text-2xl font-bold mb-3">
             Seu acesso está temporariamente bloqueado
           </h1>
-          <p className="text-muted-foreground mb-6">
-            {blockedMessage}
-          </p>
+          <p className="text-muted-foreground mb-6">{blockedMessage}</p>
           {adminContact && (
-            <p className="text-sm text-muted-foreground mb-4">
-              Contato: {adminContact}
-            </p>
+            <p className="text-sm text-muted-foreground mb-4">Contato: {adminContact}</p>
           )}
           <Button disabled className="gap-2">
             <MessageCircle className="h-4 w-4" />
@@ -151,14 +149,17 @@ function AppLayout() {
       <aside className="hidden w-64 flex-col border-r bg-card p-5 md:flex">
         <div className="mb-8 flex items-center gap-3">
           {role?.company?.logo_url ? (
-            <img src={role.company.logo_url} alt="" className="size-10 rounded-xl object-cover ring-1 ring-border" />
+            <img
+              src={role.company.logo_url}
+              alt=""
+              className="size-10 rounded-xl object-cover ring-1 ring-border"
+            />
           ) : (
             <div className="grid size-10 place-items-center rounded-xl bg-primary/10">
               <Logo className="h-5" />
             </div>
           )}
           <div className="min-w-0">
-            <Logo className="h-4" />
             <div className="mt-0.5 truncate text-xs text-muted-foreground">
               {role?.company?.name ?? "Painel"}
             </div>
@@ -199,7 +200,6 @@ function AppLayout() {
 
       {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/90 backdrop-blur px-4 py-3 md:hidden">
-        <Logo className="h-6" />
         <span className="truncate text-sm font-medium text-muted-foreground">
           {role?.company?.name ?? ""}
         </span>
