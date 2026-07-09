@@ -1,8 +1,8 @@
 -- ============================================================
--- Editar e excluir postagens de clientes via RPC (session-token)
+-- Editar e excluir postagens via RPC (session-token)
 -- ============================================================
 
--- 1. RPC: editar postagem do cliente (valida token + ownership)
+-- 1. RPC: editar postagem (valida token + ownership)
 CREATE OR REPLACE FUNCTION private.update_customer_post(
   _customer_id uuid,
   _token uuid,
@@ -14,6 +14,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
   post_row record;
+  cust_company uuid;
 BEGIN
   IF NOT private.verify_customer(_customer_id, _token) THEN
     RAISE EXCEPTION 'invalid session';
@@ -26,7 +27,17 @@ BEGIN
     RAISE EXCEPTION 'post not found';
   END IF;
 
-  IF post_row.author_type <> 'customer' OR post_row.customer_id <> _customer_id THEN
+  SELECT company_id INTO cust_company FROM public.customers WHERE id = _customer_id;
+
+  IF post_row.author_type = 'customer' THEN
+    IF post_row.customer_id <> _customer_id THEN
+      RAISE EXCEPTION 'not allowed';
+    END IF;
+  ELSIF post_row.author_type = 'business' THEN
+    IF cust_company IS NULL OR cust_company <> post_row.company_id THEN
+      RAISE EXCEPTION 'not allowed';
+    END IF;
+  ELSE
     RAISE EXCEPTION 'not allowed';
   END IF;
 
@@ -47,7 +58,7 @@ $$;
 REVOKE ALL ON FUNCTION public.update_customer_post(uuid, uuid, uuid, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.update_customer_post(uuid, uuid, uuid, text, text) TO anon, authenticated;
 
--- 2. RPC: excluir postagem do cliente (valida token + ownership)
+-- 2. RPC: excluir postagem (valida token + ownership)
 CREATE OR REPLACE FUNCTION private.delete_customer_post(
   _customer_id uuid,
   _token uuid,
@@ -57,19 +68,30 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
   post_row record;
+  cust_company uuid;
 BEGIN
   IF NOT private.verify_customer(_customer_id, _token) THEN
     RAISE EXCEPTION 'invalid session';
   END IF;
 
-  SELECT id, author_type, customer_id INTO post_row
+  SELECT id, company_id, author_type, customer_id INTO post_row
   FROM public.posts WHERE id = _post_id;
 
   IF post_row IS NULL THEN
     RAISE EXCEPTION 'post not found';
   END IF;
 
-  IF post_row.author_type <> 'customer' OR post_row.customer_id <> _customer_id THEN
+  SELECT company_id INTO cust_company FROM public.customers WHERE id = _customer_id;
+
+  IF post_row.author_type = 'customer' THEN
+    IF post_row.customer_id <> _customer_id THEN
+      RAISE EXCEPTION 'not allowed';
+    END IF;
+  ELSIF post_row.author_type = 'business' THEN
+    IF cust_company IS NULL OR cust_company <> post_row.company_id THEN
+      RAISE EXCEPTION 'not allowed';
+    END IF;
+  ELSE
     RAISE EXCEPTION 'not allowed';
   END IF;
 

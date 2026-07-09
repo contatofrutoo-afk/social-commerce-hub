@@ -114,6 +114,7 @@ function FeedPage() {
           post={p}
           customerId={session.customerId}
           sessionToken={session.sessionToken}
+          companyId={session.companyId}
           cart={cart}
         />
       ))}
@@ -148,11 +149,13 @@ function PostCard({
   post,
   customerId,
   sessionToken,
+  companyId,
   cart,
 }: {
   post: Post;
   customerId: string;
   sessionToken: string;
+  companyId: string;
   cart: ReturnType<typeof useCart>;
 }) {
   const qc = useQueryClient();
@@ -162,7 +165,9 @@ function PostCard({
   const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const isOwner = post.authorType === "customer" && post.customerId === customerId;
+  const isOwner =
+    (post.authorType === "customer" && post.customerId === customerId) ||
+    (post.authorType === "business" && post.companyId === companyId);
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
