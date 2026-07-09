@@ -59,6 +59,9 @@ function ClientLayout() {
               </div>
             </div>
           </Link>
+          <Link to="/c/$companySlug/perfil" params={{ companySlug }}>
+            <Logo className="h-10" />
+          </Link>
         </div>
       </header>
 
@@ -88,10 +91,7 @@ function ClientLayout() {
                         {t.badge}
                       </span>
                     )}
-          <Link to="/c/$companySlug/perfil" params={{ companySlug }}>
-            <Logo className="h-8" />
-          </Link>
-        </div>
+                  </div>
                   {t.label}
                 </Link>
               );
