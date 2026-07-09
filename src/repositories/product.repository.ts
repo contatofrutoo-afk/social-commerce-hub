@@ -43,18 +43,7 @@ export const productRepository = {
   },
 
   async findBySlug(slug: string): Promise<Product | null> {
-    const { data, error } = await supabase.from("products").select("*, company:companies(slug)").eq("slug", slug).maybeSingle();
-    if (error) throw error;
-    return data ? map(data) : null;
-  },
-
-  async findByCompanySlug(companySlug: string, productSlug: string): Promise<Product | null> {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, company:companies!inner(slug)")
-      .eq("company.slug", companySlug)
-      .eq("slug", productSlug)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("get_product_public", { _slug: slug });
     if (error) throw error;
     return data ? map(data) : null;
   },

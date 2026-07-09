@@ -92,3 +92,45 @@ $$;
 
 REVOKE ALL ON FUNCTION public.record_product_event(uuid, uuid, uuid, text, jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.record_product_event(uuid, uuid, uuid, text, jsonb) TO anon, authenticated;
+
+-- 5. Função pública para ler produto por slug (bypass RLS)
+CREATE OR REPLACE FUNCTION public.get_product_public(_slug text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+DECLARE v_result jsonb;
+BEGIN
+  SELECT jsonb_build_object(
+    'id', p.id,
+    'company_id', p.company_id,
+    'name', p.name,
+    'slug', p.slug,
+    'category', p.category,
+    'price', p.price,
+    'image_url', p.image_url,
+    'available', p.available,
+    'description', p.description,
+    'status', p.status,
+    'stock_quantity', p.stock_quantity,
+    'sku', p.sku,
+    'internal_code', p.internal_code,
+    'views_count', p.views_count,
+    'scan_count', p.scan_count,
+    'cart_additions_count', p.cart_additions_count,
+    'order_count', p.order_count,
+    'revenue', p.revenue,
+    'unique_customers', p.unique_customers
+  ) INTO v_result
+  FROM products p
+  WHERE p.slug = _slug
+    AND p.status = 'active';
+
+  RETURN v_result;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_product_public(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_product_public(text) TO anon, authenticated;
