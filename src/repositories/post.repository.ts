@@ -143,8 +143,34 @@ export const postRepository = {
     if (error) throw error;
   },
 
+  async updateCustomerPost(
+    postId: string,
+    customerId: string,
+    token: string,
+    text: string,
+    imageUrl: string | null,
+  ) {
+    const { error } = await supabase.rpc("update_customer_post" as any, {
+      _customer_id: customerId,
+      _token: token,
+      _post_id: postId,
+      _text: text,
+      _image_url: imageUrl ?? "",
+    });
+    if (error) throw error;
+  },
+
   async remove(postId: string) {
     const { error } = await supabase.from("posts").delete().eq("id", postId);
+    if (error) throw error;
+  },
+
+  async removeCustomerPost(postId: string, customerId: string, token: string) {
+    const { error } = await supabase.rpc("delete_customer_post" as any, {
+      _customer_id: customerId,
+      _token: token,
+      _post_id: postId,
+    });
     if (error) throw error;
   },
 };

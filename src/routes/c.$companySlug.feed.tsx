@@ -178,10 +178,13 @@ function PostCard({
 
   const editMutation = useMutation({
     mutationFn: () =>
-      postRepository.update(post.id, {
-        text: editText.trim(),
-        imageUrl: editImageUrl,
-      }),
+      postRepository.updateCustomerPost(
+        post.id,
+        customerId,
+        sessionToken,
+        editText.trim(),
+        editImageUrl,
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["feed"] });
       setEditingPost(false);
@@ -191,7 +194,7 @@ function PostCard({
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => postRepository.remove(post.id),
+    mutationFn: () => postRepository.removeCustomerPost(post.id, customerId, sessionToken),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["feed"] });
       setConfirmDelete(false);
