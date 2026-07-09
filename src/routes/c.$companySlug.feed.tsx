@@ -165,9 +165,7 @@ function PostCard({
   const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const isOwner =
-    (post.authorType === "customer" && post.customerId === customerId) ||
-    (post.authorType === "business" && post.companyId === companyId);
+  const isOwner = post.companyId === companyId;
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>

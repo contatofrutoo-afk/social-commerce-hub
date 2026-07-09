@@ -30,7 +30,11 @@ BEGIN
   SELECT company_id INTO cust_company FROM public.customers WHERE id = _customer_id;
 
   IF post_row.author_type = 'customer' THEN
-    IF post_row.customer_id <> _customer_id THEN
+    IF cust_company IS NOT NULL AND cust_company = post_row.company_id THEN
+      NULL;
+    ELSIF post_row.customer_id = _customer_id THEN
+      NULL;
+    ELSE
       RAISE EXCEPTION 'not allowed';
     END IF;
   ELSIF post_row.author_type = 'business' THEN
@@ -84,7 +88,11 @@ BEGIN
   SELECT company_id INTO cust_company FROM public.customers WHERE id = _customer_id;
 
   IF post_row.author_type = 'customer' THEN
-    IF post_row.customer_id <> _customer_id THEN
+    IF cust_company IS NOT NULL AND cust_company = post_row.company_id THEN
+      NULL;
+    ELSIF post_row.customer_id = _customer_id THEN
+      NULL;
+    ELSE
       RAISE EXCEPTION 'not allowed';
     END IF;
   ELSIF post_row.author_type = 'business' THEN
