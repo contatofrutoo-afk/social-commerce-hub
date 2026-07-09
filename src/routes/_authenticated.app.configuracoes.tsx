@@ -18,7 +18,7 @@ import {
 import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
 import {
-  Copy, QrCode, Trash2, Pencil, Check, X,
+  Copy, QrCode, Trash2, Pencil, Check, X, Download,
   Users, ShoppingCart, Store, TrendingUp, Heart, MessageCircle,
   Clock, Calendar, Sparkles, RefreshCw,
 } from "lucide-react";
@@ -41,6 +41,26 @@ function copyToClipboard(text: string) {
 }
 
 function QrCodeDialog({ url, label }: { url: string; label: string }) {
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`;
+
+  async function handleDownload() {
+    try {
+      const res = await fetch(qrSrc);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${label.replace(/\s+/g, "_")}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      toast.success("QR Code baixado!");
+    } catch {
+      toast.error("Erro ao baixar QR Code");
+    }
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -53,12 +73,12 @@ function QrCodeDialog({ url, label }: { url: string; label: string }) {
           <DialogTitle>{label}</DialogTitle>
         </DialogHeader>
         <div className="flex justify-center p-4">
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}`}
-            alt={`QR Code: ${url}`}
-            className="rounded-lg"
-          />
+          <img src={qrSrc} alt={`QR Code: ${url}`} className="rounded-lg" />
         </div>
+        <Button className="w-full" onClick={handleDownload}>
+          <Download className="size-4 mr-2" />
+          Baixar QR Code
+        </Button>
       </DialogContent>
     </Dialog>
   );
