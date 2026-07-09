@@ -12,9 +12,17 @@ export const Route = createFileRoute("/_authenticated/admin/metricas")({
 function WeazeMetricas() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
-    activeToday: 0, totalB2C: 0, totalOrders: 0, totalCheckins: 0,
-    totalPosts: 0, totalInteractions: 0, predictedRevenue: 0,
-    recurringRevenue: 0, blockedCount: 0, inactiveCount: 0, nearDueCount: 0,
+    activeToday: 0,
+    totalB2C: 0,
+    totalOrders: 0,
+    totalCheckins: 0,
+    totalPosts: 0,
+    totalInteractions: 0,
+    predictedRevenue: 0,
+    recurringRevenue: 0,
+    blockedCount: 0,
+    inactiveCount: 0,
+    nearDueCount: 0,
   });
 
   useEffect(() => {
@@ -26,16 +34,22 @@ function WeazeMetricas() {
 
       try {
         const [
-          { count: totalB2C }, { count: totalOrders }, { count: totalCheckins },
-          { count: totalPosts }, { count: totalInteractions },
-          { data: companyRows }, { data: todayCheckins },
+          { count: totalB2C },
+          { count: totalOrders },
+          { count: totalCheckins },
+          { count: totalPosts },
+          { count: totalInteractions },
+          { data: companyRows },
+          { data: todayCheckins },
         ] = await Promise.all([
           supabase.from("customers").select("*", { count: "exact", head: true }),
           supabase.from("orders").select("*", { count: "exact", head: true }),
           supabase.from("checkins").select("*", { count: "exact", head: true }),
           supabase.from("posts").select("*", { count: "exact", head: true }),
           supabase.from("post_reactions").select("*", { count: "exact", head: true }),
-          supabase.from("companies").select("id, status, monthly_fee, next_due_date, payment_status"),
+          supabase
+            .from("companies")
+            .select("id, status, monthly_fee, next_due_date, payment_status"),
           supabase.from("checkins").select("id").gte("start_time", today),
         ]);
 
@@ -46,19 +60,33 @@ function WeazeMetricas() {
           const d = a.next_due_date.slice(0, 10);
           return d >= today && d <= nextWeek && a.payment_status !== "paid";
         }).length;
-        const totalMonthly = companyList.reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
-        const paidMonthly = companyList.filter((a: any) => a.payment_status === "paid").reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
+        const totalMonthly = companyList.reduce(
+          (s: number, a: any) => s + (Number(a.monthly_fee) || 0),
+          0,
+        );
+        const paidMonthly = companyList
+          .filter((a: any) => a.payment_status === "paid")
+          .reduce((s: number, a: any) => s + (Number(a.monthly_fee) || 0), 0);
 
         setData({
-          activeToday: todayCheckins?.length ?? 0, totalB2C: totalB2C ?? 0,
-          totalOrders: totalOrders ?? 0, totalCheckins: totalCheckins ?? 0,
-          totalPosts: totalPosts ?? 0, totalInteractions: totalInteractions ?? 0,
-          predictedRevenue: totalMonthly, recurringRevenue: paidMonthly,
+          activeToday: todayCheckins?.length ?? 0,
+          totalB2C: totalB2C ?? 0,
+          totalOrders: totalOrders ?? 0,
+          totalCheckins: totalCheckins ?? 0,
+          totalPosts: totalPosts ?? 0,
+          totalInteractions: totalInteractions ?? 0,
+          predictedRevenue: totalMonthly,
+          recurringRevenue: paidMonthly,
           blockedCount,
-          inactiveCount: companyList.filter((a: any) => a.status !== "ativo" && a.status !== "teste").length,
+          inactiveCount: companyList.filter(
+            (a: any) => a.status !== "ativo" && a.status !== "teste",
+          ).length,
           nearDueCount,
         });
-      } catch { /* table may not exist */ }
+      } catch (err) {
+        console.error("Erro ao carregar métricas:", err);
+        toast.error("Erro ao carregar métricas.");
+      }
       setLoading(false);
     })();
   }, []);
@@ -70,8 +98,14 @@ function WeazeMetricas() {
     { label: "Check-ins", value: data.totalCheckins },
     { label: "Publicações", value: data.totalPosts },
     { label: "Interações", value: data.totalInteractions },
-    { label: "Receita Prevista (mês)", value: `R$ ${data.predictedRevenue.toLocaleString("pt-BR")}` },
-    { label: "Receita Recorrente (paga)", value: `R$ ${data.recurringRevenue.toLocaleString("pt-BR")}` },
+    {
+      label: "Receita Prevista (mês)",
+      value: `R$ ${data.predictedRevenue.toLocaleString("pt-BR")}`,
+    },
+    {
+      label: "Receita Recorrente (paga)",
+      value: `R$ ${data.recurringRevenue.toLocaleString("pt-BR")}`,
+    },
     { label: "Clientes Bloqueados", value: data.blockedCount, danger: data.blockedCount > 0 },
     { label: "Empresas sem Atividade", value: data.inactiveCount, warning: data.inactiveCount > 0 },
     { label: "Próximas do Vencimento", value: data.nearDueCount, warning: data.nearDueCount > 0 },
@@ -88,7 +122,13 @@ function WeazeMetricas() {
           <Card key={m.label}>
             <CardContent className="p-5">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">{m.label}</p>
-              <p className={cn("font-display text-xl mt-1", m.danger && "text-destructive", m.warning && "text-orange-500")}>
+              <p
+                className={cn(
+                  "font-display text-xl mt-1",
+                  m.danger && "text-destructive",
+                  m.warning && "text-orange-500",
+                )}
+              >
                 {m.value}
               </p>
             </CardContent>

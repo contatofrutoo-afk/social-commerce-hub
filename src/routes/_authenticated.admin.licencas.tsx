@@ -18,9 +18,15 @@ function WeazeLicencas() {
     (async () => {
       setLoading(true);
       try {
-        const { data } = await supabase.from("company_licenses").select("*, company:companies(name)").order("created_at", { ascending: false });
+        const { data } = await supabase
+          .from("company_licenses")
+          .select("*, company:companies(name)")
+          .order("created_at", { ascending: false });
         setLicenses(data ?? []);
-      } catch { /* table may not exist */ }
+      } catch (err) {
+        console.error("Erro ao carregar licenças:", err);
+        toast.error("Erro ao carregar licenças.");
+      }
       setLoading(false);
     })();
   }, []);
@@ -51,14 +57,20 @@ function WeazeLicencas() {
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">{l.company?.name ?? "—"}</h3>
-                  <p className="text-sm text-muted-foreground">{l.plan_type} · R$ {Number(l.monthly_fee).toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {l.plan_type} · R$ {Number(l.monthly_fee).toFixed(2)}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {l.start_date ? new Date(l.start_date).toLocaleDateString("pt-BR") : "—"}
                     {l.end_date ? ` até ${new Date(l.end_date).toLocaleDateString("pt-BR")}` : ""}
                   </p>
                 </div>
                 <Badge variant={statusColor(l.status) as any}>
-                  {l.status === "active" ? "Ativa" : l.status === "expired" ? "Expirada" : "Cancelada"}
+                  {l.status === "active"
+                    ? "Ativa"
+                    : l.status === "expired"
+                      ? "Expirada"
+                      : "Cancelada"}
                 </Badge>
               </CardContent>
             </Card>

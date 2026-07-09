@@ -22,10 +22,13 @@ export const Route = createFileRoute("/_authenticated/admin/empresas")({
 });
 
 const statusBadgeClass = (s: string) =>
-  s === "ativo" ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200" :
-  s === "bloqueado" ? "bg-red-100 text-red-800 border-red-300 hover:bg-red-200" :
-  s === "teste" ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200" :
-  "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200";
+  s === "ativo"
+    ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200"
+    : s === "bloqueado"
+      ? "bg-red-100 text-red-800 border-red-300 hover:bg-red-200"
+      : s === "teste"
+        ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-200"
+        : "bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200";
 const statusLabel = (s: string) =>
   s === "ativo" ? "Ativo" : s === "bloqueado" ? "Bloqueado" : s === "teste" ? "Teste" : "Cancelado";
 const paymentLabel = (s: string) =>
@@ -43,13 +46,16 @@ function WeazeEmpresas() {
       try {
         const { data } = await supabase.from("companies").select("*").order("name");
         setCompanies(data ?? []);
-      } catch { /* table may not exist */ }
+      } catch (err) {
+        console.error("Erro ao carregar empresas:", err);
+        toast.error("Erro ao carregar empresas.");
+      }
       setLoading(false);
     })();
   }, []);
 
-  const filtered = companies.filter((c: any) =>
-    !search || c.name?.toLowerCase().includes(search.toLowerCase())
+  const filtered = companies.filter(
+    (c: any) => !search || c.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const toggleStatus = async (e: React.MouseEvent, c: any) => {
@@ -58,13 +64,22 @@ function WeazeEmpresas() {
     const newStatus = c.status === "bloqueado" ? "ativo" : "bloqueado";
     setTogglingId(c.id);
     try {
-      const { error } = await supabase.from("companies").update({ status: newStatus }).eq("id", c.id);
+      const { error } = await supabase
+        .from("companies")
+        .update({ status: newStatus })
+        .eq("id", c.id);
       if (error) {
-        if (error.code === "42703" || error.message?.includes("column") || error.message?.includes("does not exist")) {
-          const { error: fbErr } = await supabase.from("company_admin").upsert(
-            { company_id: c.id, status: STATUS_MAP_TO_EN[newStatus] ?? newStatus },
-            { onConflict: "company_id" },
-          );
+        if (
+          error.code === "42703" ||
+          error.message?.includes("column") ||
+          error.message?.includes("does not exist")
+        ) {
+          const { error: fbErr } = await supabase
+            .from("company_admin")
+            .upsert(
+              { company_id: c.id, status: STATUS_MAP_TO_EN[newStatus] ?? newStatus },
+              { onConflict: "company_id" },
+            );
           if (fbErr) throw fbErr;
         } else {
           throw error;
@@ -86,10 +101,14 @@ function WeazeEmpresas() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl">Empresas</h1>
-          <p className="text-muted-foreground text-sm mt-1">Gerencie empresas cadastradas na plataforma.</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Gerencie empresas cadastradas na plataforma.
+          </p>
         </div>
         <Link to="/admin/empresas/$id" params={{ id: "nova" }}>
-          <Button><Plus className="h-4 w-4 mr-1" /> Nova Empresa</Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-1" /> Nova Empresa
+          </Button>
         </Link>
       </div>
 
@@ -118,33 +137,77 @@ function WeazeEmpresas() {
             <Link key={c.id} to="/admin/empresas/$id" params={{ id: c.id }} className="block">
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-display font-semibold">{c.name ?? "—"}</h3>
-                        <p className="text-xs text-muted-foreground">{c.responsible ?? c.city ?? "—"}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={statusBadgeClass(c.status)}>{statusLabel(c.status)}</Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={togglingId === c.id}
-                          onClick={(e) => toggleStatus(e, c)}
-                          title={c.status === "bloqueado" ? "Desbloquear" : "Bloquear"}
-                        >
-                          {c.status === "bloqueado" ? <ShieldOff className="h-4 w-4 text-red-600" /> : <Shield className="h-4 w-4 text-green-600" />}
-                        </Button>
-                      </div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-display font-semibold">{c.name ?? "—"}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {c.responsible ?? c.city ?? "—"}
+                      </p>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={statusBadgeClass(c.status)}>{statusLabel(c.status)}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={togglingId === c.id}
+                        onClick={(e) => toggleStatus(e, c)}
+                        title={c.status === "bloqueado" ? "Desbloquear" : "Bloquear"}
+                      >
+                        {c.status === "bloqueado" ? (
+                          <ShieldOff className="h-4 w-4 text-red-600" />
+                        ) : (
+                          <Shield className="h-4 w-4 text-green-600" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mt-2">
-                    <div><span className="block text-[10px] uppercase tracking-wider">Plano</span><span className="font-medium text-foreground">{c.plan_type}</span></div>
-                    <div><span className="block text-[10px] uppercase tracking-wider">Valor</span><span className="font-medium text-foreground">R$ {Number(c.monthly_fee).toFixed(2)}</span></div>
-                    <div><span className="block text-[10px] uppercase tracking-wider">Status</span><span className={cn("font-medium", c.payment_status === "paid" ? "text-green-600" : c.payment_status === "overdue" ? "text-destructive" : "text-muted-foreground")}>{paymentLabel(c.payment_status)}</span></div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider">Plano</span>
+                      <span className="font-medium text-foreground">{c.plan_type}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider">Valor</span>
+                      <span className="font-medium text-foreground">
+                        R$ {Number(c.monthly_fee).toFixed(2)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider">Status</span>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          c.payment_status === "paid"
+                            ? "text-green-600"
+                            : c.payment_status === "overdue"
+                              ? "text-destructive"
+                              : "text-muted-foreground",
+                        )}
+                      >
+                        {paymentLabel(c.payment_status)}
+                      </span>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mt-1 pt-2 border-t border-border">
-                    <div><span className="block text-[10px] uppercase tracking-wider">Vencimento</span><span>{c.next_due_date ? new Date(c.next_due_date).toLocaleDateString("pt-BR") : "—"}</span></div>
-                    <div><span className="block text-[10px] uppercase tracking-wider">Último Pagamento</span><span>{c.last_payment_date ? new Date(c.last_payment_date).toLocaleDateString("pt-BR") : "—"}</span></div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider">Vencimento</span>
+                      <span>
+                        {c.next_due_date
+                          ? new Date(c.next_due_date).toLocaleDateString("pt-BR")
+                          : "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] uppercase tracking-wider">
+                        Último Pagamento
+                      </span>
+                      <span>
+                        {c.last_payment_date
+                          ? new Date(c.last_payment_date).toLocaleDateString("pt-BR")
+                          : "—"}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

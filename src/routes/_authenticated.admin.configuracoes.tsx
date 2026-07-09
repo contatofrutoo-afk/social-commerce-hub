@@ -19,23 +19,30 @@ const SETTINGS_ID = "00000000-0000-0000-0000-000000000000";
 function WeazeConfiguracoes() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const [form, setForm] = useState({
-    defaultPlanValue: 237, blockedMessage: "", adminContact: "",
+    defaultPlanValue: 237,
+    blockedMessage: "",
+    adminContact: "",
   });
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const { data } = await supabase.from("admin_settings").select("*").single();
+        const { data } = await supabase.from("admin_settings").select("*").limit(1).maybeSingle();
         if (data) {
+          setSettingsId(data.id);
           setForm({
             defaultPlanValue: Number(data.default_plan_value ?? 237),
             blockedMessage: data.blocked_message ?? "",
             adminContact: data.admin_contact ?? "",
           });
         }
-      } catch { /* table may not exist */ }
+      } catch (err) {
+        console.error("Erro ao carregar configurações:", err);
+        toast.error("Erro ao carregar configurações.");
+      }
       setLoading(false);
     })();
   }, []);
@@ -44,14 +51,18 @@ function WeazeConfiguracoes() {
     setSaving(true);
     try {
       const { error } = await supabase.from("admin_settings").upsert({
-        id: SETTINGS_ID, default_plan_value: form.defaultPlanValue,
-        blocked_message: form.blockedMessage, admin_contact: form.adminContact,
+        id: settingsId ?? SETTINGS_ID,
+        default_plan_value: form.defaultPlanValue,
+        blocked_message: form.blockedMessage,
+        admin_contact: form.adminContact,
       });
       if (error) throw error;
       toast.success("Configurações salvas!");
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao salvar");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
@@ -64,37 +75,58 @@ function WeazeConfiguracoes() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="font-display text-base">Mensalidade Padrão</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-display text-base">Mensalidade Padrão</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="defaultPlanValue">Valor padrão (R$)</Label>
-            <Input id="defaultPlanValue" type="number" value={form.defaultPlanValue}
-              onChange={(e) => setForm((p) => ({ ...p, defaultPlanValue: Number(e.target.value) }))} />
-            <p className="text-xs text-muted-foreground mt-1">Usado como sugestão ao cadastrar novas empresas.</p>
+            <Input
+              id="defaultPlanValue"
+              type="number"
+              value={form.defaultPlanValue}
+              onChange={(e) => setForm((p) => ({ ...p, defaultPlanValue: Number(e.target.value) }))}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Usado como sugestão ao cadastrar novas empresas.
+            </p>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display text-base">Mensagem de Bloqueio</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-display text-base">Mensagem de Bloqueio</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="blockedMessage">Mensagem exibida para empresas bloqueadas</Label>
-            <Textarea id="blockedMessage" value={form.blockedMessage}
-              onChange={(e) => setForm((p) => ({ ...p, blockedMessage: e.target.value }))} rows={3} />
+            <Textarea
+              id="blockedMessage"
+              value={form.blockedMessage}
+              onChange={(e) => setForm((p) => ({ ...p, blockedMessage: e.target.value }))}
+              rows={3}
+            />
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="font-display text-base">Contato do Administrador</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="font-display text-base">Contato do Administrador</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="adminContact">Contato (email ou WhatsApp)</Label>
-            <Input id="adminContact" value={form.adminContact}
+            <Input
+              id="adminContact"
+              value={form.adminContact}
               onChange={(e) => setForm((p) => ({ ...p, adminContact: e.target.value }))}
-              placeholder="admin@weaze.com" />
-            <p className="text-xs text-muted-foreground mt-1">Exibido no botão "Entrar em contato" da página de bloqueio.</p>
+              placeholder="admin@weaze.com"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Exibido no botão "Entrar em contato" da página de bloqueio.
+            </p>
           </div>
         </CardContent>
       </Card>
