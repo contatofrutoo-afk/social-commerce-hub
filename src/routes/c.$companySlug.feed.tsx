@@ -7,8 +7,26 @@ import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/image-upload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Heart,
   ThumbsDown,
@@ -16,6 +34,9 @@ import {
   ShoppingBag,
   Store,
   User as UserIcon,
+  MoreVertical,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
@@ -136,6 +157,12 @@ function PostCard({
 }) {
   const qc = useQueryClient();
   const [showComments, setShowComments] = useState(false);
+  const [editingPost, setEditingPost] = useState(false);
+  const [editText, setEditText] = useState(post.text ?? "");
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isOwner = post.authorType === "customer" && post.customerId === customerId;
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
@@ -147,6 +174,30 @@ function PostCard({
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
     onError: (err) => toast.error(`Erro ao reagir: ${(err as Error).message}`),
+  });
+
+  const editMutation = useMutation({
+    mutationFn: () =>
+      postRepository.update(post.id, {
+        text: editText.trim(),
+        imageUrl: editImageUrl,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      setEditingPost(false);
+      toast.success("Publicação atualizada");
+    },
+    onError: (err) => toast.error(`Erro ao editar: ${(err as Error).message}`),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => postRepository.remove(post.id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["feed"] });
+      setConfirmDelete(false);
+      toast.success("Publicação removida");
+    },
+    onError: (err) => toast.error(`Erro ao excluir: ${(err as Error).message}`),
   });
 
   return (
@@ -176,6 +227,32 @@ function PostCard({
           <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-accent-foreground">
             {post.companions}
           </span>
+        )}
+        {isOwner && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8 shrink-0">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditText(post.text ?? "");
+                  setEditImageUrl(post.imageUrl);
+                  setEditingPost(true);
+                }}
+              >
+                <Pencil className="size-4" /> Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setConfirmDelete(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="size-4" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </header>
 
@@ -266,6 +343,60 @@ function PostCard({
       {showComments && (
         <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={editingPost} onOpenChange={setEditingPost}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar publicação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              placeholder="Texto"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              maxLength={500}
+            />
+            <ImageUpload
+              value={editImageUrl}
+              onChange={setEditImageUrl}
+              folder={`edit/${customerId}/${post.id}`}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setEditingPost(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => editMutation.mutate()}
+              disabled={editMutation.isPending || (!editText.trim() && !editImageUrl)}
+            >
+              Salvar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir publicação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A publicação será removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteMutation.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </article>
   );
 }

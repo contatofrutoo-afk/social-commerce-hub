@@ -9,15 +9,39 @@ import { Textarea } from "@/components/ui/textarea";
 import { relativeTime, formatBRL } from "@/lib/format";
 import { ImageUpload } from "@/components/image-upload";
 import { VideoUpload } from "@/components/video-upload";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trash2, Heart, MessageCircle, ThumbsDown, BarChart3, Clock, Calendar, Store, User as UserIcon, Play } from "lucide-react";
+import {
+  Trash2,
+  Heart,
+  MessageCircle,
+  ThumbsDown,
+  BarChart3,
+  Clock,
+  Calendar,
+  Store,
+  User as UserIcon,
+  Play,
+  MoreVertical,
+  Pencil,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
   component: FeedAdminPage,
@@ -29,7 +53,11 @@ function FeedAdminPage() {
   const { data: companyId } = useQuery({
     queryKey: ["my-company-id"],
     queryFn: async () => {
-      const { data } = await supabase.from("user_roles").select("company_id").limit(1).maybeSingle();
+      const { data } = await supabase
+        .from("user_roles")
+        .select("company_id")
+        .limit(1)
+        .maybeSingle();
       return data?.company_id as string | undefined;
     },
   });
@@ -64,8 +92,8 @@ function FeedAdminPage() {
       postRepository.createBusinessPost({
         companyId: companyId!,
         text,
-        imageUrl: mediaType === "image" ? (imageUrl || null) : null,
-        videoUrl: mediaType === "video" ? (videoUrl || null) : null,
+        imageUrl: mediaType === "image" ? imageUrl || null : null,
+        videoUrl: mediaType === "video" ? videoUrl || null : null,
         productIds: selectedProducts,
       }),
     onSuccess: () => {
@@ -83,8 +111,40 @@ function FeedAdminPage() {
   });
   const remove = useMutation({
     mutationFn: (id: string) => postRepository.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["feed-b2b"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["feed-b2b"] });
+      setSelectedPost(null);
+      toast.success("Publicação removida");
+    },
+    onError: (err) => toast.error(`Erro ao excluir: ${(err as Error).message}`),
   });
+
+  const editPost = useMutation({
+    mutationFn: ({
+      id,
+      text,
+      imageUrl,
+      videoUrl,
+    }: {
+      id: string;
+      text: string;
+      imageUrl: string | null;
+      videoUrl: string | null;
+    }) => postRepository.update(id, { text, imageUrl, videoUrl }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["feed-b2b"] });
+      setEditingPost(null);
+      toast.success("Publicação atualizada");
+    },
+    onError: (err) => toast.error(`Erro ao editar: ${(err as Error).message}`),
+  });
+
+  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
+  const [editVideoUrl, setEditVideoUrl] = useState<string | null>(null);
+  const [editMediaType, setEditMediaType] = useState<"image" | "video">("image");
+  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
 
   return (
     <div className="space-y-6">
@@ -146,7 +206,10 @@ function FeedAdminPage() {
             })}
           </div>
         </div>
-        <Button onClick={() => publish.mutate()} disabled={publish.isPending || (!text && !imageUrl && !videoUrl)}>
+        <Button
+          onClick={() => publish.mutate()}
+          disabled={publish.isPending || (!text && !imageUrl && !videoUrl)}
+        >
           Publicar
         </Button>
       </div>
@@ -168,12 +231,7 @@ function FeedAdminPage() {
               >
                 {p.videoUrl ? (
                   <div className="relative size-full">
-                    <video
-                      src={p.videoUrl}
-                      className="size-full object-cover"
-                      muted
-                      playsInline
-                    />
+                    <video src={p.videoUrl} className="size-full object-cover" muted playsInline />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="flex size-12 items-center justify-center rounded-full bg-black/60">
                         <Play className="size-6 fill-white text-white" />
@@ -181,11 +239,7 @@ function FeedAdminPage() {
                     </div>
                   </div>
                 ) : p.imageUrl ? (
-                  <img
-                    src={p.imageUrl}
-                    alt=""
-                    className="size-full object-cover"
-                  />
+                  <img src={p.imageUrl} alt="" className="size-full object-cover" />
                 ) : (
                   <div className="flex size-full items-center justify-center p-2 text-center text-xs text-muted-foreground">
                     {p.text}
@@ -212,14 +266,114 @@ function FeedAdminPage() {
             <PostDetail
               post={selectedPost.post}
               metric={selectedPost.metric}
-              onRemove={() => {
-                remove.mutate(selectedPost.post.id);
+              onEdit={() => {
+                setEditText(selectedPost.post.text ?? "");
+                setEditImageUrl(selectedPost.post.imageUrl);
+                setEditVideoUrl(selectedPost.post.videoUrl);
+                setEditMediaType(selectedPost.post.videoUrl ? "video" : "image");
+                setEditingPost(selectedPost.post);
                 setSelectedPost(null);
               }}
+              onDelete={() => setConfirmDelete(selectedPost.post)}
             />
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingPost} onOpenChange={(o) => !o && setEditingPost(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar publicação</DialogTitle>
+          </DialogHeader>
+          {editingPost && (
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditMediaType("image")}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    editMediaType === "image" ? "bg-primary text-primary-foreground" : "bg-muted"
+                  }`}
+                >
+                  Imagem
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditMediaType("video")}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    editMediaType === "video" ? "bg-primary text-primary-foreground" : "bg-muted"
+                  }`}
+                >
+                  Vídeo 9:16
+                </button>
+              </div>
+              {editMediaType === "image" ? (
+                <ImageUpload
+                  value={editImageUrl}
+                  onChange={setEditImageUrl}
+                  folder={`${editingPost.companyId}/feed`}
+                />
+              ) : (
+                <VideoUpload
+                  value={editVideoUrl}
+                  onChange={setEditVideoUrl}
+                  folder={`${editingPost.companyId}/feed`}
+                />
+              )}
+              <Textarea
+                placeholder="Texto"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                maxLength={500}
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditingPost(null)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() =>
+                    editPost.mutate({
+                      id: editingPost.id,
+                      text: editText.trim(),
+                      imageUrl: editMediaType === "image" ? editImageUrl : null,
+                      videoUrl: editMediaType === "video" ? editVideoUrl : null,
+                    })
+                  }
+                  disabled={
+                    editPost.isPending || (!editText.trim() && !editImageUrl && !editVideoUrl)
+                  }
+                >
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir publicação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A publicação será removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmDelete) remove.mutate(confirmDelete.id);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -227,11 +381,13 @@ function FeedAdminPage() {
 function PostDetail({
   post,
   metric,
-  onRemove,
+  onEdit,
+  onDelete,
 }: {
   post: any;
   metric: PostMetric | null;
-  onRemove: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const [showAnalytics, setShowAnalytics] = useState(false);
 
@@ -255,32 +411,50 @@ function PostDetail({
               </AvatarFallback>
             </Avatar>
             <span>
-              {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
+              {post.authorType === "business"
+                ? "Estabelecimento"
+                : (post.customerName ?? "Cliente")}
             </span>
           </div>
-          <Button size="icon" variant="ghost" onClick={onRemove}>
-            <Trash2 className="size-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="size-4" /> Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="size-4" /> Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </DialogTitle>
       </DialogHeader>
       <div className="mt-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</div>
       {post.videoUrl ? (
         <div className="mt-3 aspect-[9/16] w-full overflow-hidden rounded-lg">
-          <video
-            src={post.videoUrl}
-            className="size-full object-cover"
-            controls
-            playsInline
-          />
+          <video src={post.videoUrl} className="size-full object-cover" controls playsInline />
         </div>
       ) : post.imageUrl ? (
         <img src={post.imageUrl} alt="" className="mt-3 max-h-80 w-full rounded-lg object-cover" />
       ) : null}
       {post.text && <p className="mt-3 text-sm">{post.text}</p>}
       <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1"><Heart className="size-4" /> {post.loveCount}</span>
-        <span className="flex items-center gap-1"><ThumbsDown className="size-4" /> {post.dislikeCount}</span>
-        <span className="flex items-center gap-1"><MessageCircle className="size-4" /> {post.commentCount}</span>
+        <span className="flex items-center gap-1">
+          <Heart className="size-4" /> {post.loveCount}
+        </span>
+        <span className="flex items-center gap-1">
+          <ThumbsDown className="size-4" /> {post.dislikeCount}
+        </span>
+        <span className="flex items-center gap-1">
+          <MessageCircle className="size-4" /> {post.commentCount}
+        </span>
       </div>
 
       {metric && (
@@ -303,7 +477,9 @@ function PostDetail({
               </div>
               <div className="flex justify-between border-b pb-1">
                 <span>Taxa de conversão</span>
-                <span className="font-semibold text-primary">{metric.conversionRate.toFixed(1)}%</span>
+                <span className="font-semibold text-primary">
+                  {metric.conversionRate.toFixed(1)}%
+                </span>
               </div>
 
               {metric.products.length > 0 && (
@@ -312,7 +488,9 @@ function PostDetail({
                   {metric.products.map((pr: any) => (
                     <div key={pr.id} className="flex justify-between">
                       <span>{pr.name}</span>
-                      <span>{pr.ordered} unid. · {formatBRL(pr.revenue)}</span>
+                      <span>
+                        {pr.ordered} unid. · {formatBRL(pr.revenue)}
+                      </span>
                     </div>
                   ))}
                 </div>
