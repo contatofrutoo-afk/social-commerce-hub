@@ -15,13 +15,12 @@ function mapCompany(row: any): Company {
 export const companyRepository = {
   async findBySlug(slug: string): Promise<Company | null> {
     const { data, error } = await supabase
-      .from("companies")
-      .select("*")
-      .eq("slug", slug)
-      .maybeSingle();
+      .rpc("get_company_public", { _slug: slug });
     if (error) throw error;
-    return data ? mapCompany(data) : null;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row ? mapCompany(row) : null;
   },
+
 
   async findById(id: string): Promise<Company | null> {
     const { data, error } = await supabase.from("companies").select("*").eq("id", id).maybeSingle();
