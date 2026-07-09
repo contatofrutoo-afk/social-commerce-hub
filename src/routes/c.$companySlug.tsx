@@ -15,6 +15,7 @@ function ClientLayout() {
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
+    staleTime: 30_000,
   });
   const cart = useCart(company?.id);
   const location = useLocation();
@@ -39,7 +40,11 @@ function ClientLayout() {
             className="flex items-center gap-3"
           >
             {company?.logoUrl ? (
-              <img src={company.logoUrl} alt="" className="size-9 rounded-xl object-cover ring-1 ring-border" />
+              <img
+                src={company.logoUrl}
+                alt=""
+                className="size-9 rounded-xl object-cover ring-1 ring-border"
+              />
             ) : (
               <div className="grid size-9 place-items-center rounded-xl bg-primary/10">
                 <Logo className="h-4" />

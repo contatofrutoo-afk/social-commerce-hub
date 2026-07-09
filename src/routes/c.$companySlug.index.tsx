@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { companyRepository, customerRepository, checkinRepository } from "@/repositories";
@@ -24,25 +24,30 @@ const contexts: { id: VisitContext; label: string; icon: any }[] = [
 
 function CheckinPage() {
   const { companySlug } = Route.useParams();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
-  if (session) {
-    window.location.href = `/c/${companySlug}/feed`;
-  }
+  useEffect(() => {
+    if (session) {
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+    }
+  }, [session, companySlug, navigate]);
 
   const { data: company, isLoading } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
+    staleTime: 30_000,
   });
 
   const { data: existingCustomer } = useQuery({
     queryKey: ["customer-self", session?.customerId],
     queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
     enabled: !!session,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -80,7 +85,7 @@ function CheckinPage() {
       });
     },
     onSuccess: () => {
-      window.location.href = `/c/${companySlug}/feed`;
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),
   });

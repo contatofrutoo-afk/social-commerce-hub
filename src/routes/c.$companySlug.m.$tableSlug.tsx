@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import {
@@ -29,30 +29,37 @@ const contexts: { id: VisitContext; label: string; icon: any }[] = [
 
 function TableCheckin() {
   const { companySlug, tableSlug } = Route.useParams();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
-  if (session) {
-    window.location.href = `/c/${companySlug}/feed`;
-  }
+  useEffect(() => {
+    if (session) {
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+    }
+  }, [session, companySlug, navigate]);
 
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
+    staleTime: 30_000,
   });
+
   const { data: table } = useQuery({
     queryKey: ["table", company?.id, tableSlug],
     queryFn: () => (company ? tableRepository.findBySlug(company.id, tableSlug) : null),
     enabled: !!company,
+    staleTime: 30_000,
   });
 
   const { data: existingCustomer } = useQuery({
     queryKey: ["customer-self", session?.customerId],
     queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
     enabled: !!session,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -91,7 +98,7 @@ function TableCheckin() {
       });
     },
     onSuccess: () => {
-      window.location.href = `/c/${companySlug}/feed`;
+      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
   });
@@ -141,11 +148,21 @@ function TableCheckin() {
       <div className="space-y-4">
         <div>
           <Label>Seu nome</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1.5" maxLength={80} />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1.5"
+            maxLength={80}
+          />
         </div>
         <div>
           <Label>WhatsApp</Label>
-          <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="mt-1.5" maxLength={20} />
+          <Input
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            className="mt-1.5"
+            maxLength={20}
+          />
         </div>
         <div>
           <Label>Como está sendo sua visita hoje?</Label>
@@ -172,9 +189,14 @@ function TableCheckin() {
           size="lg"
           className="w-full"
           onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || !context || (!name.trim() && !existingCustomer?.name) || (!whatsapp.trim() && !existingCustomer?.whatsapp)}
+          disabled={
+            mutation.isPending ||
+            !context ||
+            (!name.trim() && !existingCustomer?.name) ||
+            (!whatsapp.trim() && !existingCustomer?.whatsapp)
+          }
         >
-          Entrar
+          {mutation.isPending ? "Entrando…" : "Entrar"}
         </Button>
       </div>
     </div>

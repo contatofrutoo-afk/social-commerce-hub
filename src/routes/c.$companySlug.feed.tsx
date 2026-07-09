@@ -1,11 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import {
-  companyRepository,
-  postRepository,
-  commentRepository,
-} from "@/repositories";
+import { companyRepository, postRepository, commentRepository } from "@/repositories";
 import type { Post, ReactionType } from "@/repositories/types";
 import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
@@ -13,7 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/image-upload";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, ThumbsDown, MessageCircle, ShoppingBag, Store, User as UserIcon } from "lucide-react";
+import {
+  Heart,
+  ThumbsDown,
+  MessageCircle,
+  ShoppingBag,
+  Store,
+  User as UserIcon,
+} from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,30 +33,31 @@ function FeedPage() {
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
+    staleTime: 30_000,
   });
 
-  const { data: posts, isLoading, isError, error } = useQuery({
+  const {
+    data: posts,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["feed", company?.id, session?.customerId],
     queryFn: () => postRepository.listByCompany(company!.id, session?.customerId),
     enabled: !!company,
+    staleTime: 15_000,
   });
 
   const cart = useCart(company?.id);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !session) {
+    if (!session) {
       navigate({ to: "/c/$companySlug", params: { companySlug } });
     }
   }, [session, companySlug, navigate]);
 
   if (!session) {
-    return (
-      <div className="divide-y">
-        <SkeletonPostCard />
-        <SkeletonPostCard />
-        <SkeletonPostCard />
-      </div>
-    );
+    return null;
   }
 
   if (isLoading) {
@@ -135,7 +139,12 @@ function PostCard({
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
-      postRepository.setReaction(post.id, customerId, sessionToken, post.myReaction === t ? null : t),
+      postRepository.setReaction(
+        post.id,
+        customerId,
+        sessionToken,
+        post.myReaction === t ? null : t,
+      ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
     onError: (err) => toast.error(`Erro ao reagir: ${(err as Error).message}`),
   });
@@ -172,12 +181,7 @@ function PostCard({
 
       {post.videoUrl ? (
         <div className="aspect-[9/16] w-full">
-          <video
-            src={post.videoUrl}
-            className="size-full object-cover"
-            controls
-            playsInline
-          />
+          <video src={post.videoUrl} className="size-full object-cover" controls playsInline />
         </div>
       ) : post.imageUrl ? (
         <img src={post.imageUrl} alt="" className="w-full max-h-[520px] object-cover" />
@@ -188,10 +192,7 @@ function PostCard({
       {post.authorType === "business" && post.products.length > 0 && (
         <div className="space-y-2 px-4 pb-3">
           {post.products.map((prod) => (
-            <div
-              key={prod.id}
-              className="flex items-center gap-3 rounded-xl border p-3"
-            >
+            <div key={prod.id} className="flex items-center gap-3 rounded-xl border p-3">
               {prod.imageUrl && (
                 <img src={prod.imageUrl} alt="" className="size-14 rounded-lg object-cover" />
               )}
@@ -262,13 +263,22 @@ function PostCard({
         )}
       </div>
 
-
-      {showComments && <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />}
+      {showComments && (
+        <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />
+      )}
     </article>
   );
 }
 
-function CommentsSection({ postId, customerId, sessionToken }: { postId: string; customerId: string; sessionToken: string }) {
+function CommentsSection({
+  postId,
+  customerId,
+  sessionToken,
+}: {
+  postId: string;
+  customerId: string;
+  sessionToken: string;
+}) {
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [commentImage, setCommentImage] = useState<string | null>(null);
@@ -277,7 +287,14 @@ function CommentsSection({ postId, customerId, sessionToken }: { postId: string;
     queryFn: () => commentRepository.listByPost(postId),
   });
   const add = useMutation({
-    mutationFn: () => commentRepository.create({ postId, customerId, sessionToken, text: text.trim(), imageUrl: commentImage }),
+    mutationFn: () =>
+      commentRepository.create({
+        postId,
+        customerId,
+        sessionToken,
+        text: text.trim(),
+        imageUrl: commentImage,
+      }),
     onSuccess: () => {
       setText("");
       setCommentImage(null);
@@ -305,12 +322,20 @@ function CommentsSection({ postId, customerId, sessionToken }: { postId: string;
           placeholder="Escreva um comentário…"
           maxLength={300}
         />
-        <Button size="sm" onClick={() => add.mutate()} disabled={(!text.trim() && !commentImage) || add.isPending}>
+        <Button
+          size="sm"
+          onClick={() => add.mutate()}
+          disabled={(!text.trim() && !commentImage) || add.isPending}
+        >
           Enviar
         </Button>
       </div>
       <div>
-        <ImageUpload value={commentImage} onChange={setCommentImage} folder={`comments/${customerId}/${postId}`} />
+        <ImageUpload
+          value={commentImage}
+          onChange={setCommentImage}
+          folder={`comments/${customerId}/${postId}`}
+        />
       </div>
     </div>
   );
