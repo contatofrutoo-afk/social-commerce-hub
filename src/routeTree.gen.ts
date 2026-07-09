@@ -25,6 +25,7 @@ import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.
 import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated.app.produtos'
 import { Route as AuthenticatedAppPedidosRouteImport } from './routes/_authenticated.app.pedidos'
+import { Route as AuthenticatedAppInteligenciaRouteImport } from './routes/_authenticated.app.inteligencia'
 import { Route as AuthenticatedAppFeedRouteImport } from './routes/_authenticated.app.feed'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated.app.configuracoes'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated.app.clientes'
@@ -118,6 +119,12 @@ const AuthenticatedAppPedidosRoute = AuthenticatedAppPedidosRouteImport.update({
   path: '/pedidos',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppInteligenciaRoute =
+  AuthenticatedAppInteligenciaRouteImport.update({
+    id: '/inteligencia',
+    path: '/inteligencia',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppFeedRoute = AuthenticatedAppFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -206,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
+  '/app/inteligencia': typeof AuthenticatedAppInteligenciaRoute
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
@@ -232,6 +240,7 @@ export interface FileRoutesByTo {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
+  '/app/inteligencia': typeof AuthenticatedAppInteligenciaRoute
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
@@ -263,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/feed': typeof AuthenticatedAppFeedRoute
+  '/_authenticated/app/inteligencia': typeof AuthenticatedAppInteligenciaRoute
   '/_authenticated/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
+    | '/app/inteligencia'
     | '/app/pedidos'
     | '/app/produtos'
     | '/c/$companySlug/feed'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
+    | '/app/inteligencia'
     | '/app/pedidos'
     | '/app/produtos'
     | '/c/$companySlug/feed'
@@ -350,6 +362,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/feed'
+    | '/_authenticated/app/inteligencia'
     | '/_authenticated/app/pedidos'
     | '/_authenticated/app/produtos'
     | '/c/$companySlug/feed'
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPedidosRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/inteligencia': {
+      id: '/_authenticated/app/inteligencia'
+      path: '/inteligencia'
+      fullPath: '/app/inteligencia'
+      preLoaderRoute: typeof AuthenticatedAppInteligenciaRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/feed': {
       id: '/_authenticated/app/feed'
       path: '/feed'
@@ -613,6 +633,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppFeedRoute: typeof AuthenticatedAppFeedRoute
+  AuthenticatedAppInteligenciaRoute: typeof AuthenticatedAppInteligenciaRoute
   AuthenticatedAppPedidosRoute: typeof AuthenticatedAppPedidosRoute
   AuthenticatedAppProdutosRoute: typeof AuthenticatedAppProdutosRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
@@ -624,6 +645,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppFeedRoute: AuthenticatedAppFeedRoute,
+  AuthenticatedAppInteligenciaRoute: AuthenticatedAppInteligenciaRoute,
   AuthenticatedAppPedidosRoute: AuthenticatedAppPedidosRoute,
   AuthenticatedAppProdutosRoute: AuthenticatedAppProdutosRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
