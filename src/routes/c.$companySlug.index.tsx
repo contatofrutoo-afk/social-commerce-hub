@@ -30,6 +30,10 @@ function CheckinPage() {
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
+  if (session) {
+    window.location.href = `/c/${companySlug}/feed`;
+  }
+
   const { data: company, isLoading } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
