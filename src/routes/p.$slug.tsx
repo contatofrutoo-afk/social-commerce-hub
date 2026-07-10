@@ -56,6 +56,7 @@ function ProductPage() {
   }
 
   function addToCart() {
+    if (!product) return;
     cart.add(product, qty);
     productRepository.recordEvent(product.id, product.companyId, "cart_add").catch(() => {});
     productRepository.incrementCounter(product.id, "cart_additions_count").catch(() => {});

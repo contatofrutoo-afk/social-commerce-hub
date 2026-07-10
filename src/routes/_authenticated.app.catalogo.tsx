@@ -250,7 +250,7 @@ function CatalogoPage() {
                       step="0.01"
                       value={form.price}
                       onChange={(e) =>
-                        setForm({ ...form, price: e.target.value })
+                        setForm({ ...form, price: Number(e.target.value) })
                       }
                     />
                   </div>

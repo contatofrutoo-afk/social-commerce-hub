@@ -722,7 +722,7 @@ function InteligenciaPage() {
       custEvents[e.customer_id].productIds.add(e.product_id);
       const prod = products?.find((p: any) => p.id === e.product_id);
       if (prod?.category) custEvents[e.customer_id].categoryIds.add(prod.category);
-      if (!e.created_at || (custEvents[e.customer_id].lastEvent && e.created_at > custEvents[e.customer_id].lastEvent)) custEvents[e.customer_id].lastEvent = e.created_at;
+      if (!e.created_at || (custEvents[e.customer_id].lastEvent && e.created_at > custEvents[e.customer_id].lastEvent!)) custEvents[e.customer_id].lastEvent = e.created_at;
     });
 
     periodOrders.forEach((o: any) => {
