@@ -97,7 +97,7 @@ export const productRepository = {
     if (p.internalCode !== undefined) patch.internal_code = p.internalCode;
     const { data, error } = await supabase
       .from("products")
-      .update(patch)
+      .update(patch as never)
       .eq("id", id)
       .select()
       .single();
@@ -120,9 +120,9 @@ export const productRepository = {
     const { error } = await supabase.rpc("record_product_event", {
       _product_id: productId,
       _company_id: companyId,
-      _customer_id: customerId ?? null,
+      _customer_id: customerId ?? undefined,
       _event_type: eventType,
-      _metadata: metadata ?? {},
+      _metadata: (metadata ?? {}) as never,
     });
     if (error) throw error;
   },
