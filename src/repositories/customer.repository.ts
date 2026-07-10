@@ -40,7 +40,7 @@ export const customerRepository = {
   async listByCompany(companyId: string): Promise<Customer[]> {
     const { data, error } = await supabase
       .from("customers")
-      .select("*")
+      .select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at")
       .eq("company_id", companyId)
       .order("last_visit_at", { ascending: false });
     if (error) throw error;
@@ -144,7 +144,7 @@ export const checkinRepository = {
     const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from("checkins")
-      .select("*, customer:customers(*), table:tables(label, slug)")
+      .select("*, customer:customers(id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at), table:tables(label, slug)")
       .eq("company_id", companyId)
       .gte("created_at", since)
       .order("created_at", { ascending: false });
