@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   companyRepository,
   customerRepository,
@@ -36,12 +36,6 @@ function TableCheckin() {
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
-  useEffect(() => {
-    if (session) {
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
-    }
-  }, [session, companySlug, navigate]);
-
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
@@ -54,6 +48,25 @@ function TableCheckin() {
     enabled: !!company,
     staleTime: 30_000,
   });
+
+  const checkinFired = useRef(false);
+  useEffect(() => {
+    if (!session || !company || !table) return;
+    if (checkinFired.current) return;
+    checkinFired.current = true;
+
+    checkinRepository
+      .createAutoCheckin({
+        customerId: session.customerId,
+        sessionToken: session.sessionToken,
+        companyId: session.companyId,
+        tableId: table.id,
+        source: `mesa-${table.slug}`,
+      })
+      .finally(() => {
+        navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      });
+  }, [session, company, table, companySlug, navigate]);
 
   const { data: existingCustomer } = useQuery({
     queryKey: ["customer-self", session?.customerId],

@@ -118,6 +118,28 @@ export const checkinRepository = {
     if (error) throw error;
   },
 
+  /** Check-in silencioso: cria presenca se ultimo check-in foi ha mais de 4h. */
+  async createAutoCheckin(input: {
+    customerId: string;
+    sessionToken: string;
+    companyId: string;
+    tableId?: string | null;
+    source?: string;
+  }): Promise<boolean> {
+    const { data, error } = await supabase.rpc("auto_checkin" as any, {
+      _customer_id: input.customerId,
+      _token: input.sessionToken,
+      _company_id: input.companyId,
+      _table_id: input.tableId ?? null,
+      _source: input.source ?? "link",
+    });
+    if (error) {
+      console.warn("[auto_checkin]", error.message);
+      return false;
+    }
+    return data === true;
+  },
+
   async listPresentByCompany(companyId: string, minutes = 180) {
     const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
     const { data, error } = await supabase

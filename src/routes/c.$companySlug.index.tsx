@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { companyRepository, customerRepository, checkinRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
 import { setSession, getSessionForCompany } from "@/lib/session";
@@ -31,10 +31,26 @@ function CheckinPage() {
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
+  const checkinFired = useRef(false);
   useEffect(() => {
-    if (session) {
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
-    }
+    if (!session) return;
+    if (checkinFired.current) return;
+    checkinFired.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const tableId = params.get("t") ?? params.get("table") ?? "";
+
+    checkinRepository
+      .createAutoCheckin({
+        customerId: session.customerId,
+        sessionToken: session.sessionToken,
+        companyId: session.companyId,
+        tableId: tableId || undefined,
+        source: tableId ? "mesa" : "link",
+      })
+      .finally(() => {
+        navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      });
   }, [session, companySlug, navigate]);
 
   const { data: company, isLoading } = useQuery({
