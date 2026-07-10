@@ -37,6 +37,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Send,
 } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { toast } from "sonner";
@@ -474,7 +475,7 @@ function CommentsSection({
           onClick={() => add.mutate()}
           disabled={(!text.trim() && !commentImage) || add.isPending}
         >
-          Enviar
+          <Send className="size-4" />
         </Button>
       </div>
       <div>
