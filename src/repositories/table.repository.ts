@@ -15,14 +15,13 @@ export const tableRepository = {
   },
 
   async findBySlug(companyId: string, slug: string): Promise<Table | null> {
-    const { data, error } = await supabase
-      .from("tables")
-      .select("*")
-      .eq("company_id", companyId)
-      .eq("slug", slug)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("get_table_public", {
+      _company_id: companyId,
+      _slug: slug,
+    });
     if (error) throw error;
-    return data ? map(data) : null;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row ? map(row) : null;
   },
 
   async create(companyId: string, label: string, slug: string): Promise<Table> {
