@@ -1048,6 +1048,15 @@ export type Database = {
         }
       }
       get_product_public: { Args: { _slug: string }; Returns: Json }
+      get_table_public: {
+        Args: { _company_id: string; _slug: string }
+        Returns: {
+          company_id: string
+          id: string
+          label: string
+          slug: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
