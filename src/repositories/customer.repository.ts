@@ -140,7 +140,7 @@ export const checkinRepository = {
     return data === true;
   },
 
-  async listPresentByCompany(companyId: string, minutes = 180) {
+  async listPresentByCompany(companyId: string, minutes = 480) {
     const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from("checkins")
