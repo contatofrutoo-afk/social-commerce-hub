@@ -176,11 +176,7 @@ function CustomersPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="relative shrink-0">
                     {c.avatarUrl ? (
-                      <img
-                        src={c.avatarUrl}
-                        alt=""
-                        className="size-8 rounded-full object-cover"
-                      />
+                      <img src={c.avatarUrl} alt="" className="size-8 rounded-full object-cover" />
                     ) : (
                       <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                         {c.name.charAt(0).toUpperCase()}
@@ -610,6 +606,35 @@ function Bloco5({ insights }: { insights: CustomerInsights }) {
           Categoria favorita:{" "}
           <strong className="capitalize">{insights.purchases.mostOrderedCategory}</strong>
         </p>
+      )}
+
+      {insights.purchasedProducts.length > 0 && (
+        <div className="mt-3">
+          <p className="mb-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            Produtos comprados
+          </p>
+          <div className="space-y-0.5 max-h-40 overflow-y-auto">
+            {insights.purchasedProducts.map((p) => (
+              <div
+                key={p.productId}
+                className="flex items-center justify-between rounded-md bg-muted/50 px-2 py-1 text-xs"
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="font-medium truncate block">{p.name}</span>
+                  {p.category && (
+                    <span className="text-[10px] text-muted-foreground capitalize">
+                      {p.category}
+                    </span>
+                  )}
+                </div>
+                <div className="text-right shrink-0 ml-2">
+                  <div className="text-muted-foreground">{p.count}×</div>
+                  {p.price > 0 && <div className="font-medium">{formatBRL(p.price * p.count)}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {insights.purchases.boughtTogether.length > 0 && (

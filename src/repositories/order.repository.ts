@@ -82,4 +82,31 @@ export const orderRepository = {
     const { error } = await supabase.from("orders").delete().eq("id", id);
     if (error) throw error;
   },
+
+  async deleteOrderItem(
+    _orderId: string,
+    itemId: string,
+  ): Promise<{ deleted: boolean; remainingItems: number; newTotal: number }> {
+    const { data, error } = await supabase.rpc("delete_order_item" as any, {
+      _item_id: itemId,
+    });
+    if (error) throw error;
+    const result = data as { deleted: boolean; remaining_items: number; new_total: number };
+    return {
+      deleted: result.deleted,
+      remainingItems: result.remaining_items,
+      newTotal: Number(result.new_total),
+    };
+  },
+
+  async completeOrder(
+    orderId: string,
+    _items: { productId: string; quantity: number; unitPrice: number }[],
+    _customerId: string,
+  ): Promise<void> {
+    const { error } = await supabase.rpc("complete_order" as any, {
+      _order_id: orderId,
+    });
+    if (error) throw error;
+  },
 };

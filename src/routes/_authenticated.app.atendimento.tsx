@@ -203,11 +203,7 @@ function MesasView({ companyId }: { companyId: string }) {
                     >
                       <div className="relative shrink-0">
                         {avatar ? (
-                          <img
-                            src={avatar}
-                            alt=""
-                            className="size-8 rounded-full object-cover"
-                          />
+                          <img src={avatar} alt="" className="size-8 rounded-full object-cover" />
                         ) : (
                           <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                             {name.charAt(0).toUpperCase()}
@@ -290,7 +286,10 @@ function LojaView({ companyId }: { companyId: string }) {
           const avatar = c.customer?.avatar_url;
           const name = c.customer?.name ?? "";
           return (
-            <div key={c.id} className="group relative flex items-center gap-3 p-3 text-left transition-colors">
+            <div
+              key={c.id}
+              className="group relative flex items-center gap-3 p-3 text-left transition-colors"
+            >
               <button
                 onClick={() => setSelectedCheckin(c)}
                 className="flex flex-1 items-center gap-3 min-w-0"
@@ -566,15 +565,28 @@ function CustomerPanel({
       {/* ===== BLOCO 5: ÚLTIMOS PEDIDOS ===== */}
       {p.recentOrders.length > 0 && (
         <Section title="Últimos pedidos" icon={ShoppingCart}>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {p.recentOrders.slice(0, 3).map((o) => (
               <li key={o.id} className="rounded-lg border p-2 text-xs">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-1">
                   <span className="font-semibold">{formatBRL(o.total)}</span>
                   <span className="text-muted-foreground">{relativeTime(o.createdAt)}</span>
                 </div>
-                <div className="text-muted-foreground mt-0.5">
-                  {o.items.map((i) => `${i.quantity}x ${i.productName}`).join(", ")}
+                <div className="space-y-0.5">
+                  {o.items.map((item) => {
+                    const lineTotal = item.quantity * item.unitPrice;
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between bg-muted/50 rounded px-1.5 py-0.5"
+                      >
+                        <span className="truncate font-medium">{item.productName}</span>
+                        <span className="shrink-0 ml-2 text-muted-foreground">
+                          {item.quantity}× {formatBRL(item.unitPrice)} = {formatBRL(lineTotal)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </li>
             ))}
