@@ -48,6 +48,12 @@ function CheckinPage() {
         tableId: tableId || undefined,
         source: tableId ? "mesa" : "link",
       })
+      .then((created) => {
+        console.log("[auto_checkin]", created ? "checkin criado" : "cooldown ativo, skip");
+      })
+      .catch((err) => {
+        console.warn("[auto_checkin] erro:", err?.message ?? err);
+      })
       .finally(() => {
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       });
