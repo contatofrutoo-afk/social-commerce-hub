@@ -38,33 +38,99 @@ export type Database = {
         }
         Relationships: []
       }
+      b2c_customers: {
+        Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
+          company_id: string
+          created_at: string
+          first_visit_at: string
+          id: string
+          last_visit_at: string
+          last_visit_form: string | null
+          last_visit_table: string | null
+          name: string
+          total_visits: number
+          whatsapp: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          company_id: string
+          created_at?: string
+          first_visit_at?: string
+          id?: string
+          last_visit_at?: string
+          last_visit_form?: string | null
+          last_visit_table?: string | null
+          name: string
+          total_visits?: number
+          whatsapp?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
+          company_id?: string
+          created_at?: string
+          first_visit_at?: string
+          id?: string
+          last_visit_at?: string
+          last_visit_form?: string | null
+          last_visit_table?: string | null
+          name?: string
+          total_visits?: number
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       checkins: {
         Row: {
           company_id: string
           context: Database["public"]["Enums"]["visit_context"]
           created_at: string
           customer_id: string
+          customer_name: string
+          day_of_week: string
           id: string
+          origin: string
+          people_count: number
           source: string | null
+          start_time: string
           table_id: string | null
+          table_name: string | null
+          visit_context: string
         }
         Insert: {
           company_id: string
           context: Database["public"]["Enums"]["visit_context"]
           created_at?: string
           customer_id: string
+          customer_name?: string
+          day_of_week?: string
           id?: string
+          origin?: string
+          people_count?: number
           source?: string | null
+          start_time?: string
           table_id?: string | null
+          table_name?: string | null
+          visit_context?: string
         }
         Update: {
           company_id?: string
           context?: Database["public"]["Enums"]["visit_context"]
           created_at?: string
           customer_id?: string
+          customer_name?: string
+          day_of_week?: string
           id?: string
+          origin?: string
+          people_count?: number
           source?: string | null
+          start_time?: string
           table_id?: string | null
+          table_name?: string | null
+          visit_context?: string
         }
         Relationships: [
           {
@@ -609,6 +675,58 @@ export type Database = {
           },
         ]
       }
+      product_events: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          product_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          product_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_events_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_likes: {
         Row: {
           created_at: string
@@ -678,36 +796,69 @@ export type Database = {
       products: {
         Row: {
           available: boolean
+          cart_additions_count: number
           category: string | null
           company_id: string
           created_at: string
           description: string | null
           id: string
           image_url: string | null
+          internal_code: string | null
           name: string
+          order_count: number
           price: number
+          revenue: number
+          scan_count: number
+          sku: string | null
+          slug: string | null
+          status: string
+          stock_quantity: number | null
+          unique_customers: number
+          views_count: number
         }
         Insert: {
           available?: boolean
+          cart_additions_count?: number
           category?: string | null
           company_id: string
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
+          internal_code?: string | null
           name: string
+          order_count?: number
           price?: number
+          revenue?: number
+          scan_count?: number
+          sku?: string | null
+          slug?: string | null
+          status?: string
+          stock_quantity?: number | null
+          unique_customers?: number
+          views_count?: number
         }
         Update: {
           available?: boolean
+          cart_additions_count?: number
           category?: string | null
           company_id?: string
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
+          internal_code?: string | null
           name?: string
+          order_count?: number
           price?: number
+          revenue?: number
+          scan_count?: number
+          sku?: string | null
+          slug?: string | null
+          status?: string
+          stock_quantity?: number | null
+          unique_customers?: number
+          views_count?: number
         }
         Relationships: [
           {
@@ -788,10 +939,33 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_checkin:
+        | {
+            Args: {
+              _company_id: string
+              _customer_id: string
+              _source?: string
+              _table_id?: string
+              _token: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_auth_user_id: string
+              p_company_id: string
+              p_customer_name: string
+              p_source?: string
+              p_table_id?: string
+              p_table_name?: string
+            }
+            Returns: boolean
+          }
       claim_own_company: {
         Args: { _name: string; _slug: string }
         Returns: string
       }
+      complete_order: { Args: { _order_id: string }; Returns: undefined }
       create_checkin: {
         Args: {
           _company_id: string
@@ -836,6 +1010,11 @@ export type Database = {
         }
         Returns: string
       }
+      delete_customer_post: {
+        Args: { _customer_id: string; _post_id: string; _token: string }
+        Returns: undefined
+      }
+      delete_order_item: { Args: { _item_id: string }; Returns: Json }
       get_company_public: {
         Args: { _slug: string }
         Returns: {
@@ -868,12 +1047,17 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_product_public: { Args: { _slug: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_product_counter: {
+        Args: { _field: string; _product_id: string }
+        Returns: undefined
       }
       list_customer_orders: {
         Args: { _customer_id: string; _token: string }
@@ -883,6 +1067,16 @@ export type Database = {
       list_public_posts: {
         Args: { _company_id: string; _viewer_customer_id?: string }
         Returns: Json[]
+      }
+      record_product_event: {
+        Args: {
+          _company_id: string
+          _customer_id?: string
+          _event_type?: string
+          _metadata?: Json
+          _product_id: string
+        }
+        Returns: string
       }
       set_post_reaction: {
         Args: {
@@ -908,6 +1102,16 @@ export type Database = {
           _product_id: string
           _token: string
           _wished: boolean
+        }
+        Returns: undefined
+      }
+      update_customer_post: {
+        Args: {
+          _customer_id: string
+          _image_url: string
+          _post_id: string
+          _text: string
+          _token: string
         }
         Returns: undefined
       }
