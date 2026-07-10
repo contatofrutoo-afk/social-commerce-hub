@@ -58,7 +58,7 @@ function daysSince(iso: string): number {
 export const crmRepository = {
   async getCustomerInsights(customerId: string, companyId?: string): Promise<CustomerInsights> {
     const results = await Promise.allSettled([
-      supabase.from("customers").select("*").eq("id", customerId).maybeSingle(),
+      supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("id", customerId).maybeSingle(),
       supabase.from("checkins").select("id, context, created_at, source, table_id").eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("orders").select(`id, total, status, created_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price))`).eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("post_reactions").select(`id, type, created_at, post:posts(id, post_products(product:products(id, name, category, image_url, price)))`).eq("customer_id", customerId),
@@ -536,7 +536,7 @@ export const crmRepository = {
 
   async getCustomerServiceProfile(customerId: string): Promise<CustomerServiceProfile> {
     const [customerResult, checkinsResult, ordersResult, likesResult, wishesResult] = await Promise.all([
-      supabase.from("customers").select("*").eq("id", customerId).single(),
+      supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("id", customerId).single(),
       supabase.from("checkins").select("id, context, created_at, table_id").eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("orders").select(`*, table:tables(label), order_items(*, product:products(name, category))`).eq("customer_id", customerId).order("created_at", { ascending: false }),
       supabase.from("product_likes").select("product_id, created_at, product:products(name, category, image_url, price)").eq("customer_id", customerId).order("created_at", { ascending: false }),

@@ -118,7 +118,7 @@ function InteligenciaPage() {
   const { data: customers } = useQuery({
     queryKey: ["customers-all", companyId],
     queryFn: async () => {
-      const { data } = await supabase.from("customers").select("*").eq("company_id", companyId!);
+      const { data } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("company_id", companyId!);
       return data ?? [];
     },
     enabled: !!companyId,
