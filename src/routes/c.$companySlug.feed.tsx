@@ -165,17 +165,11 @@ function PostCard({
   const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const isAuthor = post.authorType === "customer" && post.customerId === customerId;
   const isCompanyMember = post.companyId === companyId;
-  const isPostAuthor = post.authorType === "customer" && post.customerId === customerId;
 
-  const canEdit =
-    (post.authorType === "customer" && isPostAuthor) ||
-    (post.authorType === "business" && isCompanyMember);
-
-  const canDelete =
-    isPostAuthor ||
-    (post.authorType === "customer" && isCompanyMember) ||
-    (post.authorType === "business" && isCompanyMember);
+  const canEdit = isAuthor;
+  const canDelete = isAuthor || (post.authorType === "customer" && isCompanyMember);
 
   const showMenu = canEdit || canDelete;
 
