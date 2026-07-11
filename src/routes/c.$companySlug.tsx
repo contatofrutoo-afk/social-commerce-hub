@@ -28,10 +28,12 @@ function ClientLayout() {
     { to: "/c/$companySlug/perfil", label: "Perfil", icon: User },
   ] as const;
 
-  const showTabs = !path.match(new RegExp(`/c/${companySlug}/?$`)) && !path.includes("/m/");
+  const isVendas = path.includes("/vendas");
+  const showTabs = !path.match(new RegExp(`/c/${companySlug}/?$`)) && !path.includes("/m/") && !isVendas;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className={`min-h-screen bg-background ${isVendas ? "" : "pb-20"}`}>
+      {!isVendas && (
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link
@@ -64,6 +66,7 @@ function ClientLayout() {
           </Link>
         </div>
       </header>
+      )}
 
       <main className="mx-auto max-w-2xl">
         <Outlet />
