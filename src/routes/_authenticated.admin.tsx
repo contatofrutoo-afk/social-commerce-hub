@@ -64,7 +64,7 @@ function WeazeLayout() {
           })}
         </nav>
         <button
-          onClick={async () => { localStorage.removeItem("weaze:login_timestamp"); await supabase.auth.signOut(); navigate({ to: "/auth" }); }}
+          onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth" }); }}
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
         >
           <LogOut className="h-4 w-4" /> Sair
