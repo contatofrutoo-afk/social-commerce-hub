@@ -43,14 +43,6 @@ export default function SessionTimeoutGuard() {
   const [expired, setExpired] = useState(false);
   const [countdown, setCountdown] = useState("");
 
-  const forceLogout = useCallback(async () => {
-    setExpired(true);
-    setCountdown("00:00");
-    localStorage.removeItem(SESSION_TIMESTAMP_KEY);
-    await supabase.auth.signOut();
-    navigate({ to: "/auth" });
-  }, [navigate]);
-
   const handleLogout = useCallback(async () => {
     localStorage.removeItem(SESSION_TIMESTAMP_KEY);
     await supabase.auth.signOut();
@@ -92,7 +84,7 @@ export default function SessionTimeoutGuard() {
   }, [expiresAt, navigate]);
 
   useEffect(() => {
-    if (!expiresAt || expired) return;
+    if (!expiresAt || expired || !showWarning) return;
 
     const tick = () => {
       const remaining = expiresAt - Date.now();
@@ -104,13 +96,12 @@ export default function SessionTimeoutGuard() {
         return;
       }
       setCountdown(formatTimeRemaining(remaining));
-      setShowWarning(remaining <= SESSION_WARNING_MS);
     };
 
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [expiresAt, expired, navigate]);
+  }, [expiresAt, expired, showWarning, navigate]);
 
   return (
     <>

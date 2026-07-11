@@ -189,6 +189,7 @@ function AppLayout() {
         </nav>
         <button
           onClick={async () => {
+            localStorage.removeItem("weaze:login_timestamp");
             await supabase.auth.signOut();
             navigate({ to: "/auth" });
           }}
