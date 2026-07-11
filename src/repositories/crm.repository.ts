@@ -69,19 +69,21 @@ function daysSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 86400000;
 }
 
-function computeInterestFunnel(cartAddEvents: any[], purchaseEvents: any[]): InterestFunnel {
+function computeInterestFunnel(
+  cartAddEvents: any[],
+  purchaseEvents: any[],
+  productNames: Map<string, string>,
+): InterestFunnel {
   const cartAdds = cartAddEvents.length;
   const purchases = purchaseEvents.length;
 
   const productsInCart = cartAddEvents
-    .filter((e: any) => e.product)
-    .map((e: any) => ({ id: e.product_id, name: e.product?.name ?? "" }))
-    .filter((p: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.id === p.id) === i);
+    .map((e: any) => ({ id: e.product_id, name: productNames.get(e.product_id) ?? "Produto" }))
+    .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i);
 
   const productsPurchased = purchaseEvents
-    .filter((e: any) => e.product)
-    .map((e: any) => ({ id: e.product_id, name: e.product?.name ?? "" }))
-    .filter((p: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.id === p.id) === i);
+    .map((e: any) => ({ id: e.product_id, name: productNames.get(e.product_id) ?? "Produto" }))
+    .filter((p, i, arr) => arr.findIndex((x) => x.id === p.id) === i);
 
   const lastCartAddAt = cartAddEvents.length > 0 ? cartAddEvents[0].created_at : null;
   const lastPurchaseAt = purchaseEvents.length > 0 ? purchaseEvents[0].created_at : null;
@@ -168,7 +170,7 @@ export const crmRepository = {
         .eq("company_id", companyId ?? "__none__"),
       supabase
         .from("product_events")
-        .select("id, event_type, product_id, created_at, product:products(name)")
+        .select("id, event_type, product_id, created_at")
         .eq("customer_id", customerId)
         .in("event_type", ["cart_add", "purchase"])
         .order("created_at", { ascending: false }),
@@ -195,6 +197,20 @@ export const crmRepository = {
     const wishesRows = settle<any[]>(results[7] as any, []);
     const allTables = settle<any[]>(results[8] as any, []);
     const productEvents = settle<any[]>(results[9] as any, []);
+
+    const eventProductIds = [
+      ...new Set(productEvents.map((e: any) => e.product_id).filter(Boolean)),
+    ];
+    let productNameMap = new Map<string, string>();
+    if (eventProductIds.length > 0) {
+      const { data: eventProducts } = await supabase
+        .from("products")
+        .select("id, name")
+        .in("id", eventProductIds);
+      if (eventProducts) {
+        productNameMap = new Map(eventProducts.map((p: any) => [p.id, p.name]));
+      }
+    }
 
     const now = Date.now();
 
@@ -690,7 +706,7 @@ export const crmRepository = {
     // --- Interest funnel ---
     const cartAddEvents = productEvents.filter((e: any) => e.event_type === "cart_add");
     const purchaseEvents = productEvents.filter((e: any) => e.event_type === "purchase");
-    const interestFunnel = computeInterestFunnel(cartAddEvents, purchaseEvents);
+    const interestFunnel = computeInterestFunnel(cartAddEvents, purchaseEvents, productNameMap);
 
     return {
       // Original fields (kept for reference)
@@ -802,7 +818,7 @@ export const crmRepository = {
           .eq("customer_id", customerId),
         supabase
           .from("product_events")
-          .select("id, event_type, product_id, created_at, product:products(name)")
+          .select("id, event_type, product_id, created_at")
           .eq("customer_id", customerId)
           .in("event_type", ["cart_add", "purchase"])
           .order("created_at", { ascending: false }),
@@ -822,6 +838,20 @@ export const crmRepository = {
     const likes = likesResult.data ?? [];
     const wishes = wishesResult.data ?? [];
     const productEvents = eventsResult.data ?? [];
+
+    const eventProductIds = [
+      ...new Set(productEvents.map((e: any) => e.product_id).filter(Boolean)),
+    ];
+    let productNameMap = new Map<string, string>();
+    if (eventProductIds.length > 0) {
+      const { data: eventProducts } = await supabase
+        .from("products")
+        .select("id, name")
+        .in("id", eventProductIds);
+      if (eventProducts) {
+        productNameMap = new Map(eventProducts.map((p: any) => [p.id, p.name]));
+      }
+    }
 
     const sortedCheckins = [...checkins].sort(
       (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
@@ -1040,7 +1070,7 @@ export const crmRepository = {
     // --- Interest funnel ---
     const cartAddEvents = productEvents.filter((e: any) => e.event_type === "cart_add");
     const purchaseEvents = productEvents.filter((e: any) => e.event_type === "purchase");
-    const interestFunnel = computeInterestFunnel(cartAddEvents, purchaseEvents);
+    const interestFunnel = computeInterestFunnel(cartAddEvents, purchaseEvents, productNameMap);
 
     return {
       id: customer.id,
