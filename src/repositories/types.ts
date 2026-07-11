@@ -227,6 +227,7 @@ export interface CustomerServiceProfile {
   likedButNotOrdered: { id: string; name: string }[];
   opportunities: string[];
   weazeSuggestions: string[];
+  interestFunnel: InterestFunnel;
 }
 
 export interface Insight {
@@ -237,7 +238,15 @@ export interface Insight {
 
 // --- CRM ---
 
-export type TimelineEventType = "checkin" | "order" | "reaction_love" | "reaction_dislike" | "comment" | "like" | "wish" | "post";
+export type TimelineEventType =
+  | "checkin"
+  | "order"
+  | "reaction_love"
+  | "reaction_dislike"
+  | "comment"
+  | "like"
+  | "wish"
+  | "post";
 
 export interface TimelineEvent {
   id: string;
@@ -282,6 +291,19 @@ export interface VisitHabits {
 export type CustomerClassification = "new" | "frequent" | "vip" | "at_risk" | "inactive";
 
 export type TrendType = "increasing" | "stable" | "decreasing" | "inactive";
+
+export type InterestLevel = "nenhum" | "curioso" | "interessado" | "intencao" | "quente";
+
+export interface InterestFunnel {
+  level: InterestLevel;
+  label: string;
+  cartAdds: number;
+  purchases: number;
+  productsInCart: { id: string; name: string }[];
+  productsPurchased: { id: string; name: string }[];
+  lastCartAddAt: string | null;
+  lastPurchaseAt: string | null;
+}
 
 export interface EngagementSummary {
   level: "muito_ativo" | "ativo" | "pouco_ativo" | "baixo_engajamento";
@@ -351,4 +373,5 @@ export interface CustomerInsights {
   lastPostAt: string | null;
   lastLikeAt: string | null;
   likedButNotOrdered: ProductInteraction[];
+  interestFunnel: InterestFunnel;
 }

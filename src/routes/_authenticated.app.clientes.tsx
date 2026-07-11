@@ -35,6 +35,7 @@ import {
   ArrowDown,
   Minus,
   Trash2,
+  Flame,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/clientes")({
@@ -61,6 +62,20 @@ const classificationConfig = {
   vip: { label: "VIP", class: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
   at_risk: { label: "Risco", class: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30" },
   inactive: { label: "Inativo", class: "bg-red-500/10 text-red-600 border-red-500/30" },
+};
+
+const interestConfig: Record<string, { label: string; class: string }> = {
+  nenhum: { label: "Sem interação", class: "bg-muted text-muted-foreground border-border" },
+  curioso: { label: "Curioso", class: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
+  interessado: {
+    label: "Interessado",
+    class: "bg-orange-500/10 text-orange-600 border-orange-500/30",
+  },
+  intencao: {
+    label: "Intenção de compra",
+    class: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  },
+  quente: { label: "Cliente quente", class: "bg-red-500/10 text-red-600 border-red-500/30" },
 };
 
 const classificationExplanations: Record<string, string> = {
@@ -336,6 +351,13 @@ function Bloco1({
             <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}>
               {cc.label}
             </span>
+            {insights.interestFunnel.level !== "nenhum" && (
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${interestConfig[insights.interestFunnel.level]?.class ?? interestConfig.nenhum.class}`}
+              >
+                <Flame className="inline size-2.5 mr-0.5 -mt-0.5" /> {insights.interestFunnel.label}
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">{insights.whatsapp}</p>
           <p className="text-[11px] text-muted-foreground">

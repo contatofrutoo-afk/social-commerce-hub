@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { productRepository } from "@/repositories";
 import { useCart } from "@/hooks/use-cart";
+import { getSessionForCompany } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { ArrowLeft, ShoppingCart, Package, Minus, Plus, Eye, ScanLine, Hash } from "lucide-react";
@@ -58,7 +59,9 @@ function ProductPage() {
   function addToCart() {
     if (!product) return;
     cart.add(product, qty);
-    productRepository.recordEvent(product.id, product.companyId, "cart_add").catch(() => {});
+    const companySlug = product.companySlug ?? slug.split("-")[0];
+    const session = getSessionForCompany(companySlug);
+    productRepository.recordEvent(product.id, product.companyId, "cart_add", session?.customerId).catch(() => {});
     productRepository.incrementCounter(product.id, "cart_additions_count").catch(() => {});
   }
 

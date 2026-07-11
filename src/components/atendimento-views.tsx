@@ -3,8 +3,23 @@ import { useState } from "react";
 import { tableRepository, checkinRepository, crmRepository } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
 import {
-  User, Heart, Users, Home, Clock, ShoppingCart, Sparkles, TrendingUp,
-  Star, Gift, Lightbulb, Target, ShoppingBag, ChevronRight, LogOut, Trash2,
+  User,
+  Heart,
+  Users,
+  Home,
+  Clock,
+  ShoppingCart,
+  Sparkles,
+  TrendingUp,
+  Star,
+  Gift,
+  Lightbulb,
+  Target,
+  ShoppingBag,
+  ChevronRight,
+  LogOut,
+  Trash2,
+  Flame,
 } from "lucide-react";
 
 const PRESENCE_WINDOW_MS = 8 * 60 * 60 * 1000;
@@ -14,23 +29,62 @@ function isPresent(createdAt: string): boolean {
 }
 
 const contextIcons: Record<string, any> = {
-  sozinho: User, casal: Heart, amigos: Users, familia: Home,
+  sozinho: User,
+  casal: Heart,
+  amigos: Users,
+  familia: Home,
 };
 
 const contextLabels: Record<string, string> = {
-  sozinho: "Está sozinho", casal: "Está em casal", amigos: "Está com amigos", familia: "Está acompanhado da família",
+  sozinho: "Está sozinho",
+  casal: "Está em casal",
+  amigos: "Está com amigos",
+  familia: "Está acompanhado da família",
 };
 
 const contextEmojis: Record<string, string> = {
-  sozinho: "🙋", casal: "❤️", amigos: "👥", familia: "👨‍👩‍👧",
+  sozinho: "🙋",
+  casal: "❤️",
+  amigos: "👥",
+  familia: "👨‍👩‍👧",
 };
 
 const classificationConfig: Record<string, { label: string; class: string; dot: string }> = {
-  new: { label: "Novo Cliente", class: "bg-blue-500/10 text-blue-600 border-blue-500/30", dot: "🟢" },
-  frequent: { label: "Cliente Frequente", class: "bg-green-500/10 text-green-600 border-green-500/30", dot: "🔵" },
-  vip: { label: "Cliente VIP", class: "bg-amber-500/10 text-amber-600 border-amber-500/30", dot: "🟣" },
-  at_risk: { label: "Risco", class: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30", dot: "🟡" },
+  new: {
+    label: "Novo Cliente",
+    class: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+    dot: "🟢",
+  },
+  frequent: {
+    label: "Cliente Frequente",
+    class: "bg-green-500/10 text-green-600 border-green-500/30",
+    dot: "🔵",
+  },
+  vip: {
+    label: "Cliente VIP",
+    class: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    dot: "🟣",
+  },
+  at_risk: {
+    label: "Risco",
+    class: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
+    dot: "🟡",
+  },
   inactive: { label: "Inativo", class: "bg-red-500/10 text-red-600 border-red-500/30", dot: "🔴" },
+};
+
+const interestConfig: Record<string, { label: string; class: string }> = {
+  nenhum: { label: "Sem interação", class: "bg-muted text-muted-foreground border-border" },
+  curioso: { label: "Curioso", class: "bg-blue-500/10 text-blue-600 border-blue-500/30" },
+  interessado: {
+    label: "Interessado",
+    class: "bg-orange-500/10 text-orange-600 border-orange-500/30",
+  },
+  intencao: {
+    label: "Intenção de compra",
+    class: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  },
+  quente: { label: "Cliente quente", class: "bg-red-500/10 text-red-600 border-red-500/30" },
 };
 
 // ======= MESAS VIEW =======
@@ -305,9 +359,18 @@ export function CustomerPanel({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-bold">{p.name}</h2>
-              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}>
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${cc.class}`}
+              >
                 {cc.dot} {cc.label}
               </span>
+              {p.interestFunnel.level !== "nenhum" && (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${interestConfig[p.interestFunnel.level]?.class ?? interestConfig.nenhum.class}`}
+                >
+                  <Flame className="inline size-2.5 mr-0.5 -mt-0.5" /> {p.interestFunnel.label}
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
               Cliente desde {new Date(p.customerSince).toLocaleDateString("pt-BR")}
@@ -319,7 +382,8 @@ export function CustomerPanel({
           {p.currentContext && ContextIcon && (
             <span className="flex items-center gap-1">
               <ContextIcon className="size-3.5" />
-              {contextEmojis[p.currentContext] ?? ""} {contextLabels[p.currentContext] ?? p.currentContext}
+              {contextEmojis[p.currentContext] ?? ""}{" "}
+              {contextLabels[p.currentContext] ?? p.currentContext}
             </span>
           )}
           {mode === "mesas" && tableLabel && (
@@ -348,11 +412,15 @@ export function CustomerPanel({
           </div>
           <div className="rounded-lg bg-muted p-2">
             <div className="text-muted-foreground">Último pedido</div>
-            <div className="font-semibold">{p.lastOrder ? relativeTime(p.lastOrder) : "Nenhum"}</div>
+            <div className="font-semibold">
+              {p.lastOrder ? relativeTime(p.lastOrder) : "Nenhum"}
+            </div>
           </div>
           <div className="rounded-lg bg-muted p-2">
             <div className="text-muted-foreground">Ticket médio</div>
-            <div className="font-semibold">{p.avgOrderValue > 0 ? formatBRL(p.avgOrderValue) : "—"}</div>
+            <div className="font-semibold">
+              {p.avgOrderValue > 0 ? formatBRL(p.avgOrderValue) : "—"}
+            </div>
           </div>
         </div>
       </Section>
@@ -386,14 +454,20 @@ export function CustomerPanel({
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] flex items-center gap-1">
                   <Heart className="size-2.5 text-red-400" />
                   Curtiu recentemente:{" "}
-                  {p.recentlyLikedProducts.slice(0, 3).map((l) => l.name).join(", ")}
+                  {p.recentlyLikedProducts
+                    .slice(0, 3)
+                    .map((l) => l.name)
+                    .join(", ")}
                 </span>
               )}
               {p.wishedProducts.length > 0 && (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] flex items-center gap-1">
                   <Gift className="size-2.5 text-amber-400" />
                   Desejou:{" "}
-                  {p.wishedProducts.slice(0, 3).map((w) => w.name).join(", ")}
+                  {p.wishedProducts
+                    .slice(0, 3)
+                    .map((w) => w.name)
+                    .join(", ")}
                 </span>
               )}
             </div>
@@ -425,7 +499,10 @@ export function CustomerPanel({
                 <div>
                   <span className="text-muted-foreground text-xs">Já curtiu:</span>
                   <div className="font-medium">
-                    {p.likedButNotOrdered.slice(0, 3).map((l) => l.name).join(", ")}
+                    {p.likedButNotOrdered
+                      .slice(0, 3)
+                      .map((l) => l.name)
+                      .join(", ")}
                   </div>
                 </div>
               </div>
@@ -436,7 +513,10 @@ export function CustomerPanel({
                 <div>
                   <span className="text-muted-foreground text-xs">Desejou:</span>
                   <div className="font-medium">
-                    {p.wishedProducts.slice(0, 3).map((w) => w.name).join(", ")}
+                    {p.wishedProducts
+                      .slice(0, 3)
+                      .map((w) => w.name)
+                      .join(", ")}
                   </div>
                 </div>
               </div>
@@ -447,13 +527,54 @@ export function CustomerPanel({
                 <div>
                   <span className="text-muted-foreground text-xs">Nunca comprou:</span>
                   <div className="font-medium">
-                    {p.likedButNotOrdered.slice(0, 3).map((l) => l.name).join(", ")}
+                    {p.likedButNotOrdered
+                      .slice(0, 3)
+                      .map((l) => l.name)
+                      .join(", ")}
                   </div>
                 </div>
               </div>
             )}
           </div>
         )}
+      </Section>
+
+      <Section title="Funil de interesse" icon={Flame}>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${interestConfig[p.interestFunnel.level]?.class ?? interestConfig.nenhum.class}`}
+            >
+              {p.interestFunnel.label}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {p.interestFunnel.cartAdds > 0 &&
+                `${p.interestFunnel.cartAdds} ${p.interestFunnel.cartAdds === 1 ? "item adicionado" : "itens adicionados"}`}
+              {p.interestFunnel.cartAdds > 0 && p.interestFunnel.purchases > 0 && " · "}
+              {p.interestFunnel.purchases > 0 &&
+                `${p.interestFunnel.purchases} ${p.interestFunnel.purchases === 1 ? "compra" : "compras"}`}
+              {p.interestFunnel.cartAdds === 0 &&
+                p.interestFunnel.purchases === 0 &&
+                "Nenhuma interação"}
+            </span>
+          </div>
+          {p.interestFunnel.productsInCart.length > 0 && (
+            <div className="text-xs">
+              <span className="text-muted-foreground">Adicionou:</span>{" "}
+              <span className="font-medium">
+                {p.interestFunnel.productsInCart.map((p) => p.name).join(", ")}
+              </span>
+            </div>
+          )}
+          {p.interestFunnel.productsPurchased.length > 0 && (
+            <div className="text-xs">
+              <span className="text-muted-foreground">Comprou:</span>{" "}
+              <span className="font-medium">
+                {p.interestFunnel.productsPurchased.map((p) => p.name).join(", ")}
+              </span>
+            </div>
+          )}
+        </div>
       </Section>
 
       {p.recentOrders.length > 0 && (
