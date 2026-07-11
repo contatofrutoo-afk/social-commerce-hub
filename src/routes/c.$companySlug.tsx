@@ -5,6 +5,7 @@ import { Newspaper, ShoppingBag, User, Camera } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import ClientSessionGuard from "@/components/ClientSessionGuard";
 
 export const Route = createFileRoute("/c/$companySlug")({
   component: ClientLayout,
@@ -33,6 +34,7 @@ function ClientLayout() {
 
   return (
     <div className={`min-h-screen bg-background ${isVendas ? "" : "pb-20"}`}>
+      {showTabs && <ClientSessionGuard />}
       {!isVendas && (
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">

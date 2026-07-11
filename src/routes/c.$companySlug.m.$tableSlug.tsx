@@ -127,6 +127,7 @@ function TableCheckin() {
         companyId: company.id,
         companySlug,
         sessionToken: upserted.sessionToken,
+        createdAt: Date.now(),
       });
     },
     onSuccess: () => {
