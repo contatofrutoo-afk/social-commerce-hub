@@ -42,7 +42,7 @@ function TableCheckin() {
     staleTime: 30_000,
   });
 
-  const { data: table } = useQuery({
+  const { data: table, isLoading: tableLoading, error: tableError } = useQuery({
     queryKey: ["table", company?.id, tableSlug],
     queryFn: () => (company ? tableRepository.findBySlug(company.id, tableSlug) : null),
     enabled: !!company,
@@ -51,9 +51,22 @@ function TableCheckin() {
 
   const checkinFired = useRef(false);
   useEffect(() => {
-    if (!session || !company || !table) return;
+    if (!session || !company || !table) {
+      if (session && company && table === undefined) {
+        console.warn("[mesa_checkin] table not found for slug:", tableSlug, "company:", company?.id);
+      }
+      return;
+    }
     if (checkinFired.current) return;
     checkinFired.current = true;
+
+    console.log("[mesa_checkin] firing auto_checkin", {
+      customerId: session.customerId,
+      companyId: session.companyId,
+      tableId: table.id,
+      tableSlug: table.slug,
+      source: `mesa-${table.slug}`,
+    });
 
     checkinRepository
       .createAutoCheckin({
@@ -63,10 +76,16 @@ function TableCheckin() {
         tableId: table.id,
         source: `mesa-${table.slug}`,
       })
+      .then((created) => {
+        console.log("[mesa_checkin]", created ? "checkin criado" : "cooldown ativo, skip");
+      })
+      .catch((err) => {
+        console.warn("[mesa_checkin] erro:", err?.message ?? err);
+      })
       .finally(() => {
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       });
-  }, [session, company, table, companySlug, navigate]);
+  }, [session, company, table, companySlug, navigate, tableSlug]);
 
   const { data: existingCustomer } = useQuery({
     queryKey: ["customer-self", session?.customerId],
@@ -117,6 +136,27 @@ function TableCheckin() {
   });
 
   if (!company || !table) {
+    if (tableError) {
+      console.warn("[mesa_checkin] table query error:", tableError.message);
+      return (
+        <div className="px-6 py-8 text-center space-y-3">
+          <p className="text-destructive font-medium">Mesa não encontrada</p>
+          <p className="text-sm text-muted-foreground">
+            Verifique o link ou entre em contato com o estabelecimento.
+          </p>
+        </div>
+      );
+    }
+    if (company && !tableLoading && table === null) {
+      return (
+        <div className="px-6 py-8 text-center space-y-3">
+          <p className="text-destructive font-medium">Mesa "{tableSlug}" não encontrada</p>
+          <p className="text-sm text-muted-foreground">
+            Esta mesa não existe em {company.name}. Verifique o link.
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="px-6 py-8">
         <div className="mb-6 text-center space-y-3">
