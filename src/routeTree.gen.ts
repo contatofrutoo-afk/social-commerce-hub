@@ -19,6 +19,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
+import { Route as CCompanySlugVendasRouteImport } from './routes/c.$companySlug.vendas'
 import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.sacola'
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
 import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.perfil'
@@ -87,6 +88,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const CCompanySlugVendasRoute = CCompanySlugVendasRouteImport.update({
+  id: '/vendas',
+  path: '/vendas',
+  getParentRoute: () => CCompanySlugRoute,
 } as any)
 const CCompanySlugSacolaRoute = CCompanySlugSacolaRouteImport.update({
   id: '/sacola',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
+  '/c/$companySlug/vendas': typeof CCompanySlugVendasRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
+  '/c/$companySlug/vendas': typeof CCompanySlugVendasRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug': typeof CCompanySlugIndexRoute
@@ -279,6 +287,7 @@ export interface FileRoutesById {
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
+  '/c/$companySlug/vendas': typeof CCompanySlugVendasRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
+    | '/c/$companySlug/vendas'
     | '/admin/'
     | '/app/'
     | '/c/$companySlug/'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
+    | '/c/$companySlug/vendas'
     | '/admin'
     | '/app'
     | '/c/$companySlug'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
+    | '/c/$companySlug/vendas'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/c/$companySlug/'
@@ -455,6 +467,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/c/$companySlug/vendas': {
+      id: '/c/$companySlug/vendas'
+      path: '/vendas'
+      fullPath: '/c/$companySlug/vendas'
+      preLoaderRoute: typeof CCompanySlugVendasRouteImport
+      parentRoute: typeof CCompanySlugRoute
     }
     '/c/$companySlug/sacola': {
       id: '/c/$companySlug/sacola'
@@ -673,6 +692,7 @@ interface CCompanySlugRouteChildren {
   CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
   CCompanySlugPublicarRoute: typeof CCompanySlugPublicarRoute
   CCompanySlugSacolaRoute: typeof CCompanySlugSacolaRoute
+  CCompanySlugVendasRoute: typeof CCompanySlugVendasRoute
   CCompanySlugIndexRoute: typeof CCompanySlugIndexRoute
   CCompanySlugMTableSlugRoute: typeof CCompanySlugMTableSlugRoute
 }
@@ -682,6 +702,7 @@ const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
   CCompanySlugPerfilRoute: CCompanySlugPerfilRoute,
   CCompanySlugPublicarRoute: CCompanySlugPublicarRoute,
   CCompanySlugSacolaRoute: CCompanySlugSacolaRoute,
+  CCompanySlugVendasRoute: CCompanySlugVendasRoute,
   CCompanySlugIndexRoute: CCompanySlugIndexRoute,
   CCompanySlugMTableSlugRoute: CCompanySlugMTableSlugRoute,
 }

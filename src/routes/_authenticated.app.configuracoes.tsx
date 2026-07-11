@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import {
   Copy, QrCode, Trash2, Pencil, Check, X, Download,
   Users, ShoppingCart, Store, TrendingUp, Heart, MessageCircle,
-  Clock, Calendar, Sparkles, RefreshCw,
+  Clock, Calendar, Sparkles, RefreshCw, Link2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/configuracoes")({
@@ -139,6 +139,7 @@ function SettingsPage() {
 
   const baseUrl = getBaseUrl();
   const generalLink = company ? `${baseUrl}/c/${company.slug}` : "";
+  const vendasLink = company ? `${baseUrl}/c/${company.slug}/vendas` : "";
 
   const save = useMutation({
     mutationFn: () =>
@@ -275,6 +276,32 @@ function SettingsPage() {
               Copiar Link
             </Button>
             <QrCodeDialog url={generalLink} label="QR Code — Link Geral" />
+          </div>
+        </div>
+      )}
+
+      {/* Link Vendas (Painel do Vendedor) */}
+      {company && (
+        <div className="space-y-3 rounded-xl border bg-card p-4">
+          <h2 className="font-semibold flex items-center gap-2">
+            <Link2 className="size-4" />
+            Link do Painel de Vendas
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Compartilhe este link com seus vendedores. Eles terão acesso imediato ao painel de atendimento, sem precisar de login.
+          </p>
+          <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
+            <code className="flex-1 text-sm break-all">{vendasLink}</code>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="default"
+              onClick={() => copyToClipboard(vendasLink)}
+            >
+              <Copy className="size-4 mr-2" />
+              Copiar Link
+            </Button>
+            <QrCodeDialog url={vendasLink} label="QR Code — Painel de Vendas" />
           </div>
         </div>
       )}
