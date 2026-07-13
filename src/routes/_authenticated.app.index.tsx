@@ -171,16 +171,19 @@ function DashboardPage() {
     queryKey: ["customers", companyId],
     queryFn: () => customerRepository.listByCompany(companyId!),
     enabled: !!companyId,
+    refetchInterval: 30_000,
   });
   const { data: orders } = useQuery({
     queryKey: ["orders", companyId],
     queryFn: () => orderRepository.listByCompany(companyId!),
     enabled: !!companyId,
+    refetchInterval: 30_000,
   });
   const { data: present } = useQuery({
     queryKey: ["present", companyId],
     queryFn: () => checkinRepository.listPresentByCompany(companyId!),
     enabled: !!companyId,
+    refetchInterval: 15_000,
   });
   const { data: posts } = useQuery({
     queryKey: ["feed-b2b", companyId],
@@ -220,6 +223,7 @@ function DashboardPage() {
       return data ?? [];
     },
     enabled: !!companyId,
+    refetchInterval: 30_000,
   });
 
   const { data: reactions } = useQuery({
@@ -232,6 +236,7 @@ function DashboardPage() {
       return data ?? [];
     },
     enabled: !!companyId,
+    refetchInterval: 30_000,
   });
 
   const { data: productLikes } = useQuery({
@@ -245,6 +250,17 @@ function DashboardPage() {
     },
     enabled: !!companyId,
   });
+
+  // ── Unique present customers (deduplicate by customer_id) ──
+  const presentCount = useMemo(() => {
+    if (!present) return 0;
+    const seen = new Set<string>();
+    present.forEach((c: any) => {
+      const cid = c.customer_id ?? c.customer?.id;
+      if (cid) seen.add(cid);
+    });
+    return seen.size;
+  }, [present]);
 
   // ── Period computations ──
   const { start: pStart, end: pEnd } = getPeriodBounds(period);
@@ -531,12 +547,12 @@ function DashboardPage() {
       </div>
 
       {/* Presentes agora (mini banner) */}
-      {present && present.length > 0 && (
+      {presentCount > 0 && (
         <div className="flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2 text-sm">
           <Store className="size-4 text-primary" />
-          <span className="font-medium">{present.length}</span>
+          <span className="font-medium">{presentCount}</span>
           <span className="text-muted-foreground">
-            cliente{present.length > 1 ? "s" : ""} presente{present.length > 1 ? "s" : ""} agora
+            cliente{presentCount > 1 ? "s" : ""} presente{presentCount > 1 ? "s" : ""} agora
           </span>
         </div>
       )}
