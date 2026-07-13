@@ -11,7 +11,7 @@ export type WeazeSession = {
   // mutações do próprio cliente (perfil, reações, curtidas, desejos) via RPCs.
   sessionToken: string;
   /** Timestamp (Date.now()) de quando a sessão foi criada. Sessões sem este campo
-   *  (criadas antes desta feature) são consideradas válidas para não quebrar fluxo. */
+   *  são consideradas expiradas e o cliente deve fazer check-in novamente. */
   createdAt?: number;
 };
 
@@ -38,24 +38,26 @@ export function clearSession() {
 export function getSessionForCompany(companySlug: string): WeazeSession | null {
   const s = getSession();
   if (!s || s.companySlug !== companySlug || !s.sessionToken) return null;
-  // Sessões com createdAt expirado são tratadas como inexistentes
-  if (s.createdAt && Date.now() - s.createdAt > SESSION_DURATION_MS) {
+  // Sessões sem createdAt ou com createdAt expirado são tratadas como inexistentes
+  if (!s.createdAt || Date.now() - s.createdAt > SESSION_DURATION_MS) {
     clearSession();
     return null;
   }
   return s;
 }
 
-/** Timestamp (ms) em que a sessão expira. Null se não houver sessão ou se ela não tem createdAt. */
+/** Timestamp (ms) em que a sessão expira. Null se não houver sessão. */
 export function getSessionExpiry(): number | null {
   const s = getSession();
-  if (!s?.createdAt) return null;
+  if (!s) return null;
+  // Sessões sem createdAt são tratadas como já expiradas
+  if (!s.createdAt) return 0;
   return s.createdAt + SESSION_DURATION_MS;
 }
 
-/** Retorna os milissegundos restantes até a expiração. Null se sem sessão ou sem createdAt. */
+/** Retorna os milissegundos restantes até a expiração. Null se não houver sessão. */
 export function getSessionRemainingMs(): number | null {
   const expiry = getSessionExpiry();
-  if (!expiry) return null;
+  if (expiry === null) return null;
   return Math.max(0, expiry - Date.now());
 }
