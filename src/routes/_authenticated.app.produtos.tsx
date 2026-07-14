@@ -184,9 +184,11 @@ function ProductCardWithAnalytics({
 
   return (
     <div className="rounded-xl border bg-card p-3">
-      {product.imageUrl && (
+      {product.videoUrl ? (
+        <video src={product.videoUrl} className="h-32 w-full rounded-lg object-cover" preload="metadata" muted playsInline />
+      ) : product.imageUrl ? (
         <img src={product.imageUrl} alt="" className="h-32 w-full rounded-lg object-cover" />
-      )}
+      ) : null}
       <div className="mt-2 flex justify-between">
         <div>
           <div className="font-medium">{product.name}</div>
