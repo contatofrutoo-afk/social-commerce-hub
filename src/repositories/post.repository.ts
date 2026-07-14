@@ -9,6 +9,7 @@ function mapProduct(r: any) {
     category: r.category,
     price: Number(r.price),
     imageUrl: r.image_url,
+    videoUrl: r.video_url ?? null,
     available: r.available,
     description: r.description,
   };
