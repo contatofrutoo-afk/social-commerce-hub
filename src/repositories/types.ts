@@ -136,6 +136,7 @@ export interface CartItem {
   name: string;
   price: number;
   imageUrl: string | null;
+  videoUrl: string | null;
   quantity: number;
   note?: string;
 }
