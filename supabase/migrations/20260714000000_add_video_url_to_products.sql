@@ -19,7 +19,7 @@ BEGIN
     'order_count', p.order_count, 'revenue', p.revenue, 'unique_customers', p.unique_customers
   ) INTO v_result
   FROM products p JOIN companies c ON c.id = p.company_id
-  WHERE p.slug = _slug AND p.status = 'active' AND c.status = 'active';
+  WHERE p.slug = _slug AND p.status = 'active';
   RETURN v_result;
 END;
 $$;
