@@ -51,6 +51,7 @@ export interface Product {
   category: string | null;
   price: number;
   imageUrl: string | null;
+  videoUrl: string | null;
   available: boolean;
   description: string | null;
   status: ProductStatus;

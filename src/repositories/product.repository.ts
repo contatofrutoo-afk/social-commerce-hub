@@ -11,6 +11,7 @@ function map(r: any): Product {
     category: r.category,
     price: Number(r.price),
     imageUrl: r.image_url,
+    videoUrl: r.video_url ?? null,
     available: r.available,
     description: r.description,
     status: r.status ?? "active",
@@ -69,6 +70,7 @@ export const productRepository = {
         category: p.category,
         price: p.price,
         image_url: p.imageUrl,
+        video_url: p.videoUrl ?? null,
         available: p.available,
         description: p.description,
         status: p.status ?? "active" as const,
@@ -89,6 +91,7 @@ export const productRepository = {
     if (p.category !== undefined) patch.category = p.category;
     if (p.price !== undefined) patch.price = p.price;
     if (p.imageUrl !== undefined) patch.image_url = p.imageUrl;
+    if (p.videoUrl !== undefined) patch.video_url = p.videoUrl;
     if (p.available !== undefined) patch.available = p.available;
     if (p.description !== undefined) patch.description = p.description;
     if (p.status !== undefined) patch.status = p.status;

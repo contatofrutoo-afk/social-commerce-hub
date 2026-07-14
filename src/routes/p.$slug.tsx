@@ -85,13 +85,20 @@ function ProductPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6">
-        {product.imageUrl && (
+        {product.videoUrl ? (
+          <video
+            src={product.videoUrl}
+            className="w-full rounded-xl object-cover aspect-square"
+            controls
+            playsInline
+          />
+        ) : product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt={product.name}
             className="w-full rounded-xl object-cover aspect-square"
           />
-        )}
+        ) : null}
 
         <div className="mt-4 space-y-3">
           <div>

@@ -7,6 +7,7 @@ import type { Product, ProductStatus } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/image-upload";
+import { VideoUpload } from "@/components/video-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -53,6 +54,7 @@ const empty = {
   category: "",
   price: 0,
   imageUrl: "",
+  videoUrl: "",
   description: "",
   available: true,
   status: "active" as ProductStatus,
@@ -128,6 +130,7 @@ function CatalogoPage() {
       category: p.category ?? "",
       price: p.price,
       imageUrl: p.imageUrl ?? "",
+      videoUrl: p.videoUrl ?? "",
       description: p.description ?? "",
       available: p.available,
       status: p.status,
@@ -146,6 +149,7 @@ function CatalogoPage() {
         category: form.category || null,
         price: Number(form.price),
         imageUrl: form.imageUrl || null,
+        videoUrl: form.videoUrl || null,
         description: form.description || null,
         available: form.available,
         status: form.status,
@@ -316,6 +320,14 @@ function CatalogoPage() {
                   />
                 </div>
                 <div>
+                  <Label>Vídeo (opcional)</Label>
+                  <VideoUpload
+                    value={form.videoUrl || null}
+                    onChange={(url) => setForm({ ...form, videoUrl: url ?? "" })}
+                    folder={`${companyId}/catalogo`}
+                  />
+                </div>
+                <div>
                   <Label>Descrição</Label>
                   <Textarea
                     value={form.description}
@@ -396,7 +408,14 @@ function ProductCard({
   return (
     <div className="rounded-xl border bg-card p-4">
       <div className="flex gap-4">
-        {product.imageUrl ? (
+        {product.videoUrl ? (
+          <video
+            src={product.videoUrl}
+            className="size-20 shrink-0 rounded-lg object-cover"
+            playsInline
+            muted
+          />
+        ) : product.imageUrl ? (
           <img
             src={product.imageUrl}
             alt=""
