@@ -27,3 +27,6 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_product_public(_slug text)
 RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = public
 AS $$ SELECT private.get_product_public(_slug); $$;
+
+REVOKE ALL ON FUNCTION public.get_product_public(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_product_public(text) TO anon, authenticated;
