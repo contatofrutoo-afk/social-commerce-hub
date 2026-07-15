@@ -99,20 +99,6 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80, prod
   const arrowSize = size >= 112 ? "size-4" : "size-3";
   const showControls = allMedia.length > 1;
 
-  // Touch swipe support in lightbox
-  const touchStartX = useRef<number | null>(null);
-  function onTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0].clientX;
-  }
-  function onTouchEnd(e: React.TouchEvent) {
-    if (touchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) {
-      if (dx < 0) nextLightbox();
-      else prevLightbox();
-    }
-    touchStartX.current = null;
-  }
 
   return (
     <>
