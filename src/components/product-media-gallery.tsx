@@ -9,42 +9,40 @@ interface ProductMediaGalleryProps {
 
 export function ProductMediaGallery({ imageUrl, videoUrl, media }: ProductMediaGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const allMedia: { url: string; type: "image" | "video" }[] = [];
   if (videoUrl) allMedia.push({ url: videoUrl, type: "video" });
   if (imageUrl) allMedia.push({ url: imageUrl, type: "image" });
   if (media) allMedia.push(...media);
 
-  const updateButtons = useCallback(() => {
+  const updateIndex = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
+    setCurrentIndex(Math.round(el.scrollLeft / el.clientWidth));
   }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    updateButtons();
-    el.addEventListener("scroll", updateButtons, { passive: true });
-    return () => el.removeEventListener("scroll", updateButtons);
-  }, [updateButtons]);
+    el.addEventListener("scroll", updateIndex, { passive: true });
+    return () => el.removeEventListener("scroll", updateIndex);
+  }, [updateIndex]);
 
-  function scroll(dir: "left" | "right") {
+  function scrollTo(index: number) {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir === "left" ? -el.clientWidth : el.clientWidth, behavior: "smooth" });
+    el.scrollBy({ left: (index - currentIndex) * el.clientWidth, behavior: "smooth" });
+    setCurrentIndex(index);
   }
 
   if (allMedia.length === 0) return null;
 
   return (
-    <div className="relative w-20 h-20 shrink-0">
+    <div className="relative w-20 h-20 shrink-0 overflow-hidden rounded-lg">
       <div
         ref={scrollRef}
-        className="flex size-full snap-x snap-mandatory overflow-x-auto rounded-lg"
+        className="flex size-full snap-x snap-mandatory overflow-x-auto"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {allMedia.map((item, i) => (
@@ -57,13 +55,13 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media }: ProductMediaG
           </div>
         ))}
       </div>
-      {allMedia.length > 1 && canScrollLeft && (
-        <button type="button" onClick={() => scroll("left")} className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
+      {allMedia.length > 1 && currentIndex > 0 && (
+        <button type="button" onClick={() => scrollTo(currentIndex - 1)} className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
           <ChevronLeft className="size-3" />
         </button>
       )}
-      {allMedia.length > 1 && canScrollRight && (
-        <button type="button" onClick={() => scroll("right")} className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
+      {allMedia.length > 1 && currentIndex < allMedia.length - 1 && (
+        <button type="button" onClick={() => scrollTo(currentIndex + 1)} className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
           <ChevronRight className="size-3" />
         </button>
       )}
