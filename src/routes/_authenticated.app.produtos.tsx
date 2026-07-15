@@ -115,7 +115,7 @@ function ProductsPage() {
               <Plus className="mr-1 size-4" /> Novo
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editing ? "Editar produto" : "Novo produto"}</DialogTitle>
             </DialogHeader>
