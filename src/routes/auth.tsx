@@ -9,6 +9,14 @@ import { toast } from "sonner";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect:
+      typeof search.redirect === "string" &&
+      search.redirect.startsWith("/") &&
+      !search.redirect.startsWith("//")
+        ? search.redirect
+        : undefined,
+  }),
   component: AuthPage,
   head: () => ({
     meta: [
@@ -20,6 +28,8 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
+  const destination = redirect ?? "/app";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,9 +37,9 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/app" });
+      if (data.session) navigate({ to: destination as never });
     }).catch(() => {});
-  }, [navigate]);
+  }, [destination, navigate]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +49,7 @@ function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/app" },
+          options: { emailRedirectTo: window.location.origin + destination },
         });
         if (error) throw error;
         if (!data.session) {
@@ -51,7 +61,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: "/app" });
+      navigate({ to: destination as never });
     } catch (err: any) {
       toast.error(err.message ?? "Erro");
     } finally {
