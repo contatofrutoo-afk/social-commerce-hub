@@ -41,11 +41,11 @@ export const productRepository = {
   async listByCompany(companyId: string): Promise<Product[]> {
     const { data, error } = await (supabase as any)
       .from("products")
-      .select("*")
+      .select("*, product_media(*)")
       .eq("company_id", companyId)
       .order("name");
     if (error) throw error;
-    return (data ?? []).map(map);
+    return (data ?? []).map((r: any) => map({ ...r, media: r.product_media ?? [] }));
   },
 
   async findById(id: string): Promise<Product | null> {
