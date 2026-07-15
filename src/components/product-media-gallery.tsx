@@ -63,6 +63,22 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80, prod
     };
   }, [lightboxIdx, closeLightbox, nextLightbox, prevLightbox]);
 
+  // Touch swipe support in lightbox — declarado antes de qualquer early-return
+  // para manter a ordem de hooks estável entre renders.
+  const touchStartX = useRef<number | null>(null);
+  function onTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 40) {
+      if (dx < 0) nextLightbox();
+      else prevLightbox();
+    }
+    touchStartX.current = null;
+  }
+
   if (allMedia.length === 0) return null;
 
   function scroll(dir: number) {
