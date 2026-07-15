@@ -141,7 +141,7 @@ function ProductsPage() {
                 />
               </div>
               <div>
-                <Label>URL da imagem</Label>
+                <Label>Carregar imagem/vídeo</Label>
                 <ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} folder={`${companyId}/products`} />
               </div>
               <div>
