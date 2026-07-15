@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { tableRepository, checkinRepository, crmRepository } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
 import {
@@ -87,11 +88,54 @@ const interestConfig: Record<string, { label: string; class: string }> = {
   quente: { label: "Cliente quente", class: "bg-red-500/10 text-red-600 border-red-500/30" },
 };
 
+// Assina mudanças em tempo real nas tabelas relevantes e invalida os caches
+// usados pelas views. Compartilhado por Mesas e Loja para que /vendas espelhe
+// /app/atendimento instantaneamente.
+function useRealtimeService(companyId: string) {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!companyId) return;
+    const channel = supabase
+      .channel(`service-${companyId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "checkins", filter: `company_id=eq.${companyId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["present", companyId] });
+          qc.invalidateQueries({ queryKey: ["checkins-all", companyId] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tables", filter: `company_id=eq.${companyId}` },
+        () => qc.invalidateQueries({ queryKey: ["tables", companyId] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `company_id=eq.${companyId}` },
+        () => qc.invalidateQueries({ queryKey: ["orders", companyId] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customers", filter: `company_id=eq.${companyId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["customers", companyId] });
+          qc.invalidateQueries({ queryKey: ["present", companyId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId, qc]);
+}
+
 // ======= MESAS VIEW =======
 
 export function MesasView({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const [selectedCheckin, setSelectedCheckin] = useState<any>(null);
+  useRealtimeService(companyId);
 
   const { data: tables } = useQuery({
     queryKey: ["tables", companyId],
@@ -215,6 +259,8 @@ export function MesasView({ companyId }: { companyId: string }) {
 export function LojaView({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const [selectedCheckin, setSelectedCheckin] = useState<any>(null);
+  useRealtimeService(companyId);
+
 
   const { data: present } = useQuery({
     queryKey: ["present", companyId],
