@@ -689,28 +689,34 @@ function FAQ() {
     { q: "Existe limite de produtos?", a: "Não. Produtos e categorias ilimitados." },
   ];
   return (
-    <Section id="faq" className="bg-muted/30 border-y border-border/60">
-      <FadeIn className="mx-auto max-w-2xl text-center">
-        <Eyebrow>FAQ</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Perguntas <span className="weaze-text-gradient">frequentes.</span>
-        </h2>
-      </FadeIn>
-
-      <div className="mx-auto mt-12 max-w-3xl">
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((f, i) => (
-            <AccordionItem key={f.q} value={`item-${i}`} className="border-border/60">
-              <AccordionTrigger className="text-left font-display text-lg font-medium">
-                {f.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-base text-muted-foreground">
-                {f.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+    <Section id="faq">
+      <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <FadeIn className="lg:sticky lg:top-28">
+          <Eyebrow>FAQ</Eyebrow>
+          <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Perguntas <span className="weaze-text-gradient">frequentes.</span>
+          </h2>
+          <p className="mt-5 text-lg text-muted-foreground">Tudo o que você precisa saber antes de começar. Se ficar alguma dúvida, fale com a gente.</p>
+          <Button asChild size="lg" variant="outline" className="mt-8 rounded-full">
+            <Link to="/auth">Falar com a equipe <ArrowRight className="ml-2 size-4" /></Link>
+          </Button>
+        </FadeIn>
+        <FadeIn>
+          <Accordion type="single" collapsible className="w-full space-y-3">
+            {faqs.map((f, i) => (
+              <AccordionItem key={f.q} value={`item-${i}`} className="overflow-hidden rounded-2xl border border-border/60 bg-card px-5 data-[state=open]:border-primary/40 data-[state=open]:shadow-elegant">
+                <AccordionTrigger className="text-left font-display text-lg font-medium hover:no-underline">
+                  {f.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  {f.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </FadeIn>
       </div>
+
     </Section>
   );
 }
