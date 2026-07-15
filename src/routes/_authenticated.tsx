@@ -34,9 +34,10 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     const session = await waitForRestoredSession();
     if (!session) {
+      const redirectTo = `${location.pathname}${location.searchStr || ""}`;
       throw redirect({
         to: "/auth",
-        search: { redirect: location.href } as never,
+        search: { redirect: redirectTo } as never,
       });
     }
     return { user: session.user };
