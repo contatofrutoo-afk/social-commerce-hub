@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { companyRepository, orderRepository, productRepository } from "@/repositories";
+import { companyRepository, orderRepository } from "@/repositories";
+import { supabase } from "@/integrations/supabase/client";
 import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -30,15 +31,22 @@ function BagPage() {
   const cart = useCart(company?.id);
 
   const productIds = cart.items.map((i) => i.productId);
-  const { data: freshProducts } = useQuery({
-    queryKey: ["cart-products", ...productIds],
+  const { data: mediaByProduct } = useQuery({
+    queryKey: ["cart-product-media", ...productIds],
     queryFn: async () => {
-      const results = await Promise.allSettled(
-        productIds.map((id) => productRepository.findById(id)),
-      );
-      return results
-        .filter((r): r is PromiseFulfilledResult<NonNullable<Awaited<ReturnType<typeof productRepository.findById>>>> => r.status === "fulfilled" && r.value != null)
-        .map((r) => r.value);
+      const { data, error } = await (supabase as any)
+        .from("product_media")
+        .select("product_id, media_url, media_type, sort_order")
+        .in("product_id", productIds)
+        .order("sort_order");
+      if (error) throw error;
+      const map = new Map<string, { url: string; type: "image" | "video" }[]>();
+      for (const row of (data ?? []) as { product_id: string; media_url: string; media_type: "image" | "video" }[]) {
+        const list = map.get(row.product_id) ?? [];
+        list.push({ url: row.media_url, type: row.media_type });
+        map.set(row.product_id, list);
+      }
+      return map;
     },
     enabled: productIds.length > 0,
   });
@@ -81,8 +89,7 @@ function BagPage() {
       ) : (
         <div className="space-y-3">
           {cart.items.map((i) => {
-            const fp = freshProducts?.find((p) => p.id === i.productId);
-            const freshMedia = fp?.media?.map((m: { mediaUrl: string; mediaType: "image" | "video" }) => ({ url: m.mediaUrl, type: m.mediaType }));
+            const freshMedia = mediaByProduct?.get(i.productId);
             return (
             <div key={i.productId} className="rounded-xl border bg-card p-3">
               <div className="flex gap-3">
