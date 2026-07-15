@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { productRepository } from "@/repositories";
 import { useCart } from "@/hooks/use-cart";
 import { getSessionForCompany } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
-import { ArrowLeft, ShoppingCart, Package, Minus, Plus, Eye, ScanLine, Hash } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Package, Minus, Plus, Eye, ScanLine, Hash, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/p/$slug")({
   component: ProductPage,
@@ -85,20 +85,7 @@ function ProductPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6">
-        {product.videoUrl ? (
-          <video
-            src={product.videoUrl}
-            className="w-full rounded-xl object-cover aspect-square"
-            controls
-            playsInline
-          />
-        ) : product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="w-full rounded-xl object-cover aspect-square"
-          />
-        ) : null}
+        <ProductMediaCarousel product={product} />
 
         <div className="mt-4 space-y-3">
           <div>
@@ -177,6 +164,103 @@ function ProductPage() {
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ProductMediaCarousel({ product }: { product: any }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const allMedia: { url: string; type: string }[] = [];
+  if (product.videoUrl) allMedia.push({ url: product.videoUrl, type: "video" });
+  if (product.imageUrl) allMedia.push({ url: product.imageUrl, type: "image" });
+  if (product.media) allMedia.push(...product.media.map((m: any) => ({ url: m.mediaUrl, type: m.mediaType })));
+
+  if (allMedia.length === 0) return null;
+
+  function scrollTo(index: number) {
+    if (!scrollRef.current) return;
+    const child = scrollRef.current.children[index] as HTMLElement;
+    if (child) {
+      child.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+      setCurrentIndex(index);
+    }
+  }
+
+  function onScroll() {
+    if (!scrollRef.current) return;
+    const scrollLeft = scrollRef.current.scrollLeft;
+    const width = scrollRef.current.clientWidth;
+    const index = Math.round(scrollLeft / width);
+    setCurrentIndex(index);
+  }
+
+  return (
+    <div>
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide rounded-xl"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          onScroll={onScroll}
+        >
+          {allMedia.map((item, i) => (
+            <div key={i} className="w-full shrink-0 snap-start">
+              {item.type === "video" ? (
+                <video
+                  src={item.url}
+                  className="w-full aspect-square object-cover"
+                  controls
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={item.url}
+                  alt={product.name}
+                  className="w-full aspect-square object-cover"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        {allMedia.length > 1 && (
+          <>
+            {currentIndex > 0 && (
+              <button
+                type="button"
+                onClick={() => scrollTo(currentIndex - 1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+            )}
+            {currentIndex < allMedia.length - 1 && (
+              <button
+                type="button"
+                onClick={() => scrollTo(currentIndex + 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      {allMedia.length > 1 && (
+        <div className="mt-2 flex justify-center gap-1.5">
+          {allMedia.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => scrollTo(i)}
+              className={`size-1.5 rounded-full transition-colors ${
+                i === currentIndex ? "bg-primary" : "bg-muted-foreground/30"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

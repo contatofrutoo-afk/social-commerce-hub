@@ -3,11 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { productRepository } from "@/repositories";
-import type { Product, ProductStatus } from "@/repositories/types";
+import type { Product, ProductStatus, MediaItem } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/image-upload";
 import { VideoUpload } from "@/components/video-upload";
+import { MultiMediaUpload } from "@/components/multi-media-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -61,6 +62,7 @@ const empty = {
   stockQuantity: 0,
   sku: "",
   internalCode: "",
+  mediaItems: [] as MediaItem[],
 };
 
 function generateSlug(name: string): string {
@@ -137,6 +139,7 @@ function CatalogoPage() {
       stockQuantity: p.stockQuantity ?? 0,
       sku: p.sku ?? "",
       internalCode: p.internalCode ?? "",
+      mediaItems: (p.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
     });
     setOpen(true);
   }
@@ -157,8 +160,16 @@ function CatalogoPage() {
         sku: form.sku || null,
         internalCode: form.internalCode || null,
       };
-      if (editing) return productRepository.update(editing.id, payload);
-      return productRepository.create(companyId!, payload);
+      if (editing) {
+        const updated = await productRepository.update(editing.id, payload);
+        await productRepository.setMedia(editing.id, form.mediaItems);
+        return updated;
+      }
+      const created = await productRepository.create(companyId!, payload);
+      if (form.mediaItems.length > 0) {
+        await productRepository.setMedia(created.id, form.mediaItems);
+      }
+      return created;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["catalogo"] });
@@ -324,6 +335,14 @@ function CatalogoPage() {
                   <VideoUpload
                     value={form.videoUrl || null}
                     onChange={(url) => setForm({ ...form, videoUrl: url ?? "" })}
+                    folder={`${companyId}/catalogo`}
+                  />
+                </div>
+                <div>
+                  <Label>Mídias extras (até {4} fotos/vídeos)</Label>
+                  <MultiMediaUpload
+                    values={form.mediaItems}
+                    onChange={(items) => setForm({ ...form, mediaItems: items })}
                     folder={`${companyId}/catalogo`}
                   />
                 </div>

@@ -46,6 +46,7 @@ export function useCart(companyId: string | undefined) {
           price: product.price,
           imageUrl: product.imageUrl,
           videoUrl: product.videoUrl ?? null,
+          media: (product.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
           quantity: qty,
         });
       write(companyId, list);

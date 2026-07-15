@@ -1,5 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Product, ProductStatus } from "./types";
+import type { Product, ProductMedia, ProductStatus } from "./types";
+
+function mapMedia(r: any): ProductMedia {
+  return {
+    id: r.id,
+    mediaType: r.media_type ?? r.mediaType,
+    mediaUrl: r.media_url ?? r.mediaUrl,
+    sortOrder: r.sort_order ?? r.sortOrder ?? 0,
+  };
+}
 
 function map(r: any): Product {
   return {
@@ -24,12 +33,13 @@ function map(r: any): Product {
     orderCount: r.order_count ?? 0,
     revenue: Number(r.revenue ?? 0),
     uniqueCustomers: r.unique_customers ?? 0,
+    media: r.media ? (r.media.map ? r.media.map(mapMedia) : []) : undefined,
   };
 }
 
 export const productRepository = {
   async listByCompany(companyId: string): Promise<Product[]> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("products")
       .select("*")
       .eq("company_id", companyId)
@@ -39,7 +49,7 @@ export const productRepository = {
   },
 
   async findById(id: string): Promise<Product | null> {
-    const { data, error } = await supabase.from("products").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await (supabase as any).from("products").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     return data ? map(data) : null;
   },
@@ -61,7 +71,7 @@ export const productRepository = {
     },
   ) {
     const slug = p.slug ?? p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("products")
       .insert({
         company_id: companyId,
@@ -73,7 +83,7 @@ export const productRepository = {
         video_url: p.videoUrl ?? null,
         available: p.available,
         description: p.description,
-        status: p.status ?? "active" as const,
+        status: p.status ?? "active",
         stock_quantity: p.stockQuantity ?? null,
         sku: p.sku ?? null,
         internal_code: p.internalCode ?? null,
@@ -98,9 +108,9 @@ export const productRepository = {
     if (p.stockQuantity !== undefined) patch.stock_quantity = p.stockQuantity;
     if (p.sku !== undefined) patch.sku = p.sku;
     if (p.internalCode !== undefined) patch.internal_code = p.internalCode;
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("products")
-      .update(patch as never)
+      .update(patch)
       .eq("id", id)
       .select()
       .single();
@@ -135,6 +145,34 @@ export const productRepository = {
       _product_id: productId,
       _field: field,
     });
+    if (error) throw error;
+  },
+
+  async listMedia(productId: string): Promise<ProductMedia[]> {
+    const { data, error } = await (supabase as any)
+      .from("product_media")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order")
+      .order("created_at");
+    if (error) throw error;
+    return (data ?? []).map(mapMedia);
+  },
+
+  async setMedia(
+    productId: string,
+    items: { url: string; type: "image" | "video" }[],
+  ) {
+    await (supabase as any).from("product_media").delete().eq("product_id", productId);
+    if (items.length === 0) return;
+    const { error } = await (supabase as any).from("product_media").insert(
+      items.map((item, i) => ({
+        product_id: productId,
+        media_type: item.type,
+        media_url: item.url,
+        sort_order: i,
+      })),
+    );
     if (error) throw error;
   },
 

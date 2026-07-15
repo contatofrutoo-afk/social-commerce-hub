@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { productRepository, dashboardRepository } from "@/repositories";
-import type { Product, ProductMetric } from "@/repositories/types";
+import type { Product, ProductMetric, MediaItem } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/image-upload";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MultiMediaUpload } from "@/components/multi-media-upload";
 import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
 import { Pencil, Trash2, Plus, BarChart3, ChevronDown, ChevronUp, Clock, Calendar, TrendingUp, Heart, ShoppingCart } from "lucide-react";
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/app/produtos")({
   head: () => ({ meta: [{ title: "Produtos — WEAZE" }] }),
 });
 
-const empty = { name: "", category: "", price: 0, image_url: "", description: "", available: true };
+const empty = { name: "", category: "", price: 0, image_url: "", video_url: "", description: "", available: true, mediaItems: [] as MediaItem[] };
 
 function ProductsPage() {
   const qc = useQueryClient();
@@ -56,11 +57,20 @@ function ProductsPage() {
         category: form.category,
         price: Number(form.price),
         imageUrl: form.image_url || null,
+        videoUrl: form.video_url || null,
         description: form.description || null,
         available: form.available,
       };
-      if (editing) return productRepository.update(editing.id, payload);
-      return productRepository.create(companyId!, payload);
+      if (editing) {
+        const updated = await productRepository.update(editing.id, payload);
+        await productRepository.setMedia(editing.id, form.mediaItems);
+        return updated;
+      }
+      const created = await productRepository.create(companyId!, payload);
+      if (form.mediaItems.length > 0) {
+        await productRepository.setMedia(created.id, form.mediaItems);
+      }
+      return created;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
@@ -87,8 +97,10 @@ function ProductsPage() {
       category: p.category ?? "",
       price: p.price,
       image_url: p.imageUrl ?? "",
+      video_url: p.videoUrl ?? "",
       description: p.description ?? "",
       available: p.available,
+      mediaItems: (p.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
     });
     setOpen(true);
   }
@@ -131,6 +143,14 @@ function ProductsPage() {
               <div>
                 <Label>URL da imagem</Label>
                 <ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} folder={`${companyId}/products`} />
+              </div>
+              <div>
+                <Label>Mídias extras (até 4 fotos/vídeos)</Label>
+                <MultiMediaUpload
+                  values={form.mediaItems}
+                  onChange={(items) => setForm({ ...form, mediaItems: items })}
+                  folder={`${companyId}/products`}
+                />
               </div>
               <div>
                 <Label>Descrição</Label>

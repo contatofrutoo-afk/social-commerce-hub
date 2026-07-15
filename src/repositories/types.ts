@@ -42,6 +42,13 @@ export interface Checkin {
 
 export type ProductStatus = "active" | "inactive";
 
+export interface ProductMedia {
+  id: string;
+  mediaType: "image" | "video";
+  mediaUrl: string;
+  sortOrder: number;
+}
+
 export interface Product {
   id: string;
   companyId: string;
@@ -64,6 +71,7 @@ export interface Product {
   orderCount: number;
   revenue: number;
   uniqueCustomers: number;
+  media?: ProductMedia[];
 }
 
 export interface ProductEvent {
@@ -131,12 +139,18 @@ export interface OrderItem {
   unitPrice: number;
 }
 
+export interface MediaItem {
+  url: string;
+  type: "image" | "video";
+}
+
 export interface CartItem {
   productId: string;
   name: string;
   price: number;
   imageUrl: string | null;
   videoUrl: string | null;
+  media?: { url: string; type: "image" | "video" }[];
   quantity: number;
   note?: string;
 }

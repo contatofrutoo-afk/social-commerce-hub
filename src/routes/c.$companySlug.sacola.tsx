@@ -6,6 +6,7 @@ import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ProductMediaGallery } from "@/components/product-media-gallery";
 import { formatBRL } from "@/lib/format";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -67,17 +68,11 @@ function BagPage() {
         <div className="space-y-3">
           {cart.items.map((i) => (
             <div key={i.productId} className="flex items-center gap-3 rounded-xl border p-3">
-              {i.videoUrl ? (
-                <video
-                  src={i.videoUrl}
-                  className="size-16 rounded-lg object-cover"
-                  preload="metadata"
-                  muted
-                  playsInline
-                />
-              ) : i.imageUrl ? (
-                <img src={i.imageUrl} alt="" className="size-16 rounded-lg object-cover" />
-              ) : null}
+              <ProductMediaGallery
+                imageUrl={i.imageUrl}
+                videoUrl={i.videoUrl}
+                media={i.media}
+              />
               <div className="flex-1">
                 <div className="text-sm font-medium">{i.name}</div>
                 <div className="text-xs text-muted-foreground">{formatBRL(i.price)}</div>
