@@ -37,8 +37,8 @@ function BagPage() {
         productIds.map((id) => productRepository.findById(id)),
       );
       return results
-        .filter((r) => r.status === "fulfilled" && r.value)
-        .map((r) => (r as PromiseFulfilledResult<NonNullable<typeof r.value>>).value);
+        .filter((r): r is PromiseFulfilledResult<NonNullable<Awaited<ReturnType<typeof productRepository.findById>>>> => r.status === "fulfilled" && r.value != null)
+        .map((r) => r.value);
     },
     enabled: productIds.length > 0,
   });
