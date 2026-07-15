@@ -185,10 +185,10 @@ function WeazeDashboard() {
   }, []);
 
   return (
-    <div className={cn("space-y-6", loading && "opacity-50 pointer-events-none")}>
+    <div className={cn("dash-surface -m-4 space-y-6 p-4 md:-m-8 md:p-8", loading && "opacity-50 pointer-events-none")}>
       <div>
-        <h1 className="font-display text-3xl">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Indicadores gerais da WEAZE.</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Indicadores gerais da WEAZE em tempo real.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
