@@ -44,7 +44,7 @@ export default function ClientSessionGuard() {
       setExpired(true);
       setCountdown("00:00");
       clearSession();
-    clearLastProfile();
+      clearLastProfile();
       navigate({ to: "/c/$companySlug", params: { companySlug } });
       return;
     }
@@ -65,7 +65,7 @@ export default function ClientSessionGuard() {
         setExpired(true);
         setCountdown("00:00");
         clearSession();
-    clearLastProfile();
+        clearLastProfile();
         navigate({ to: "/c/$companySlug", params: { companySlug } });
         return;
       }
@@ -89,7 +89,7 @@ export default function ClientSessionGuard() {
         setExpired(true);
         setCountdown("00:00");
         clearSession();
-    clearLastProfile();
+        clearLastProfile();
         navigate({ to: "/c/$companySlug", params: { companySlug } });
         return;
       }
