@@ -84,33 +84,45 @@ function BagPage() {
             const fp = freshProducts?.find((p) => p.id === i.productId);
             const freshMedia = fp?.media?.map((m: { mediaUrl: string; mediaType: "image" | "video" }) => ({ url: m.mediaUrl, type: m.mediaType }));
             return (
-            <div key={i.productId} className="flex items-center gap-3 rounded-xl border p-3">
-              <ProductMediaGallery
-                imageUrl={i.imageUrl}
-                videoUrl={i.videoUrl}
-                media={freshMedia ?? i.media}
-              />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{i.name}</div>
-                <div className="text-xs text-muted-foreground">{formatBRL(i.price)}</div>
-                <Input
-                  value={i.note ?? ""}
-                  onChange={(e) => cart.setNote(i.productId, e.target.value)}
-                  placeholder="Observação"
-                  className="mt-2 h-8 text-xs"
+            <div key={i.productId} className="rounded-xl border bg-card p-3">
+              <div className="flex gap-3">
+                <ProductMediaGallery
+                  imageUrl={i.imageUrl}
+                  videoUrl={i.videoUrl}
+                  media={freshMedia ?? i.media}
+                  size={128}
                 />
-              </div>
-              <div className="flex items-center gap-1">
-                <Button size="icon" variant="ghost" onClick={() => cart.setQty(i.productId, i.quantity - 1)}>
-                  <Minus className="size-3" />
-                </Button>
-                <span className="w-6 text-center text-sm font-medium">{i.quantity}</span>
-                <Button size="icon" variant="ghost" onClick={() => cart.setQty(i.productId, i.quantity + 1)}>
-                  <Plus className="size-3" />
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => cart.remove(i.productId)}>
-                  <Trash2 className="size-3" />
-                </Button>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{i.name}</div>
+                      <div className="text-xs text-muted-foreground">{formatBRL(i.price)}</div>
+                    </div>
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => cart.remove(i.productId)}>
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={i.note ?? ""}
+                    onChange={(e) => cart.setNote(i.productId, e.target.value)}
+                    placeholder="Observação"
+                    className="mt-2 h-8 text-xs"
+                  />
+                  <div className="mt-auto flex items-center justify-between pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      Subtotal: <span className="font-semibold text-foreground">{formatBRL(i.price * i.quantity)}</span>
+                    </span>
+                    <div className="flex items-center gap-1 rounded-full border">
+                      <Button size="icon" variant="ghost" className="size-7 rounded-full" onClick={() => cart.setQty(i.productId, i.quantity - 1)}>
+                        <Minus className="size-3" />
+                      </Button>
+                      <span className="w-5 text-center text-sm font-medium">{i.quantity}</span>
+                      <Button size="icon" variant="ghost" className="size-7 rounded-full" onClick={() => cart.setQty(i.productId, i.quantity + 1)}>
+                        <Plus className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             );
