@@ -111,7 +111,19 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80, prod
             <button
               type="button"
               key={i}
-              onClick={() => setLightboxIdx(i)}
+              onClick={() => {
+                setLightboxIdx(i);
+                // Métricas: cliente ampliou uma mídia do produto → view.
+                if (productId && companyId) {
+                  const session = getSession();
+                  const customerId =
+                    session?.companyId === companyId ? session.customerId : undefined;
+                  productRepository
+                    .recordEvent(productId, companyId, "view", customerId)
+                    .catch(() => {});
+                  productRepository.incrementCounter(productId, "views_count").catch(() => {});
+                }
+              }}
               aria-label="Ampliar mídia"
               className="h-full shrink-0 snap-start cursor-zoom-in"
               style={{ width: size }}
