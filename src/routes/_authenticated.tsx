@@ -1,29 +1,31 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-async function waitForRestoredSession() {
+async function waitForRestoredSession(): Promise<Session | null> {
   const { data } = await supabase.auth.getSession();
   if (data.session) return data.session;
 
-  return new Promise<typeof data.session>((resolve) => {
+  return new Promise<Session | null>((resolve) => {
     let settled = false;
-    const finish = (session: typeof data.session) => {
-      if (settled) return;
-      settled = true;
-      subscription.unsubscribe();
-      resolve(session);
-    };
-
+    let unsubscribe = () => {};
     const timeout = window.setTimeout(async () => {
       const refreshed = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
       finish(refreshed.data.session);
     }, 900);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const finish = (session: Session | null) => {
+      if (settled) return;
+      settled = true;
       window.clearTimeout(timeout);
+      unsubscribe();
+      resolve(session);
+    };
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       finish(session);
     });
-    const { subscription } = authListener;
+    unsubscribe = () => authListener.subscription.unsubscribe();
   });
 }
 
