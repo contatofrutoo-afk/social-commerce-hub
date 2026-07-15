@@ -7,7 +7,7 @@ import { getSessionForCompany } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ImageUpload } from "@/components/image-upload";
+import { MediaUpload } from "@/components/media-upload";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/c/$companySlug/publicar")({
@@ -28,7 +28,8 @@ function PublishPage() {
     queryFn: () => companyRepository.findBySlug(companySlug),
   });
 
-  const [imageUrl, setImageUrl] = useState<string | null>("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [companions, setCompanions] = useState<VisitContext | null>(null);
@@ -36,13 +37,14 @@ function PublishPage() {
   const publish = useMutation({
     mutationFn: async () => {
       if (!company || !session) throw new Error("Sessão inválida");
-      if (!imageUrl && !text) throw new Error("Adicione uma imagem ou texto");
+      if (!imageUrl && !videoUrl && !text) throw new Error("Adicione uma imagem, vídeo ou texto");
       return postRepository.createCustomerPost({
         companyId: company.id,
         customerId: session.customerId,
         sessionToken: session.sessionToken,
         text,
         imageUrl: imageUrl || null,
+        videoUrl: videoUrl || null,
         category: category ?? undefined,
         companions: companions ?? undefined,
       });
@@ -67,8 +69,17 @@ function PublishPage() {
     <div className="space-y-4 p-4">
       <h1 className="text-xl font-bold">Compartilhe sua experiência</h1>
       <div>
-        <Label>URL da imagem</Label>
-        <ImageUpload value={imageUrl} onChange={setImageUrl} folder={`publicar/${companySlug}`} className="mt-1.5" />
+        <Label>Mídia (imagem ou vídeo)</Label>
+        <MediaUpload
+          imageUrl={imageUrl}
+          videoUrl={videoUrl}
+          onChange={({ imageUrl: i, videoUrl: v }) => {
+            setImageUrl(i);
+            setVideoUrl(v);
+          }}
+          folder={`publicar/${companySlug}`}
+          className="mt-1.5"
+        />
       </div>
       <div>
         <Label>Conte como está sendo</Label>
