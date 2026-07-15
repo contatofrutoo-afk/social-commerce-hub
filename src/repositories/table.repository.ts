@@ -5,14 +5,15 @@ const map = (r: any): Table => ({ id: r.id, companyId: r.company_id, label: r.la
 
 export const tableRepository = {
   async listByCompany(companyId: string): Promise<Table[]> {
-    const { data, error } = await supabase
-      .from("tables")
-      .select("*")
-      .eq("company_id", companyId)
-      .order("label");
+    // Uses public security-definer RPC so both staff and anon (public sales
+    // panel at /c/:slug/vendas) can read the tables list.
+    const { data, error } = await supabase.rpc("list_service_tables_public" as any, {
+      _company_id: companyId,
+    });
     if (error) throw error;
-    return (data ?? []).map(map);
+    return ((data ?? []) as any[]).map(map);
   },
+
 
   async findBySlug(companyId: string, slug: string): Promise<Table | null> {
     const { data, error } = await supabase.rpc("get_table_public", {
