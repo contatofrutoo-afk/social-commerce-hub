@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { getSessionForCompany, clearSession, getSessionRemainingMs } from "@/lib/session";
+import { getSessionForCompany, clearSession, clearLastProfile, getSessionRemainingMs } from "@/lib/session";
 import {
   AlertDialog,
   AlertDialogContent,

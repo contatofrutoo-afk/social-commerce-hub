@@ -19,6 +19,11 @@ export function setLastProfile(p: WeazeProfile) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
 }
+
+export function clearLastProfile() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(PROFILE_KEY);
+}
 const SESSION_DURATION_MS = 7 * 60 * 60 * 1000; // 7 hours
 
 export type WeazeSession = {
@@ -56,9 +61,11 @@ export function clearSession() {
 export function getSessionForCompany(companySlug: string): WeazeSession | null {
   const s = getSession();
   if (!s || s.companySlug !== companySlug || !s.sessionToken) return null;
-  // Sessões sem createdAt ou com createdAt expirado são tratadas como inexistentes
+  // Sessões sem createdAt ou com createdAt expirado são tratadas como inexistentes.
+  // Também limpa o perfil em cache para forçar nova leitura do QR (não é rede social).
   if (!s.createdAt || Date.now() - s.createdAt > SESSION_DURATION_MS) {
     clearSession();
+    clearLastProfile();
     return null;
   }
   return s;
