@@ -627,22 +627,24 @@ function DashboardPage() {
             const comp = computeChange(step.value, step.prev);
             const barWidth = step.value > 0 ? (step.value / funnelData.maxStep) * 100 : 0;
             return (
-              <div key={step.key} className="rounded-xl border bg-card p-4">
+              <div key={step.key} className="dash-card p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <step.icon className="size-4 text-primary" />
-                    <span className="text-sm text-muted-foreground">{step.label}</span>
+                    <span className="grid size-7 place-items-center rounded-lg kpi-accent">
+                      <step.icon className="size-3.5" />
+                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">{step.label}</span>
                   </div>
                   {i < 3 && (
                     <ChevronRightIcon className="size-4 text-muted-foreground/40 hidden lg:block" />
                   )}
                 </div>
-                <div className="mt-1 text-2xl font-bold">{step.value}</div>
+                <div className="mt-2 number-display text-3xl">{step.value}</div>
                 <ComparisonBadge {...comp} />
                 {/* Progress bar */}
-                <div className="mt-2 h-1.5 w-full rounded-full bg-muted">
+                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-1.5 rounded-full bg-primary transition-all"
+                    className="h-1.5 rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all"
                     style={{ width: `${barWidth}%` }}
                   />
                 </div>
