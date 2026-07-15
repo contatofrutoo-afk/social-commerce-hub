@@ -17,7 +17,7 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media }: ProductMediaG
   if (imageUrl) allMedia.push({ url: imageUrl, type: "image" });
   if (media) allMedia.push(...media);
 
-  const updateScrollButtons = useCallback(() => {
+  const updateButtons = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
     setCanScrollLeft(el.scrollLeft > 4);
@@ -27,64 +27,45 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media }: ProductMediaG
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    updateScrollButtons();
-    el.addEventListener("scroll", updateScrollButtons, { passive: true });
-    return () => el.removeEventListener("scroll", updateScrollButtons);
-  }, [updateScrollButtons]);
+    updateButtons();
+    el.addEventListener("scroll", updateButtons, { passive: true });
+    return () => el.removeEventListener("scroll", updateButtons);
+  }, [updateButtons]);
 
   function scroll(dir: "left" | "right") {
     const el = scrollRef.current;
     if (!el) return;
-    const amount = el.clientWidth * 0.85;
-    el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+    el.scrollBy({ left: dir === "left" ? -el.clientWidth : el.clientWidth, behavior: "smooth" });
   }
 
   if (allMedia.length === 0) return null;
 
   return (
-    <div className="relative">
+    <div className="relative w-20 h-20 shrink-0">
       <div
         ref={scrollRef}
-        className="flex w-full snap-x snap-mandatory overflow-x-auto rounded-lg"
+        className="flex size-full snap-x snap-mandatory overflow-x-auto rounded-lg"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {allMedia.map((item, i) => (
-          <div key={i} className="w-full shrink-0 snap-start">
+          <div key={i} className="size-full shrink-0 snap-start">
             {item.type === "video" ? (
-              <video
-                src={item.url}
-                className="w-full aspect-square object-cover"
-                preload="metadata"
-                muted
-                playsInline
-              />
+              <video src={item.url} className="size-full object-cover" preload="metadata" muted playsInline />
             ) : (
-              <img src={item.url} alt="" className="w-full aspect-square object-cover" />
+              <img src={item.url} alt="" className="size-full object-cover" />
             )}
           </div>
         ))}
       </div>
-      {allMedia.length > 1 && (
-        <>
-          {canScrollLeft && (
-            <button
-              type="button"
-              onClick={() => scroll("left")}
-              className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1 shadow hover:bg-background"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-          )}
-          {canScrollRight && (
-            <button
-              type="button"
-              onClick={() => scroll("right")}
-              className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1 shadow hover:bg-background"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          )}
-        </>
+      {allMedia.length > 1 && canScrollLeft && (
+        <button type="button" onClick={() => scroll("left")} className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
+          <ChevronLeft className="size-3" />
+        </button>
+      )}
+      {allMedia.length > 1 && canScrollRight && (
+        <button type="button" onClick={() => scroll("right")} className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
+          <ChevronRight className="size-3" />
+        </button>
       )}
     </div>
   );
