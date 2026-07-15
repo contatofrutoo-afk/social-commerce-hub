@@ -57,12 +57,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
       const redirectTo = `${location.pathname}${location.searchStr || ""}`;
       throw redirect({ to: "/auth", search: { redirect: redirectTo } as never });
     }
-    const { data: role } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-    if (role?.role !== "admin") throw redirect({ to: "/app" });
+    const { data: isAdmin, error } = await supabase.rpc("has_role", {
+      _user_id: session.user.id,
+      _role: "admin",
+    });
+    if (error || !isAdmin) throw redirect({ to: "/app" });
   },
 });
 
