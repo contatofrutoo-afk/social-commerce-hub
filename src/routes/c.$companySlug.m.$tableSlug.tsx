@@ -49,6 +49,47 @@ function TableCheckin() {
     staleTime: 30_000,
   });
 
+  // Multi-tenant seamless switch: se não há sessão para esta loja mas o cliente
+  // já se identificou antes em outra loja, reaproveita nome/whatsapp e entra
+  // automaticamente na mesa desta loja sem formulário.
+  const autoOnboardFired = useRef(false);
+  useEffect(() => {
+    if (session) return;
+    if (!company || !table) return;
+    if (autoOnboardFired.current) return;
+    const profile = getLastProfile();
+    if (!profile?.name || !profile?.whatsapp) return;
+    autoOnboardFired.current = true;
+
+    (async () => {
+      try {
+        const upserted = await customerRepository.upsertVisit({
+          companyId: company.id,
+          name: profile.name,
+          whatsapp: profile.whatsapp,
+        });
+        setSession({
+          customerId: upserted.customerId,
+          companyId: company.id,
+          companySlug,
+          sessionToken: upserted.sessionToken,
+          createdAt: Date.now(),
+        });
+        await checkinRepository.createAutoCheckin({
+          customerId: upserted.customerId,
+          sessionToken: upserted.sessionToken,
+          companyId: company.id,
+          tableId: table.id,
+          source: `mesa-${table.slug}`,
+        });
+      } catch (err: any) {
+        console.warn("[auto_onboard_mesa]", err?.message ?? err);
+      } finally {
+        navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      }
+    })();
+  }, [session, company, table, companySlug, navigate]);
+
   const checkinFired = useRef(false);
   useEffect(() => {
     if (!session || !company || !table) {
