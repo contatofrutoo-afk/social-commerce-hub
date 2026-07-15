@@ -141,14 +141,36 @@ export const checkinRepository = {
   },
 
   async listPresentByCompany(companyId: string, minutes = 480) {
-    const since = new Date(Date.now() - minutes * 60 * 1000).toISOString();
-    const { data, error } = await supabase
-      .from("checkins")
-      .select("*, customer:customers(id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at), table:tables(label, slug)")
-      .eq("company_id", companyId)
-      .gte("created_at", since)
-      .order("created_at", { ascending: false });
+    // Uses public security-definer RPC so both staff and anon (public sales
+    // panel at /c/:slug/vendas) can read the presence snapshot.
+    const { data, error } = await supabase.rpc("list_service_present_public" as any, {
+      _company_id: companyId,
+      _minutes: minutes,
+    });
     if (error) throw error;
-    return data ?? [];
+    // Reshape flat RPC rows into the nested shape the views expect
+    // (checkin fields at root, customer nested, table nested).
+    return ((data ?? []) as any[]).map((r) => ({
+      id: r.id,
+      company_id: r.company_id,
+      customer_id: r.customer_id,
+      table_id: r.table_id,
+      context: r.context,
+      source: r.source,
+      created_at: r.created_at,
+      customer: r.customer_id
+        ? {
+            id: r.customer_id,
+            company_id: r.company_id,
+            name: r.customer_name,
+            avatar_url: r.customer_avatar_url,
+            visit_count: r.customer_visit_count,
+            first_visit_at: r.customer_first_visit_at,
+            last_visit_at: r.customer_last_visit_at,
+          }
+        : null,
+      table: r.table_id ? { label: r.table_label, slug: r.table_slug } : null,
+    }));
   },
+
 };

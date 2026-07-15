@@ -1129,6 +1129,34 @@ export type Database = {
         Args: { _company_id: string; _viewer_customer_id?: string }
         Returns: Json[]
       }
+      list_service_present_public: {
+        Args: { _company_id: string; _minutes?: number }
+        Returns: {
+          company_id: string
+          context: string
+          created_at: string
+          customer_avatar_url: string
+          customer_first_visit_at: string
+          customer_id: string
+          customer_last_visit_at: string
+          customer_name: string
+          customer_visit_count: number
+          id: string
+          source: string
+          table_id: string
+          table_label: string
+          table_slug: string
+        }[]
+      }
+      list_service_tables_public: {
+        Args: { _company_id: string }
+        Returns: {
+          company_id: string
+          id: string
+          label: string
+          slug: string
+        }[]
+      }
       record_product_event: {
         Args: {
           _company_id: string
