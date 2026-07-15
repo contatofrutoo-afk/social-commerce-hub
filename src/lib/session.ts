@@ -1,6 +1,24 @@
 // Sessão do cliente B2C. Guarda APENAS identificadores (não dados de domínio).
 // Dados vivem no Cloud; localStorage aqui é apenas a "chave" para reencontrar o customer.
 const KEY = "weaze.session.v1";
+const PROFILE_KEY = "weaze.profile.v1";
+
+export type WeazeProfile = { name: string; whatsapp: string };
+
+export function getLastProfile(): WeazeProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PROFILE_KEY);
+    return raw ? (JSON.parse(raw) as WeazeProfile) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setLastProfile(p: WeazeProfile) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+}
 const SESSION_DURATION_MS = 7 * 60 * 60 * 1000; // 7 hours
 
 export type WeazeSession = {

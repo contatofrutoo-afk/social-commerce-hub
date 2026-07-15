@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { companyRepository, customerRepository, checkinRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
-import { setSession, getSessionForCompany } from "@/lib/session";
+import { setSession, getSessionForCompany, getLastProfile, setLastProfile } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,6 +65,50 @@ function CheckinPage() {
     staleTime: 30_000,
   });
 
+  // Multi-tenant seamless switch: se não há sessão para esta loja mas o cliente
+  // já se identificou em outra loja antes, reaproveita nome/whatsapp e faz
+  // check-in automático sem exigir formulário.
+  const autoOnboardFired = useRef(false);
+  useEffect(() => {
+    if (session) return;
+    if (!company) return;
+    if (autoOnboardFired.current) return;
+    const profile = getLastProfile();
+    if (!profile?.name || !profile?.whatsapp) return;
+    autoOnboardFired.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const tableId = params.get("t") ?? params.get("table") ?? "";
+
+    (async () => {
+      try {
+        const upserted = await customerRepository.upsertVisit({
+          companyId: company.id,
+          name: profile.name,
+          whatsapp: profile.whatsapp,
+        });
+        setSession({
+          customerId: upserted.customerId,
+          companyId: company.id,
+          companySlug,
+          sessionToken: upserted.sessionToken,
+          createdAt: Date.now(),
+        });
+        await checkinRepository.createAutoCheckin({
+          customerId: upserted.customerId,
+          sessionToken: upserted.sessionToken,
+          companyId: company.id,
+          tableId: tableId || undefined,
+          source: tableId ? "mesa" : "link",
+        });
+      } catch (err: any) {
+        console.warn("[auto_onboard]", err?.message ?? err);
+      } finally {
+        navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
+      }
+    })();
+  }, [session, company, companySlug, navigate]);
+
   const { data: existingCustomer } = useQuery({
     queryKey: ["customer-self", session?.customerId],
     queryFn: () => customerRepository.findSelf(session!.customerId, session!.sessionToken),
@@ -106,6 +150,7 @@ function CheckinPage() {
         sessionToken: upserted.sessionToken,
         createdAt: Date.now(),
       });
+      setLastProfile({ name: nameValue, whatsapp: whatsappValue });
     },
     onSuccess: () => {
       navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
