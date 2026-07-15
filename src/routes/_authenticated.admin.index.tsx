@@ -34,30 +34,28 @@ function KPI({
   hint?: string;
   variant?: "default" | "warning" | "danger" | "success";
 }) {
+  const accent =
+    variant === "danger"
+      ? "text-destructive bg-destructive/10"
+      : variant === "warning"
+        ? "text-orange-600 bg-orange-500/10"
+        : variant === "success"
+          ? "text-green-600 bg-green-500/10"
+          : "text-primary bg-primary/10";
   return (
-    <Card>
-      <CardContent className="p-5">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-        <div className="flex items-center gap-2 mt-1">
-          {Icon && (
-            <Icon
-              className={cn(
-                "h-5 w-5",
-                variant === "danger"
-                  ? "text-destructive"
-                  : variant === "warning"
-                    ? "text-orange-500"
-                    : variant === "success"
-                      ? "text-green-500"
-                      : "text-muted-foreground",
-              )}
-            />
-          )}
-          <p className="font-display text-2xl">{value}</p>
-        </div>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
-      </CardContent>
-    </Card>
+    <div className="dash-card group relative overflow-hidden p-5 transition-all hover:dash-card-hover">
+      <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 blur-2xl" />
+      <div className="relative flex items-start justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
+        {Icon && (
+          <span className={cn("grid size-9 place-items-center rounded-xl", accent)}>
+            <Icon className="h-4 w-4" />
+          </span>
+        )}
+      </div>
+      <p className="relative mt-3 number-display text-3xl">{value}</p>
+      {hint && <p className="relative mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
 
