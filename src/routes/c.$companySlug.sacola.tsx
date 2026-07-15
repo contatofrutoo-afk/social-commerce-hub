@@ -113,7 +113,8 @@ function BagPage() {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <Textarea
             placeholder="Observação do pedido (opcional)"
