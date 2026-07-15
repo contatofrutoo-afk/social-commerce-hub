@@ -260,39 +260,47 @@ function WeazeDashboard() {
       </div>
 
       {data.topCompanies.length > 0 && (
-        <Card>
-          <CardContent className="p-5">
-            <h3 className="font-display text-lg mb-3">Empresas com Maior Uso</h3>
-            <div className="space-y-2">
-              {data.topCompanies.slice(0, 5).map((c, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{c.name}</span>
-                  <span className="text-muted-foreground">
-                    {c.checkins} check-ins · {c.posts} posts
+        <div className="dash-card p-5">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Empresas com Maior Uso
+          </h3>
+          <div className="space-y-1">
+            {data.topCompanies.slice(0, 5).map((c, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid size-6 place-items-center rounded-md bg-primary/10 text-[11px] font-bold text-primary">
+                    {i + 1}
                   </span>
+                  <span className="font-medium">{c.name}</span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <span className="text-xs text-muted-foreground">
+                  {c.checkins} check-ins · {c.posts} posts
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {data.inactiveCompanies.length > 0 && (
-        <Card>
-          <CardContent className="p-5">
-            <h3 className="font-display text-lg mb-3">Empresas sem Atividade (mês)</h3>
-            <div className="flex flex-wrap gap-2">
-              {data.inactiveCompanies.map((name, i) => (
-                <span
-                  key={i}
-                  className="text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="dash-card p-5">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Empresas sem Atividade (mês)
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {data.inactiveCompanies.map((name, i) => (
+              <span
+                key={i}
+                className="rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
