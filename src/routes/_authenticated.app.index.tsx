@@ -539,23 +539,35 @@ function DashboardPage() {
   if (!companyId) return <div>Carregando…</div>;
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="dash-surface -m-6 space-y-6 p-6 pb-8 md:-m-6 md:p-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Visão geral do seu negócio em tempo real.</p>
+        </div>
         <PeriodSelector current={period} onChange={setPeriod} />
       </div>
 
       {/* Presentes agora (mini banner) */}
       {presentCount > 0 && (
-        <div className="flex items-center gap-2 rounded-xl border bg-primary/5 px-4 py-2 text-sm">
-          <Store className="size-4 text-primary" />
-          <span className="font-medium">{presentCount}</span>
-          <span className="text-muted-foreground">
-            cliente{presentCount > 1 ? "s" : ""} presente{presentCount > 1 ? "s" : ""} agora
+        <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-4 py-3 text-sm">
+          <span className="relative grid size-9 place-items-center rounded-xl kpi-accent">
+            <Store className="size-4" />
+            <span className="absolute -right-0.5 -top-0.5 grid size-3 place-items-center">
+              <span className="absolute inline-flex size-3 animate-ping rounded-full bg-primary/60" />
+              <span className="relative inline-flex size-2 rounded-full bg-primary" />
+            </span>
           </span>
+          <div>
+            <span className="number-display text-lg">{presentCount}</span>{" "}
+            <span className="text-muted-foreground">
+              cliente{presentCount > 1 ? "s" : ""} presente{presentCount > 1 ? "s" : ""} agora
+            </span>
+          </div>
         </div>
       )}
+
 
       {/* Linha 1 — KPIs */}
       <HideableSection
