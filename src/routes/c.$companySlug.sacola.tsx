@@ -31,15 +31,22 @@ function BagPage() {
   const cart = useCart(company?.id);
 
   const productIds = cart.items.map((i) => i.productId);
-  const { data: freshProducts } = useQuery({
-    queryKey: ["cart-products", ...productIds],
+  const { data: mediaByProduct } = useQuery({
+    queryKey: ["cart-product-media", ...productIds],
     queryFn: async () => {
-      const results = await Promise.allSettled(
-        productIds.map((id) => productRepository.findById(id)),
-      );
-      return results
-        .filter((r): r is PromiseFulfilledResult<NonNullable<Awaited<ReturnType<typeof productRepository.findById>>>> => r.status === "fulfilled" && r.value != null)
-        .map((r) => r.value);
+      const { data, error } = await (supabase as any)
+        .from("product_media")
+        .select("product_id, media_url, media_type, sort_order")
+        .in("product_id", productIds)
+        .order("sort_order");
+      if (error) throw error;
+      const map = new Map<string, { url: string; type: "image" | "video" }[]>();
+      for (const row of (data ?? []) as { product_id: string; media_url: string; media_type: "image" | "video" }[]) {
+        const list = map.get(row.product_id) ?? [];
+        list.push({ url: row.media_url, type: row.media_type });
+        map.set(row.product_id, list);
+      }
+      return map;
     },
     enabled: productIds.length > 0,
   });
