@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState } from "react";
 
 interface ProductMediaGalleryProps {
   imageUrl: string | null;
@@ -9,44 +9,46 @@ interface ProductMediaGalleryProps {
 
 export function ProductMediaGallery({ imageUrl, videoUrl, media }: ProductMediaGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
 
   const allMedia: { url: string; type: "image" | "video" }[] = [];
-  if (videoUrl) allMedia.push({ url: videoUrl, type: "video" });
   if (imageUrl) allMedia.push({ url: imageUrl, type: "image" });
-  if (media) allMedia.push(...media);
-
-  const updateIndex = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    setCurrentIndex(Math.round(el.scrollLeft / el.clientWidth));
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", updateIndex, { passive: true });
-    return () => el.removeEventListener("scroll", updateIndex);
-  }, [updateIndex]);
-
-  function scrollTo(index: number) {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: (index - currentIndex) * el.clientWidth, behavior: "smooth" });
-    setCurrentIndex(index);
+  if (videoUrl) allMedia.push({ url: videoUrl, type: "video" });
+  if (media) {
+    for (const m of media) {
+      if (!allMedia.some((a) => a.url === m.url)) {
+        allMedia.push(m);
+      }
+    }
   }
 
   if (allMedia.length === 0) return null;
 
+  function scroll(dir: number) {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 80, behavior: "smooth" });
+    setTimeout(updateArrows, 100);
+  }
+
+  function updateArrows() {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 2);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 2);
+  }
+
   return (
-    <div className="relative w-20 h-20 shrink-0 overflow-hidden rounded-lg">
+    <div className="relative shrink-0" style={{ width: 80, height: 80 }}>
       <div
         ref={scrollRef}
-        className="flex size-full snap-x snap-mandatory overflow-x-auto"
+        className="flex h-full snap-x snap-mandatory overflow-x-auto scroll-smooth"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        onScroll={updateArrows}
       >
         {allMedia.map((item, i) => (
-          <div key={i} className="size-full shrink-0 snap-start">
+          <div key={i} className="h-full w-20 shrink-0 snap-start">
             {item.type === "video" ? (
               <video src={item.url} className="size-full object-cover" preload="metadata" muted playsInline />
             ) : (
@@ -55,13 +57,13 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media }: ProductMediaG
           </div>
         ))}
       </div>
-      {allMedia.length > 1 && currentIndex > 0 && (
-        <button type="button" onClick={() => scrollTo(currentIndex - 1)} className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
+      {allMedia.length > 1 && !atStart && (
+        <button type="button" onClick={() => scroll(-1)} className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow-sm">
           <ChevronLeft className="size-3" />
         </button>
       )}
-      {allMedia.length > 1 && currentIndex < allMedia.length - 1 && (
-        <button type="button" onClick={() => scrollTo(currentIndex + 1)} className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow">
+      {allMedia.length > 1 && !atEnd && (
+        <button type="button" onClick={() => scroll(1)} className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-0.5 shadow-sm">
           <ChevronRight className="size-3" />
         </button>
       )}

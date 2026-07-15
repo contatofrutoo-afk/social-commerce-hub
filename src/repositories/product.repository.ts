@@ -49,9 +49,9 @@ export const productRepository = {
   },
 
   async findById(id: string): Promise<Product | null> {
-    const { data, error } = await (supabase as any).from("products").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await (supabase as any).from("products").select("*, product_media(*)").eq("id", id).maybeSingle();
     if (error) throw error;
-    return data ? map(data) : null;
+    return data ? map({ ...data, media: data.product_media ?? [] }) : null;
   },
 
   async findBySlug(slug: string): Promise<Product | null> {
