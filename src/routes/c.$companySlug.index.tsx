@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { companyRepository, customerRepository, checkinRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
-import { setSession, getSessionForCompany } from "@/lib/session";
+import { setSession, getSessionForCompany, getLastProfile, setLastProfile } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
