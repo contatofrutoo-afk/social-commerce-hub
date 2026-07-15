@@ -26,7 +26,16 @@ function ProductPage() {
 
   useEffect(() => {
     if (product) {
-      productRepository.recordEvent(product.id, product.companyId, "view").catch(() => {});
+      const companySlug = product.companySlug ?? slug.split("-")[0];
+      const session = getSessionForCompany(companySlug);
+      // QR de produto lido = evento `scan` (topo do funil da Inteligência do Catálogo).
+      productRepository
+        .recordEvent(product.id, product.companyId, "scan", session?.customerId)
+        .catch(() => {});
+      // Também registra `view` (visualização de detalhe) para métricas de interesse.
+      productRepository
+        .recordEvent(product.id, product.companyId, "view", session?.customerId)
+        .catch(() => {});
       productRepository.incrementCounter(product.id, "views_count").catch(() => {});
     }
   }, [product?.id]);

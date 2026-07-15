@@ -1,6 +1,8 @@
 // Sacola no client — puramente UI state. Ao "Enviar Pedido", vira Order no Cloud.
 import { useCallback, useEffect, useState } from "react";
 import type { CartItem, Product } from "@/repositories/types";
+import { productRepository } from "@/repositories/product.repository";
+import { getSession } from "@/lib/session";
 
 const KEY_PREFIX = "weaze.cart.v1.";
 
@@ -50,6 +52,14 @@ export function useCart(companyId: string | undefined) {
           quantity: qty,
         });
       write(companyId, list);
+      // Métricas: registra cart_add para a Inteligência do Catálogo, independente
+      // de onde o cliente adicionou (feed, sacola, catálogo, /p/:slug).
+      const session = getSession();
+      const customerId = session?.companyId === companyId ? session.customerId : undefined;
+      productRepository
+        .recordEvent(product.id, companyId, "cart_add", customerId)
+        .catch(() => {});
+      productRepository.incrementCounter(product.id, "cart_additions_count").catch(() => {});
     },
     [companyId],
   );
