@@ -1017,8 +1017,8 @@ function ImpactoSection({ data }: { data: Metrics["impacto"] }) {
     <div className="space-y-4">
       <SectionHeader
         icon={Zap}
-        title="Impacto da WEAZZE"
-        description="Valor gerado pela WEAZZE para os estabelecimentos"
+        title="Impacto da weaze"
+        description="Valor gerado pela weaze para os estabelecimentos"
         badge={{ label: "Valor Gerado", variant: "default" }}
       />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
