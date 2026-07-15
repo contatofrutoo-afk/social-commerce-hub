@@ -36,7 +36,7 @@ const paymentStatusColor: Record<string, "default" | "secondary" | "destructive"
 };
 
 const PLAN_OPTIONS = ["Mensal", "Anual", "Promocional", "Personalizado"];
-const METHOD_OPTIONS = ["PIX", "Cartao", "Dinheiro", "Outro"];
+const METHOD_OPTIONS = ["PIX", "Cartão", "Dinheiro", "Outro"];
 const STATUS_OPTIONS = [
   { value: "paid", label: "Pago" },
   { value: "pending", label: "Em Aberto" },
