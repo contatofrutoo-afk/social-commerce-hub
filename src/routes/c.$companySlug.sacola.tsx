@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { companyRepository, orderRepository } from "@/repositories";
+import { companyRepository, orderRepository, productRepository } from "@/repositories";
 import { getSessionForCompany } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,20 @@ function BagPage() {
     queryFn: () => companyRepository.findBySlug(companySlug),
   });
   const cart = useCart(company?.id);
+
+  const productIds = cart.items.map((i) => i.productId);
+  const { data: freshProducts } = useQuery({
+    queryKey: ["cart-products", ...productIds],
+    queryFn: async () => {
+      const results = await Promise.allSettled(
+        productIds.map((id) => productRepository.findById(id)),
+      );
+      return results
+        .filter((r) => r.status === "fulfilled" && r.value)
+        .map((r) => (r as PromiseFulfilledResult<NonNullable<typeof r.value>>).value);
+    },
+    enabled: productIds.length > 0,
+  });
 
   const submit = useMutation({
     mutationFn: async () => {
@@ -66,12 +80,15 @@ function BagPage() {
         <p className="py-12 text-center text-muted-foreground">Nenhum item ainda.</p>
       ) : (
         <div className="space-y-3">
-          {cart.items.map((i) => (
+          {cart.items.map((i) => {
+            const fp = freshProducts?.find((p) => p.id === i.productId);
+            const freshMedia = fp?.media?.map((m) => ({ url: m.mediaUrl, type: m.mediaType }));
+            return (
             <div key={i.productId} className="flex items-center gap-3 rounded-xl border p-3">
               <ProductMediaGallery
                 imageUrl={i.imageUrl}
                 videoUrl={i.videoUrl}
-                media={i.media}
+                media={freshMedia ?? i.media}
               />
               <div className="flex-1">
                 <div className="text-sm font-medium">{i.name}</div>
