@@ -238,7 +238,7 @@ function HeroMockup() {
 }
 
 
-/* ============================== PROBLEM ============================== */
+/* ============================== PROBLEM (dark, warning) ============================== */
 function Problem() {
   const bullets = [
     "Quem visitou hoje.",
@@ -248,89 +248,89 @@ function Problem() {
     "Quem são seus melhores clientes.",
   ];
   return (
-    <Section>
-      <div className="grid gap-14 lg:grid-cols-2 lg:items-center">
-        <FadeIn>
-          <Eyebrow>O problema</Eyebrow>
-          <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Seu negócio perde clientes todos os dias… e talvez você{" "}
-            <span className="weaze-text-gradient">nem perceba.</span>
-          </h2>
-          <p className="mt-6 text-lg text-muted-foreground">
-            A maioria dos estabelecimentos não sabe:
-          </p>
-          <ul className="mt-6 space-y-3">
-            {bullets.map((b) => (
-              <li key={b} className="flex items-start gap-3">
-                <span className="mt-2 inline-block size-1.5 rounded-full bg-primary" />
-                <span className="text-foreground/90">{b}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-8 text-lg text-muted-foreground">
-            Sem essas informações fica impossível vender mais.
-          </p>
-        </FadeIn>
-        <FadeIn>
-          <div className="relative overflow-hidden rounded-3xl border border-border/60 shadow-elegant">
-            <img src={sceneCafe} alt="Cliente escaneando QR code em um café" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
-          </div>
-        </FadeIn>
+    <section className="relative overflow-hidden bg-[#0b0b12] py-28 text-white sm:py-36">
+      <div className="absolute inset-0 -z-10 opacity-40" style={{ backgroundImage: "radial-gradient(600px 400px at 15% 20%, rgba(239,68,68,0.25), transparent 60%), radial-gradient(500px 300px at 90% 80%, rgba(168,85,247,0.2), transparent 60%)" }} />
+      <div className="absolute inset-0 -z-10 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="grid gap-16 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+          <FadeIn>
+            <div className="inline-flex items-center gap-2 rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-red-300">
+              <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> O problema
+            </div>
+            <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
+              Seu negócio perde clientes todos os dias… e talvez você{" "}
+              <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">nem perceba.</span>
+            </h2>
+            <p className="mt-6 text-lg text-white/60">A maioria dos estabelecimentos não sabe:</p>
+            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+              {bullets.map((b, i) => (
+                <li key={b} className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm">
+                  <span className="font-display text-sm font-semibold text-red-400/80">0{i + 1}</span>
+                  <span className="text-sm text-white/85">{b}</span>
+                </li>
+              ))}
+            </ul>
+          </FadeIn>
+          <FadeIn>
+            <div className="relative">
+              <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-tr from-red-500/20 via-transparent to-transparent blur-3xl" />
+              <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl">
+                <img src={sceneCafe} alt="Cliente escaneando QR code em um café" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-white/50">Sem weaze</div>
+                    <div className="font-display text-2xl font-semibold">Cliente invisível</div>
+                  </div>
+                  <div className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300 backdrop-blur">-73% recorrência</div>
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }
 
-/* ============================== SOLUTION ============================== */
+/* ============================== SOLUTION (giant statement) ============================== */
 function Solution() {
   return (
-    <Section className="bg-muted/30 border-y border-border/60">
-      <div className="mx-auto max-w-3xl text-center">
-        <Eyebrow>A solução</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Conheça a <span className="weaze-text-gradient">weaze</span>
-        </h2>
-        <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-          Uma plataforma criada para transformar clientes ocasionais em clientes
-          recorrentes. Enquanto seu cliente navega, interage, comenta e faz
-          pedidos, a weaze aprende automaticamente seu comportamento e entrega
-          inteligência para o seu negócio vender mais.
-        </p>
+    <section className="relative overflow-hidden py-32 sm:py-40">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-primary/5 to-background" />
+      <motion.div
+        aria-hidden
+        animate={{ rotate: 360 }}
+        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        className="absolute left-1/2 top-1/2 -z-10 size-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20"
+        style={{ background: "conic-gradient(from 0deg, transparent, hsl(var(--primary) / 0.4), transparent, hsl(var(--primary) / 0.3), transparent)" }}
+      />
+      <div className="mx-auto max-w-5xl px-6 text-center">
+        <FadeIn>
+          <Eyebrow>A solução</Eyebrow>
+          <h2 className="font-display mt-6 text-5xl font-semibold tracking-tight sm:text-7xl lg:text-8xl">
+            Conheça a <span className="weaze-text-gradient italic">weaze</span>
+          </h2>
+          <p className="mx-auto mt-8 max-w-2xl text-xl leading-relaxed text-muted-foreground">
+            Enquanto seu cliente navega, interage, comenta e faz pedidos, a weaze aprende automaticamente seu comportamento e entrega{" "}
+            <span className="text-foreground font-medium">inteligência para o seu negócio vender mais.</span>
+          </p>
+        </FadeIn>
       </div>
-    </Section>
+    </section>
   );
 }
 
-/* ============================== HOW IT WORKS ============================== */
+/* ============================== HOW IT WORKS (timeline) ============================== */
 function HowItWorks() {
   const steps = [
-    {
-      n: "01",
-      icon: QrCode,
-      title: "Cliente faz o check-in",
-      desc: "Basta escanear um QR Code para entrar na experiência da weaze.",
-    },
-    {
-      n: "02",
-      icon: Heart,
-      title: "Interage naturalmente",
-      desc: "Curte produtos, comenta, salva, adiciona à sacola e visualiza itens — tudo registrado automaticamente.",
-    },
-    {
-      n: "03",
-      icon: Sparkles,
-      title: "A plataforma entende seu cliente",
-      desc: "Cada ação constrói um perfil completo de comportamento. Sem formulários, sem pesquisas.",
-    },
-    {
-      n: "04",
-      icon: BarChart3,
-      title: "Seu negócio recebe inteligência",
-      desc: "Descubra quem compra mais, quem está prestes a voltar e quem merece uma oferta personalizada.",
-    },
+    { n: "01", icon: QrCode, title: "Cliente faz o check-in", desc: "Basta escanear um QR Code para entrar na experiência da weaze." },
+    { n: "02", icon: Heart, title: "Interage naturalmente", desc: "Curte produtos, comenta, salva, adiciona à sacola e visualiza itens — tudo registrado automaticamente." },
+    { n: "03", icon: Sparkles, title: "A plataforma entende seu cliente", desc: "Cada ação constrói um perfil completo de comportamento. Sem formulários, sem pesquisas." },
+    { n: "04", icon: BarChart3, title: "Seu negócio recebe inteligência", desc: "Descubra quem compra mais, quem está prestes a voltar e quem merece uma oferta personalizada." },
   ];
   return (
-    <Section id="como-funciona">
+    <Section id="como-funciona" className="bg-muted/30 border-y border-border/60">
       <FadeIn className="mx-auto max-w-2xl text-center">
         <Eyebrow>Como funciona</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -338,126 +338,149 @@ function HowItWorks() {
           <span className="weaze-text-gradient">Poderoso para o seu negócio.</span>
         </h2>
       </FadeIn>
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-80px" }}
-        className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4"
-      >
-        {steps.map((s) => (
-          <motion.div
-            key={s.n}
-            variants={fadeUp}
-            className="group relative rounded-2xl border border-border/60 bg-card p-7 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-elegant"
-          >
-            <div className="font-display text-4xl font-semibold text-primary/20 transition group-hover:text-primary/60">
-              {s.n}
-            </div>
-            <div className="mt-4 grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
-              <s.icon className="size-5" />
-            </div>
-            <h3 className="font-display mt-5 text-xl font-semibold">{s.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-          </motion.div>
-        ))}
-      </motion.div>
+      <div className="relative mt-20">
+        <div aria-hidden className="absolute left-8 top-0 hidden h-full w-px bg-gradient-to-b from-primary/60 via-primary/20 to-transparent lg:block" />
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="space-y-6">
+          {steps.map((s, i) => (
+            <motion.div key={s.n} variants={fadeUp} className="relative grid gap-6 lg:grid-cols-[80px_1fr] lg:items-start">
+              <div className="relative z-10 flex lg:justify-center">
+                <div className="grid size-16 place-items-center rounded-2xl border border-primary/30 bg-background shadow-elegant">
+                  <s.icon className="size-6 text-primary" />
+                </div>
+              </div>
+              <div className={`group rounded-3xl border border-border/60 bg-card p-8 transition hover:border-primary/40 hover:shadow-elegant ${i % 2 === 1 ? "lg:ml-12" : ""}`}>
+                <div className="flex items-center gap-4">
+                  <span className="font-display text-5xl font-semibold text-primary/20">{s.n}</span>
+                  <h3 className="font-display text-2xl font-semibold">{s.title}</h3>
+                </div>
+                <p className="mt-3 text-base leading-relaxed text-muted-foreground">{s.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
     </Section>
   );
 }
 
-/* ============================== FEATURES ============================== */
+/* ============================== FEATURES (bento) ============================== */
 function Features() {
-  const features = [
-    { icon: Sparkles, title: "Feed Social", desc: "Transforme seu negócio em uma rede social própria." },
-    { icon: MessageSquareHeart, title: "CRM Inteligente", desc: "Conheça profundamente cada cliente." },
-    { icon: Users, title: "Atendimento Inteligente", desc: "Seu atendente sabe exatamente como atender cada pessoa." },
-    { icon: Layers, title: "Catálogo Inteligente", desc: "Produtos físicos com QR Code e pedidos instantâneos." },
-    { icon: ShoppingBag, title: "Pedidos", desc: "Receba pedidos diretamente pelo dashboard." },
-    { icon: BarChart3, title: "Dashboard", desc: "Todas as métricas em tempo real." },
-    { icon: QrCode, title: "QR Code das Mesas", desc: "Experiência digital completa para bares e restaurantes." },
-    { icon: Package, title: "QR Code de Produtos", desc: "Ideal para lojas físicas." },
-    { icon: Store, title: "Perfil Inteligente", desc: "Cada cliente possui um histórico completo." },
-  ];
   return (
-    <Section id="recursos" className="bg-muted/30 border-y border-border/60">
-      <FadeIn className="mx-auto max-w-2xl text-center">
-        <Eyebrow>Recursos</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Tudo que seu negócio precisa em uma{" "}
-          <span className="weaze-text-gradient">única plataforma.</span>
-        </h2>
-      </FadeIn>
+    <section id="recursos" className="relative py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-6">
+        <FadeIn className="mx-auto max-w-2xl text-center">
+          <Eyebrow>Recursos</Eyebrow>
+          <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Tudo que seu negócio precisa em uma{" "}
+            <span className="weaze-text-gradient">única plataforma.</span>
+          </h2>
+        </FadeIn>
 
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-80px" }}
-        className="mt-16 grid gap-5 md:grid-cols-2 lg:grid-cols-3"
-      >
-        {features.map((f) => (
-          <motion.div
-            key={f.title}
-            variants={fadeUp}
-            className="group rounded-2xl border border-border/60 bg-card p-6 transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-elegant"
-          >
-            <div className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-              <f.icon className="size-5" />
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          className="mt-16 grid gap-4 md:grid-cols-6 md:auto-rows-[minmax(180px,auto)]"
+        >
+          {/* Big hero card */}
+          <motion.div variants={fadeUp} className="group relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-8 md:col-span-4 md:row-span-2">
+            <div className="absolute -right-16 -top-16 size-64 rounded-full bg-primary/20 blur-3xl transition group-hover:bg-primary/30" />
+            <div className="relative">
+              <div className="grid size-12 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow">
+                <Sparkles className="size-6" />
+              </div>
+              <h3 className="font-display mt-6 text-3xl font-semibold">Feed Social</h3>
+              <p className="mt-3 max-w-md text-base text-muted-foreground">Transforme seu negócio em uma rede social própria. Publicações, curtidas, comentários e interações que geram vendas.</p>
             </div>
-            <h3 className="font-display mt-5 text-lg font-semibold">{f.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
           </motion.div>
-        ))}
-      </motion.div>
-    </Section>
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <MessageSquareHeart className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">CRM Inteligente</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Conheça profundamente cada cliente.</p>
+          </motion.div>
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <Users className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">Atendimento Inteligente</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Saiba exatamente como atender cada pessoa.</p>
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <Layers className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">Catálogo Inteligente</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Produtos com QR e pedidos instantâneos.</p>
+          </motion.div>
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <ShoppingBag className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">Pedidos</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Receba pedidos direto pelo dashboard.</p>
+          </motion.div>
+          <motion.div variants={fadeUp} className="relative overflow-hidden rounded-3xl border border-primary/30 bg-primary p-6 text-primary-foreground md:col-span-2">
+            <BarChart3 className="size-6" />
+            <h3 className="font-display mt-4 text-lg font-semibold">Dashboard</h3>
+            <p className="mt-2 text-sm text-primary-foreground/80">Todas as métricas em tempo real.</p>
+          </motion.div>
+
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <QrCode className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">QR das Mesas</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Experiência digital para bares e restaurantes.</p>
+          </motion.div>
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <Package className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">QR de Produtos</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Ideal para lojas físicas.</p>
+          </motion.div>
+          <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
+            <Store className="size-6 text-primary" />
+            <h3 className="font-display mt-4 text-lg font-semibold">Perfil Inteligente</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Histórico completo de cada cliente.</p>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
-/* ============================== BENEFITS ============================== */
+/* ============================== BENEFITS (dark stats) ============================== */
 function Benefits() {
   const items = [
-    { icon: Users, t: "Conheça seus clientes" },
-    { icon: TrendingUp, t: "Aumente a recorrência" },
-    { icon: Sparkles, t: "Venda de forma personalizada" },
-    { icon: Bell, t: "Reduza abandono" },
-    { icon: Heart, t: "Melhore a experiência" },
-    { icon: BarChart3, t: "Dados reais para decisões" },
+    { icon: Users, t: "Conheça seus clientes", n: "360°", d: "Perfil comportamental completo." },
+    { icon: TrendingUp, t: "Aumente a recorrência", n: "+42%", d: "Clientes que voltam mais vezes." },
+    { icon: Sparkles, t: "Venda personalizada", n: "1:1", d: "Ofertas certas para cada perfil." },
+    { icon: Bell, t: "Reduza abandono", n: "-38%", d: "Recupere quem quase comprou." },
+    { icon: Heart, t: "Melhore a experiência", n: "★ 4.9", d: "Interação fluida e memorável." },
+    { icon: BarChart3, t: "Decisões com dados", n: "Real-time", d: "Métricas ao vivo, sem achismo." },
   ];
   return (
-    <Section>
-      <FadeIn className="mx-auto max-w-2xl text-center">
-        <Eyebrow>Benefícios</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Mais relacionamento. Mais fidelização.{" "}
-          <span className="weaze-text-gradient">Mais vendas.</span>
-        </h2>
-      </FadeIn>
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-80px" }}
-        className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-      >
-        {items.map((it) => (
-          <motion.div
-            key={it.t}
-            variants={fadeUp}
-            className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-6 transition hover:border-primary/40 hover:shadow-elegant"
-          >
-            <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-              <it.icon className="size-5" />
-            </div>
-            <p className="font-medium">{it.t}</p>
-          </motion.div>
-        ))}
-      </motion.div>
-    </Section>
+    <section className="relative overflow-hidden bg-[#0a0a0f] py-28 text-white sm:py-36">
+      <div className="absolute inset-0 -z-10 opacity-30" style={{ backgroundImage: "radial-gradient(700px 400px at 80% 10%, hsl(var(--primary) / 0.4), transparent 60%), radial-gradient(500px 300px at 10% 90%, hsl(var(--primary) / 0.25), transparent 60%)" }} />
+      <div className="mx-auto max-w-7xl px-6">
+        <FadeIn className="max-w-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
+            Benefícios
+          </div>
+          <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight sm:text-6xl">
+            Mais relacionamento. Mais fidelização.{" "}
+            <span className="bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">Mais vendas.</span>
+          </h2>
+        </FadeIn>
+        <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((it) => (
+            <motion.div key={it.t} variants={fadeUp} className="group relative bg-[#0a0a0f] p-8 transition hover:bg-white/[0.03]">
+              <it.icon className="size-6 text-primary" />
+              <div className="font-display mt-6 text-5xl font-semibold tracking-tight bg-gradient-to-br from-white to-white/50 bg-clip-text text-transparent">{it.n}</div>
+              <div className="mt-3 font-display text-lg font-medium">{it.t}</div>
+              <div className="mt-1 text-sm text-white/50">{it.d}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
-/* ============================== FOR WHO ============================== */
+/* ============================== FOR WHO (marquee) ============================== */
 function ForWho() {
   const list = [
     { icon: Utensils, t: "Restaurantes" },
@@ -475,8 +498,9 @@ function ForWho() {
     { icon: Dumbbell, t: "Academias" },
     { icon: Sparkles, t: "Qualquer negócio local" },
   ];
+  const row = [...list, ...list];
   return (
-    <Section className="bg-muted/30 border-y border-border/60">
+    <Section>
       <FadeIn className="mx-auto max-w-2xl text-center">
         <Eyebrow>Para quem é</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -485,21 +509,42 @@ function ForWho() {
         </h2>
       </FadeIn>
 
-      <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
-        {list.map((it) => (
-          <div
-            key={it.t}
-            className="flex flex-col items-center gap-3 rounded-2xl border border-border/60 bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary/40"
+      <div className="mt-14 space-y-4">
+        <div className="relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+          <motion.div
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            className="flex w-max gap-4"
           >
-            <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <it.icon className="size-5" />
-            </div>
-            <span className="text-sm font-medium">{it.t}</span>
-          </div>
-        ))}
+            {row.map((it, i) => (
+              <div key={i} className="flex shrink-0 items-center gap-3 rounded-full border border-border/60 bg-card px-5 py-3">
+                <div className="grid size-8 place-items-center rounded-full bg-primary/10 text-primary">
+                  <it.icon className="size-4" />
+                </div>
+                <span className="text-sm font-medium whitespace-nowrap">{it.t}</span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+        <div className="relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_10%,black_90%,transparent)]">
+          <motion.div
+            animate={{ x: ["-50%", "0%"] }}
+            transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+            className="flex w-max gap-4"
+          >
+            {row.map((it, i) => (
+              <div key={i} className="flex shrink-0 items-center gap-3 rounded-full border border-border/60 bg-card px-5 py-3">
+                <div className="grid size-8 place-items-center rounded-full bg-primary/10 text-primary">
+                  <it.icon className="size-4" />
+                </div>
+                <span className="text-sm font-medium whitespace-nowrap">{it.t}</span>
+              </div>
+            ))}
+          </motion.div>
+        </div>
       </div>
 
-      <div className="mt-14 grid gap-6 md:grid-cols-2">
+      <div className="mt-16 grid gap-6 md:grid-cols-2">
         <div className="overflow-hidden rounded-3xl border border-border/60 shadow-elegant">
           <img src={sceneRestaurant} alt="Grupo em restaurante usando weaze" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
         </div>
@@ -511,7 +556,7 @@ function ForWho() {
   );
 }
 
-/* ============================== DASHBOARD SHOWCASE ============================== */
+/* ============================== DASHBOARD SHOWCASE (split) ============================== */
 function DashboardShowcase() {
   const stats = [
     { label: "Clientes", value: "3.482", icon: Users, delta: "+12%" },
@@ -520,50 +565,49 @@ function DashboardShowcase() {
     { label: "Recorrência", value: "3.2×", icon: TrendingUp, delta: "+8%" },
   ];
   return (
-    <Section>
-      <FadeIn className="mx-auto max-w-2xl text-center">
-        <Eyebrow>Dashboard</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Todas as métricas.{" "}
-          <span className="weaze-text-gradient">Em tempo real.</span>
-        </h2>
-      </FadeIn>
-
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-80px" }}
-        className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        {stats.map((s, i) => (
-          <motion.div
-            key={s.label}
-            variants={fadeUp}
-            animate={{ y: [0, i % 2 === 0 ? -6 : 6, 0] }}
-            transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
-            className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm"
-          >
-            <div className="flex items-center justify-between">
-              <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-                <s.icon className="size-5" />
-              </div>
-              <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">
-                {s.delta}
-              </span>
+    <Section className="bg-muted/30 border-y border-border/60">
+      <div className="grid gap-14 lg:grid-cols-[1fr_1.2fr] lg:items-center">
+        <FadeIn>
+          <Eyebrow>Dashboard</Eyebrow>
+          <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Todas as métricas.{" "}
+            <span className="weaze-text-gradient">Em tempo real.</span>
+          </h2>
+          <p className="mt-5 max-w-md text-lg text-muted-foreground">
+            Um centro de comando único com tudo o que acontece no seu negócio — do check-in ao pedido concluído.
+          </p>
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                animate={{ y: [0, i % 2 === 0 ? -6 : 6, 0] }}
+                transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }}
+                className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <s.icon className="size-5 text-primary" />
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">{s.delta}</span>
+                </div>
+                <div className="mt-4 font-display text-2xl font-semibold tracking-tight">{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </FadeIn>
+        <FadeIn>
+          <div className="relative">
+            <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-gradient-to-tr from-primary/25 via-primary/5 to-transparent blur-3xl" />
+            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card shadow-glow">
+              <img src={heroDashboard} alt="weaze dashboard completo" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
             </div>
-            <div className="mt-6 font-display text-3xl font-semibold tracking-tight">{s.value}</div>
-            <div className="mt-1 text-sm text-muted-foreground">{s.label}</div>
-          </motion.div>
-        ))}
-      </motion.div>
-
-      <div className="relative mt-14 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-glow">
-        <img src={heroDashboard} alt="weaze dashboard completo" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
+          </div>
+        </FadeIn>
       </div>
     </Section>
   );
 }
+
+
 
 
 /* ============================== PRICING ============================== */
@@ -645,28 +689,34 @@ function FAQ() {
     { q: "Existe limite de produtos?", a: "Não. Produtos e categorias ilimitados." },
   ];
   return (
-    <Section id="faq" className="bg-muted/30 border-y border-border/60">
-      <FadeIn className="mx-auto max-w-2xl text-center">
-        <Eyebrow>FAQ</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Perguntas <span className="weaze-text-gradient">frequentes.</span>
-        </h2>
-      </FadeIn>
-
-      <div className="mx-auto mt-12 max-w-3xl">
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((f, i) => (
-            <AccordionItem key={f.q} value={`item-${i}`} className="border-border/60">
-              <AccordionTrigger className="text-left font-display text-lg font-medium">
-                {f.q}
-              </AccordionTrigger>
-              <AccordionContent className="text-base text-muted-foreground">
-                {f.a}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+    <Section id="faq">
+      <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <FadeIn className="lg:sticky lg:top-28">
+          <Eyebrow>FAQ</Eyebrow>
+          <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Perguntas <span className="weaze-text-gradient">frequentes.</span>
+          </h2>
+          <p className="mt-5 text-lg text-muted-foreground">Tudo o que você precisa saber antes de começar. Se ficar alguma dúvida, fale com a gente.</p>
+          <Button asChild size="lg" variant="outline" className="mt-8 rounded-full">
+            <Link to="/auth">Falar com a equipe <ArrowRight className="ml-2 size-4" /></Link>
+          </Button>
+        </FadeIn>
+        <FadeIn>
+          <Accordion type="single" collapsible className="w-full space-y-3">
+            {faqs.map((f, i) => (
+              <AccordionItem key={f.q} value={`item-${i}`} className="overflow-hidden rounded-2xl border border-border/60 bg-card px-5 data-[state=open]:border-primary/40 data-[state=open]:shadow-elegant">
+                <AccordionTrigger className="text-left font-display text-lg font-medium hover:no-underline">
+                  {f.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-base text-muted-foreground">
+                  {f.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </FadeIn>
       </div>
+
     </Section>
   );
 }
