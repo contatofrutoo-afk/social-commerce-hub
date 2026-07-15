@@ -1,17 +1,48 @@
 import { createFileRoute, Outlet, Link, useLocation, useNavigate, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 import { BarChart3, Building2, DollarSign, FileText, Settings, TrendingUp, LogOut, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+async function waitForAdminSession(): Promise<Session | null> {
+  const { data } = await supabase.auth.getSession();
+  if (data.session) return data.session;
+
+  return new Promise<Session | null>((resolve) => {
+    let settled = false;
+    let unsubscribe = () => {};
+    const timeout = window.setTimeout(async () => {
+      const refreshed = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+      finish(refreshed.data.session);
+    }, 900);
+
+    const finish = (session: Session | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      unsubscribe();
+      resolve(session);
+    };
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      finish(session);
+    });
+    unsubscribe = () => authListener.subscription.unsubscribe();
+  });
+}
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
   component: WeazeLayout,
-  beforeLoad: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw redirect({ to: "/auth" });
+  beforeLoad: async ({ location }) => {
+    const session = await waitForAdminSession();
+    if (!session) {
+      const redirectTo = `${location.pathname}${location.searchStr || ""}`;
+      throw redirect({ to: "/auth", search: { redirect: redirectTo } as never });
+    }
     const { data: isAdmin, error } = await supabase.rpc("has_role", {
-      _user_id: user.id,
+      _user_id: session.user.id,
       _role: "admin",
     });
     if (error) {
