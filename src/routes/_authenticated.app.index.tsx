@@ -1030,8 +1030,8 @@ function ActivityDot({ type }: { type: string }) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <h3 className="mb-3 text-sm font-semibold">{title}</h3>
+    <div className="dash-card p-5">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</h3>
       {children}
     </div>
   );
@@ -1059,10 +1059,10 @@ function MiniCard({
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl border bg-card p-4">
+    <div className="dash-card p-5">
       <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-      <div className="mt-2 h-7 w-16 animate-pulse rounded bg-muted" />
-      <div className="mt-1 h-3 w-12 animate-pulse rounded bg-muted" />
+      <div className="mt-3 h-8 w-24 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-3 w-16 animate-pulse rounded bg-muted" />
     </div>
   );
 }
@@ -1077,14 +1077,14 @@ function PeriodSelector({
   onChange: (k: PeriodKey) => void;
 }) {
   return (
-    <div className="flex gap-1 rounded-xl border bg-muted/30 p-1">
+    <div className="inline-flex gap-1 rounded-full border bg-card/70 p-1 backdrop-blur">
       {(Object.entries(PERIOD_LABELS) as [PeriodKey, string][]).map(([key, label]) => (
         <button
           key={key}
           onClick={() => onChange(key)}
-          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
             key === current
-              ? "bg-card shadow-sm text-foreground"
+              ? "bg-primary text-primary-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
@@ -1115,13 +1115,16 @@ function KpiCard({
   const comp = computeChange(value, prevNumber);
 
   return (
-    <div className="rounded-xl border bg-card p-4 transition-shadow hover:shadow-sm">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <Icon className="size-4 text-primary" />
+    <div className="dash-card group relative overflow-hidden p-5 hover:dash-card-hover">
+      <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 blur-2xl transition-opacity group-hover:opacity-100" />
+      <div className="relative flex items-start justify-between">
+        <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{label}</span>
+        <span className="grid size-9 place-items-center rounded-xl kpi-accent">
+          <Icon className="size-4" />
+        </span>
       </div>
-      <div className="mt-2 text-2xl font-bold">{display}</div>
-      <div className="mt-1">
+      <div className="relative mt-3 number-display text-3xl">{display}</div>
+      <div className="relative mt-2">
         <ComparisonBadge {...comp} />
       </div>
     </div>
@@ -1133,12 +1136,16 @@ function KpiCard({
 function ComparisonBadge({ pct, dir }: { pct: number; dir: "up" | "down" | "flat" }) {
   if (dir === "flat") return <span className="text-xs text-muted-foreground">— sem alteração</span>;
   const Icon = dir === "up" ? ArrowUp : ArrowDown;
-  const color = dir === "up" ? "text-green-600" : "text-destructive";
+  const badge = dir === "up"
+    ? "text-green-700 bg-green-500/10 border-green-500/20"
+    : "text-destructive bg-destructive/10 border-destructive/20";
   return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${color}`}>
-      <Icon className="size-3" />
-      {pctStr(pct)}
-      <span className="text-muted-foreground font-normal">vs período anterior</span>
+    <span className="inline-flex items-center gap-1 text-xs">
+      <span className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 font-semibold ${badge}`}>
+        <Icon className="size-3" />
+        {pctStr(pct)}
+      </span>
+      <span className="text-muted-foreground">vs anterior</span>
     </span>
   );
 }
@@ -1157,20 +1164,23 @@ function CustomerTile({
   color: "blue" | "green" | "amber" | "orange" | "red";
 }) {
   const colors: Record<string, string> = {
-    blue: "text-blue-600 bg-blue-500/10 border-blue-500/20",
-    green: "text-green-600 bg-green-500/10 border-green-500/20",
-    amber: "text-amber-600 bg-amber-500/10 border-amber-500/20",
-    orange: "text-orange-600 bg-orange-500/10 border-orange-500/20",
-    red: "text-red-600 bg-red-500/10 border-red-500/20",
+    blue: "text-blue-600 bg-blue-500/10",
+    green: "text-green-600 bg-green-500/10",
+    amber: "text-amber-600 bg-amber-500/10",
+    orange: "text-orange-600 bg-orange-500/10",
+    red: "text-red-600 bg-red-500/10",
   };
   return (
-    <div className={`rounded-xl border p-4 text-center ${colors[color]}`}>
-      <Icon className="mx-auto size-5" />
-      <div className="mt-1 text-xl font-bold">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider">{label}</div>
+    <div className="dash-card p-4">
+      <div className={`inline-grid size-9 place-items-center rounded-xl ${colors[color]}`}>
+        <Icon className="size-4" />
+      </div>
+      <div className="mt-3 number-display text-2xl">{value}</div>
+      <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</div>
     </div>
   );
 }
+
 
 // ─── Hideable section (card with ⋮ menu) ───
 
