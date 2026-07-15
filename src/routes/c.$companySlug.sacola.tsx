@@ -72,7 +72,6 @@ function BagPage() {
                 imageUrl={i.imageUrl}
                 videoUrl={i.videoUrl}
                 media={i.media}
-                className="max-w-[200px] mx-auto"
               />
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
