@@ -75,7 +75,6 @@ function LandingPage() {
     <div className="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20">
       <Nav />
       <Hero />
-      <LogosStrip />
       <Problem />
       <Solution />
       <HowItWorks />
@@ -83,7 +82,6 @@ function LandingPage() {
       <Benefits />
       <ForWho />
       <DashboardShowcase />
-      <Testimonials />
       <Pricing />
       <FAQ />
       <FinalCTA />
@@ -240,26 +238,6 @@ function HeroMockup() {
   );
 }
 
-/* ============================== LOGOS ============================== */
-function LogosStrip() {
-  const items = ["Bar do Chef", "Café Aurora", "Norte Burger", "Studio Luz", "Villa Pet", "Adega Nova"];
-  return (
-    <section className="border-y border-border/60 bg-muted/30 py-10">
-      <div className="mx-auto max-w-7xl px-6">
-        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Usado por negócios locais em todo o Brasil
-        </p>
-        <div className="mt-6 grid grid-cols-2 gap-6 text-center sm:grid-cols-3 md:grid-cols-6">
-          {items.map((n) => (
-            <div key={n} className="font-display text-lg font-medium text-muted-foreground/80">
-              {n}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ============================== PROBLEM ============================== */
 function Problem() {
@@ -588,72 +566,6 @@ function DashboardShowcase() {
   );
 }
 
-/* ============================== TESTIMONIALS ============================== */
-function Testimonials() {
-  const items = [
-    {
-      name: "Rafael Souza",
-      role: "Proprietário",
-      company: "Bar do Chef",
-      text: "Em 30 dias identificamos 1.400 clientes que antes eram anônimos. O feed virou o motor da recompra.",
-    },
-    {
-      name: "Camila Andrade",
-      role: "Gerente",
-      company: "Café Aurora",
-      text: "Os clientes publicam e viraliza dentro do próprio café. Nunca vi engajamento assim.",
-    },
-    {
-      name: "Diego Lima",
-      role: "CEO",
-      company: "Norte Burger",
-      text: "Sabemos qual combo mais vende, em qual horário e para qual perfil. Dinheiro na mesa.",
-    },
-  ];
-  return (
-    <Section className="bg-muted/30 border-y border-border/60">
-      <FadeIn className="mx-auto max-w-2xl text-center">
-        <Eyebrow>Depoimentos</Eyebrow>
-        <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Negócios reais.{" "}
-          <span className="weaze-text-gradient">Resultados reais.</span>
-        </h2>
-      </FadeIn>
-
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-80px" }}
-        className="mt-14 grid gap-6 md:grid-cols-3"
-      >
-        {items.map((t) => (
-          <motion.div
-            key={t.name}
-            variants={fadeUp}
-            className="flex flex-col rounded-2xl border border-border/60 bg-card p-7 shadow-sm"
-          >
-            <div className="flex text-primary">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="size-4 fill-current" />
-              ))}
-            </div>
-            <p className="mt-5 flex-1 text-base leading-relaxed">"{t.text}"</p>
-            <div className="mt-6 flex items-center gap-3 border-t border-border/60 pt-5">
-              <div className="grid size-11 place-items-center rounded-full bg-primary/10 font-display text-sm font-semibold text-primary">
-                {t.name.split(" ").map((n) => n[0]).join("")}
-              </div>
-              <div>
-                <div className="text-sm font-semibold">{t.name}</div>
-                <div className="text-xs text-muted-foreground">{t.role} · {t.company}</div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
-    </Section>
-  );
-}
 
 /* ============================== PRICING ============================== */
 function Pricing() {
