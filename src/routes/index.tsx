@@ -28,7 +28,6 @@ import {
   Wine,
   Instagram,
   Linkedin,
-  Star,
   TrendingUp,
   Zap,
   Bell,
