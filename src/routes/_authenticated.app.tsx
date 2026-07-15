@@ -145,27 +145,28 @@ function AppLayout() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
-      <aside className="hidden w-64 flex-col border-r bg-card p-5 md:flex">
+    <div className="flex min-h-screen dash-surface">
+      <aside className="hidden w-64 flex-col border-r bg-card/70 p-5 backdrop-blur md:flex">
         <div className="mb-8 flex items-center gap-3">
           {role?.company?.logo_url ? (
             <img
               src={role.company.logo_url}
               alt=""
-              className="size-10 rounded-xl object-cover ring-1 ring-border"
+              className="size-11 rounded-2xl object-cover ring-1 ring-border shadow-sm"
             />
           ) : (
-            <div className="grid size-10 place-items-center rounded-xl bg-primary/10">
+            <div className="grid size-11 place-items-center rounded-2xl bg-primary/10">
               <Logo className="h-5" />
             </div>
           )}
           <div className="min-w-0">
-            <div className="mt-0.5 truncate text-xs text-muted-foreground">
-              {role?.company?.name ?? "Painel"}
+            <div className="truncate text-sm font-semibold">{role?.company?.name ?? "Painel"}</div>
+            <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              Comércio
             </div>
           </div>
         </div>
-        <nav className="flex-1 space-y-1">
+        <nav className="flex-1 space-y-0.5">
           {nav.map((n) => {
             const active = n.exact
               ? location.pathname === n.to
@@ -175,10 +176,10 @@ function AppLayout() {
                 key={n.to}
                 to={n.to}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
+                  "relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-all",
                   active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
                 <n.icon className="size-4" />
@@ -192,15 +193,15 @@ function AppLayout() {
             await supabase.auth.signOut();
             navigate({ to: "/auth" });
           }}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent"
+          className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <LogOut className="size-4" /> Sair
         </button>
       </aside>
 
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/90 backdrop-blur px-4 py-3 md:hidden">
-        <span className="truncate text-sm font-medium text-muted-foreground">
+      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/85 backdrop-blur-xl px-4 py-3 md:hidden">
+        <span className="truncate text-sm font-semibold">
           {role?.company?.name ?? ""}
         </span>
       </div>
@@ -210,17 +211,25 @@ function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-10 grid grid-cols-6 border-t bg-card md:hidden">
-        {nav.slice(0, 6).map((n) => (
-          <Link
-            key={n.to}
-            to={n.to}
-            className="flex flex-col items-center gap-0.5 py-2 text-[10px] text-muted-foreground"
-          >
-            <n.icon className="size-4" />
-            {n.label}
-          </Link>
-        ))}
+      <nav className="fixed bottom-0 left-0 right-0 z-10 grid grid-cols-6 border-t bg-card/95 backdrop-blur-xl md:hidden">
+        {nav.slice(0, 6).map((n) => {
+          const active = n.exact
+            ? location.pathname === n.to
+            : location.pathname.startsWith(n.to);
+          return (
+            <Link
+              key={n.to}
+              to={n.to}
+              className={cn(
+                "flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors",
+                active ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <n.icon className="size-4" />
+              {n.label}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );
