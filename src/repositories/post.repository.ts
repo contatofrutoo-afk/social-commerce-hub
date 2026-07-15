@@ -107,6 +107,7 @@ export const postRepository = {
     sessionToken: string;
     text: string;
     imageUrl?: string | null;
+    videoUrl?: string | null;
     category?: string;
     companions?: VisitContext;
   }): Promise<{ id: string }> {
@@ -118,6 +119,7 @@ export const postRepository = {
       _image_url: input.imageUrl ?? null,
       _category: input.category ?? null,
       _companions: (input.companions as string | undefined) ?? null,
+      _video_url: input.videoUrl ?? null,
     });
     if (error) throw error;
     return { id: data as string };
