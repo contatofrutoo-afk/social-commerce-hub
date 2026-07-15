@@ -218,15 +218,15 @@ function PostCard({
   });
 
   return (
-    <article className="bg-card">
-      <header className="flex items-center gap-3 px-4 py-3">
-        <Avatar className="size-9">
+    <article className="post-card">
+      <header className="flex items-center gap-3 px-4 pt-4 pb-3">
+        <Avatar className="size-10 ring-2 ring-primary/10">
           {post.authorType === "business" && post.companyLogoUrl ? (
             <AvatarImage src={post.companyLogoUrl} alt={post.customerName ?? ""} />
           ) : post.authorType === "customer" && post.customerAvatarUrl ? (
             <AvatarImage src={post.customerAvatarUrl} alt={post.customerName ?? ""} />
           ) : null}
-          <AvatarFallback className="text-accent-foreground">
+          <AvatarFallback className="bg-accent text-accent-foreground">
             {post.authorType === "business" ? (
               <Store className="size-4" />
             ) : (
@@ -234,21 +234,28 @@ function PostCard({
             )}
           </AvatarFallback>
         </Avatar>
-        <div className="flex-1">
-          <div className="text-sm font-semibold">
-            {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-sm font-semibold">
+              {post.authorType === "business" ? "Estabelecimento" : (post.customerName ?? "Cliente")}
+            </span>
+            {post.authorType === "business" && (
+              <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                Oficial
+              </span>
+            )}
           </div>
           <div className="text-xs text-muted-foreground">{relativeTime(post.createdAt)}</div>
         </div>
         {post.companions && (
-          <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-accent-foreground">
+          <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-accent-foreground capitalize">
             {post.companions}
           </span>
         )}
         {showMenu && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 shrink-0">
+              <Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full">
                 <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -277,61 +284,61 @@ function PostCard({
         )}
       </header>
 
+      {post.text && <p className="px-4 pb-3 text-[15px] leading-relaxed">{post.text}</p>}
+
       {post.videoUrl ? (
-        <div className="aspect-[9/16] w-full">
+        <div className="aspect-[9/16] w-full bg-muted">
           <video src={post.videoUrl} className="size-full object-cover" controls playsInline />
         </div>
       ) : post.imageUrl ? (
-        <img src={post.imageUrl} alt="" className="w-full max-h-[520px] object-cover" />
+        <img src={post.imageUrl} alt="" className="w-full max-h-[560px] object-cover" />
       ) : null}
 
-      {post.text && <p className="px-4 py-3 text-sm">{post.text}</p>}
-
       {post.authorType === "business" && post.products.length > 0 && (
-        <div className="space-y-2 px-4 pb-3">
+        <div className="space-y-2 px-4 pt-3">
           {post.products.map((prod) => (
-            <div key={prod.id} className="flex items-center gap-3 rounded-xl border p-3">
+            <div key={prod.id} className="flex items-center gap-3 rounded-2xl border bg-muted/30 p-2.5 transition-colors hover:bg-muted/60">
               {prod.imageUrl && (
-                <img src={prod.imageUrl} alt="" className="size-14 rounded-lg object-cover" />
+                <img src={prod.imageUrl} alt="" className="size-14 rounded-xl object-cover" />
               )}
-              <div className="flex-1">
-                <div className="text-sm font-medium">{prod.name}</div>
-                <div className="text-xs text-muted-foreground">{formatBRL(prod.price)}</div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold">{prod.name}</div>
+                <div className="text-xs font-medium text-primary">{formatBRL(prod.price)}</div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="flex items-center gap-1 border-t px-2 py-1">
+      <div className="mt-2 flex items-center gap-1 px-2 py-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => react.mutate("love")}
-          className={post.myReaction === "love" ? "text-primary" : ""}
+          className={`rounded-full ${post.myReaction === "love" ? "bg-primary/10 text-primary" : ""}`}
         >
           <Heart className={`size-4 ${post.myReaction === "love" ? "fill-current" : ""}`} />
-          <span className="ml-1 text-xs">{post.loveCount}</span>
+          <span className="ml-1 text-xs font-medium">{post.loveCount}</span>
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => react.mutate("dislike")}
-          className={post.myReaction === "dislike" ? "text-destructive" : ""}
+          className={`rounded-full ${post.myReaction === "dislike" ? "bg-destructive/10 text-destructive" : ""}`}
         >
           <ThumbsDown className="size-4" />
-          <span className="ml-1 text-xs">{post.dislikeCount}</span>
+          <span className="ml-1 text-xs font-medium">{post.dislikeCount}</span>
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => setShowComments((s) => !s)}>
+        <Button variant="ghost" size="sm" onClick={() => setShowComments((s) => !s)} className="rounded-full">
           <MessageCircle className="size-4" />
-          <span className="ml-1 text-xs">{post.commentCount}</span>
+          <span className="ml-1 text-xs font-medium">{post.commentCount}</span>
         </Button>
         {post.authorType === "business" && (
           <div className="ml-auto">
             <Button
               variant="ghost"
               size="sm"
-              className={post.products.length === 0 ? "opacity-50" : ""}
+              className={`rounded-full ${post.products.length === 0 ? "opacity-50" : "bg-primary/8 text-primary hover:bg-primary/15"}`}
               onClick={() => {
                 try {
                   if (post.products.length === 0) {
@@ -355,11 +362,12 @@ function PostCard({
               }
             >
               <ShoppingBag className="size-4" />
-              <span className="ml-1 text-xs">Adicionar</span>
+              <span className="ml-1 text-xs font-medium">Adicionar</span>
             </Button>
           </div>
         )}
       </div>
+
 
       {showComments && (
         <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />
