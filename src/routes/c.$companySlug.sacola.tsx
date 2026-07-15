@@ -82,7 +82,7 @@ function BagPage() {
         <div className="space-y-3">
           {cart.items.map((i) => {
             const fp = freshProducts?.find((p) => p.id === i.productId);
-            const freshMedia = fp?.media?.map((m: { mediaUrl: string; mediaType: string }) => ({ url: m.mediaUrl, type: m.mediaType }));
+            const freshMedia = fp?.media?.map((m: { mediaUrl: string; mediaType: "image" | "video" }) => ({ url: m.mediaUrl, type: m.mediaType }));
             return (
             <div key={i.productId} className="flex items-center gap-3 rounded-xl border p-3">
               <ProductMediaGallery
