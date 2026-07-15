@@ -129,6 +129,7 @@ function TableCheckin() {
         sessionToken: upserted.sessionToken,
         createdAt: Date.now(),
       });
+      setLastProfile({ name: nameValue, whatsapp: whatsappValue });
     },
     onSuccess: () => {
       navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
