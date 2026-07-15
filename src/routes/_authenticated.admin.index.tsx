@@ -34,30 +34,28 @@ function KPI({
   hint?: string;
   variant?: "default" | "warning" | "danger" | "success";
 }) {
+  const accent =
+    variant === "danger"
+      ? "text-destructive bg-destructive/10"
+      : variant === "warning"
+        ? "text-orange-600 bg-orange-500/10"
+        : variant === "success"
+          ? "text-green-600 bg-green-500/10"
+          : "text-primary bg-primary/10";
   return (
-    <Card>
-      <CardContent className="p-5">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
-        <div className="flex items-center gap-2 mt-1">
-          {Icon && (
-            <Icon
-              className={cn(
-                "h-5 w-5",
-                variant === "danger"
-                  ? "text-destructive"
-                  : variant === "warning"
-                    ? "text-orange-500"
-                    : variant === "success"
-                      ? "text-green-500"
-                      : "text-muted-foreground",
-              )}
-            />
-          )}
-          <p className="font-display text-2xl">{value}</p>
-        </div>
-        {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
-      </CardContent>
-    </Card>
+    <div className="dash-card group relative overflow-hidden p-5 transition-all hover:dash-card-hover">
+      <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 blur-2xl" />
+      <div className="relative flex items-start justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
+        {Icon && (
+          <span className={cn("grid size-9 place-items-center rounded-xl", accent)}>
+            <Icon className="h-4 w-4" />
+          </span>
+        )}
+      </div>
+      <p className="relative mt-3 number-display text-3xl">{value}</p>
+      {hint && <p className="relative mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
 
@@ -187,10 +185,10 @@ function WeazeDashboard() {
   }, []);
 
   return (
-    <div className={cn("space-y-6", loading && "opacity-50 pointer-events-none")}>
+    <div className={cn("dash-surface -m-4 space-y-6 p-4 md:-m-8 md:p-8", loading && "opacity-50 pointer-events-none")}>
       <div>
-        <h1 className="font-display text-3xl">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Indicadores gerais da WEAZE.</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Indicadores gerais da WEAZE em tempo real.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -262,39 +260,47 @@ function WeazeDashboard() {
       </div>
 
       {data.topCompanies.length > 0 && (
-        <Card>
-          <CardContent className="p-5">
-            <h3 className="font-display text-lg mb-3">Empresas com Maior Uso</h3>
-            <div className="space-y-2">
-              {data.topCompanies.slice(0, 5).map((c, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{c.name}</span>
-                  <span className="text-muted-foreground">
-                    {c.checkins} check-ins · {c.posts} posts
+        <div className="dash-card p-5">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Empresas com Maior Uso
+          </h3>
+          <div className="space-y-1">
+            {data.topCompanies.slice(0, 5).map((c, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/40"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid size-6 place-items-center rounded-md bg-primary/10 text-[11px] font-bold text-primary">
+                    {i + 1}
                   </span>
+                  <span className="font-medium">{c.name}</span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <span className="text-xs text-muted-foreground">
+                  {c.checkins} check-ins · {c.posts} posts
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {data.inactiveCompanies.length > 0 && (
-        <Card>
-          <CardContent className="p-5">
-            <h3 className="font-display text-lg mb-3">Empresas sem Atividade (mês)</h3>
-            <div className="flex flex-wrap gap-2">
-              {data.inactiveCompanies.map((name, i) => (
-                <span
-                  key={i}
-                  className="text-xs bg-muted px-2 py-1 rounded-md text-muted-foreground"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="dash-card p-5">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Empresas sem Atividade (mês)
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {data.inactiveCompanies.map((name, i) => (
+              <span
+                key={i}
+                className="rounded-full border bg-muted/50 px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

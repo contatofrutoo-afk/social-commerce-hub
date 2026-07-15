@@ -36,15 +36,20 @@ function WeazeLayout() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-secondary/30 flex">
-      <aside className="hidden md:flex w-60 bg-background border-r border-border flex-col p-4">
+    <div className="min-h-screen dash-surface flex">
+      <aside className="hidden md:flex w-60 bg-card/70 backdrop-blur border-r border-border flex-col p-4">
         <div className="flex items-center gap-2 mb-8">
-          <div className="h-8 w-8 rounded-lg bg-brand grid place-items-center text-primary-foreground font-bold">
+          <div className="h-9 w-9 rounded-xl bg-primary grid place-items-center text-primary-foreground shadow-sm">
             <Shield className="h-4 w-4" />
           </div>
-          <span className="font-display text-xl">WEAZE Admin</span>
+          <div className="min-w-0">
+            <div className="font-display text-base font-bold leading-tight">WEAZE</div>
+            <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              Admin
+            </div>
+          </div>
         </div>
-        <nav className="space-y-1 flex-1">
+        <nav className="space-y-0.5 flex-1">
           {items.map(({ to, icon: Icon, label, exact }) => {
             const active = exact
               ? location.pathname === to
@@ -54,8 +59,10 @@ function WeazeLayout() {
                 key={to}
                 to={to}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  "flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all",
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" /> {label}
@@ -65,14 +72,14 @@ function WeazeLayout() {
         </nav>
         <button
           onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth" }); }}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <LogOut className="h-4 w-4" /> Sair
         </button>
       </aside>
 
       <div className="flex-1 flex flex-col">
-        <header className="md:hidden border-b border-border bg-background px-4 h-14 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+        <header className="md:hidden border-b border-border bg-card/85 backdrop-blur-xl px-4 h-14 flex items-center gap-2 overflow-x-auto scrollbar-hide">
           {items.map(({ to, label, exact }) => {
             const active = exact
               ? location.pathname === to
@@ -82,8 +89,8 @@ function WeazeLayout() {
                 key={to}
                 to={to}
                 className={cn(
-                  "shrink-0 text-xs px-3 py-1.5 rounded-full transition-colors",
-                  active ? "bg-foreground text-background" : "bg-secondary text-muted-foreground"
+                  "shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors",
+                  active ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground"
                 )}
               >
                 {label}

@@ -150,3 +150,71 @@
   box-shadow: 0 20px 60px -20px oklch(0.42 0.22 320 / 0.5);
 }
 
+/* ── Power-BI style dashboard surfaces ── */
+@utility dash-surface {
+  background:
+    radial-gradient(1200px 500px at -10% -20%, oklch(0.97 0.03 320 / 0.6) 0%, transparent 55%),
+    radial-gradient(800px 400px at 110% 0%, oklch(0.96 0.04 315 / 0.5) 0%, transparent 60%),
+    var(--color-background);
+}
+
+@utility dash-card {
+  background: var(--color-card);
+  border: 1px solid color-mix(in oklab, var(--color-border) 90%, transparent);
+  border-radius: 1rem;
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.6) inset,
+    0 1px 2px oklch(0.14 0.01 300 / 0.04),
+    0 8px 20px -14px oklch(0.14 0.01 300 / 0.14);
+  transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+}
+@utility dash-card-hover {
+  box-shadow:
+    0 1px 0 oklch(1 0 0 / 0.6) inset,
+    0 4px 6px oklch(0.14 0.01 300 / 0.05),
+    0 20px 40px -18px oklch(0.42 0.22 320 / 0.18);
+  border-color: color-mix(in oklab, var(--color-primary) 22%, var(--color-border));
+}
+
+@utility kpi-accent {
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--color-primary) 14%, transparent),
+      color-mix(in oklab, var(--color-primary) 4%, transparent));
+  color: var(--color-primary);
+  border: 1px solid color-mix(in oklab, var(--color-primary) 20%, transparent);
+}
+
+@utility number-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Feed post surface */
+@utility post-card {
+  background: var(--color-card);
+  border: 1px solid color-mix(in oklab, var(--color-border) 85%, transparent);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px oklch(0.14 0.01 300 / 0.04),
+    0 12px 30px -20px oklch(0.14 0.01 300 / 0.15);
+}
+
+/* Sidebar item active indicator */
+@utility nav-active-indicator {
+  position: relative;
+}
+@utility nav-active-indicator-bar {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-primary);
+}
+
