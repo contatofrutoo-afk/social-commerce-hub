@@ -37,8 +37,8 @@ function BagPage() {
         productIds.map((id) => productRepository.findById(id)),
       );
       return results
-        .filter((r) => r.status === "fulfilled" && r.value)
-        .map((r) => (r as PromiseFulfilledResult<NonNullable<typeof r.value>>).value);
+        .filter((r): r is PromiseFulfilledResult<NonNullable<Awaited<ReturnType<typeof productRepository.findById>>>> => r.status === "fulfilled" && r.value != null)
+        .map((r) => r.value);
     },
     enabled: productIds.length > 0,
   });
@@ -82,7 +82,7 @@ function BagPage() {
         <div className="space-y-3">
           {cart.items.map((i) => {
             const fp = freshProducts?.find((p) => p.id === i.productId);
-            const freshMedia = fp?.media?.map((m) => ({ url: m.mediaUrl, type: m.mediaType }));
+            const freshMedia = fp?.media?.map((m: { mediaUrl: string; mediaType: "image" | "video" }) => ({ url: m.mediaUrl, type: m.mediaType }));
             return (
             <div key={i.productId} className="flex items-center gap-3 rounded-xl border p-3">
               <ProductMediaGallery
@@ -113,7 +113,8 @@ function BagPage() {
                 </Button>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <Textarea
             placeholder="Observação do pedido (opcional)"

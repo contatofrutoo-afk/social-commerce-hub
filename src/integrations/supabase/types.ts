@@ -760,6 +760,41 @@ export type Database = {
           },
         ]
       }
+      product_media: {
+        Row: {
+          created_at: string
+          id: string
+          media_type: string
+          media_url: string
+          product_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_type: string
+          media_url: string
+          product_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          product_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_wishes: {
         Row: {
           created_at: string
@@ -814,6 +849,7 @@ export type Database = {
           status: string
           stock_quantity: number | null
           unique_customers: number
+          video_url: string | null
           views_count: number
         }
         Insert: {
@@ -836,6 +872,7 @@ export type Database = {
           status?: string
           stock_quantity?: number | null
           unique_customers?: number
+          video_url?: string | null
           views_count?: number
         }
         Update: {
@@ -858,6 +895,7 @@ export type Database = {
           status?: string
           stock_quantity?: number | null
           unique_customers?: number
+          video_url?: string | null
           views_count?: number
         }
         Relationships: [
