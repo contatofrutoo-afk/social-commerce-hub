@@ -1,15 +1,20 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { productRepository } from "@/repositories/product.repository";
+import { getSession } from "@/lib/session";
 
 interface ProductMediaGalleryProps {
   imageUrl: string | null;
   videoUrl: string | null;
   media?: { url: string; type: "image" | "video" }[];
   size?: number;
+  /** Se informado, registra evento `view` quando o cliente amplia a mídia. */
+  productId?: string;
+  companyId?: string;
 }
 
-export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80 }: ProductMediaGalleryProps) {
+export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80, productId, companyId }: ProductMediaGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
