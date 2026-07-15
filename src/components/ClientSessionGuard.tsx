@@ -32,6 +32,7 @@ export default function ClientSessionGuard() {
 
   const redirectToCheckin = useCallback(() => {
     clearSession();
+    clearLastProfile();
     navigate({ to: "/c/$companySlug", params: { companySlug } });
   }, [companySlug, navigate]);
 
@@ -43,6 +44,7 @@ export default function ClientSessionGuard() {
       setExpired(true);
       setCountdown("00:00");
       clearSession();
+    clearLastProfile();
       navigate({ to: "/c/$companySlug", params: { companySlug } });
       return;
     }
@@ -63,6 +65,7 @@ export default function ClientSessionGuard() {
         setExpired(true);
         setCountdown("00:00");
         clearSession();
+    clearLastProfile();
         navigate({ to: "/c/$companySlug", params: { companySlug } });
         return;
       }
@@ -86,6 +89,7 @@ export default function ClientSessionGuard() {
         setExpired(true);
         setCountdown("00:00");
         clearSession();
+    clearLastProfile();
         navigate({ to: "/c/$companySlug", params: { companySlug } });
         return;
       }
