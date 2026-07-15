@@ -1,8 +1,24 @@
-import { createFileRoute, Outlet, Link, useLocation, useNavigate, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  useLocation,
+  useNavigate,
+  redirect,
+} from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
-import { BarChart3, Building2, DollarSign, FileText, Settings, TrendingUp, LogOut, Shield } from "lucide-react";
+import {
+  BarChart3,
+  Building2,
+  DollarSign,
+  FileText,
+  Settings,
+  TrendingUp,
+  LogOut,
+  Shield,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 async function waitForAdminSession(): Promise<Session | null> {
@@ -41,15 +57,12 @@ export const Route = createFileRoute("/_authenticated/admin")({
       const redirectTo = `${location.pathname}${location.searchStr || ""}`;
       throw redirect({ to: "/auth", search: { redirect: redirectTo } as never });
     }
-    const { data: isAdmin, error } = await supabase.rpc("has_role", {
-      _user_id: session.user.id,
-      _role: "admin",
-    });
-    if (error) {
-      console.warn("[admin] has_role RPC failed — redirecting to /app", error);
-      throw redirect({ to: "/app" });
-    }
-    if (!isAdmin) throw redirect({ to: "/app" });
+    const { data: role } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    if (role?.role !== "admin") throw redirect({ to: "/app" });
   },
 });
 
@@ -82,9 +95,7 @@ function WeazeLayout() {
         </div>
         <nav className="space-y-0.5 flex-1">
           {items.map(({ to, icon: Icon, label, exact }) => {
-            const active = exact
-              ? location.pathname === to
-              : location.pathname.startsWith(to);
+            const active = exact ? location.pathname === to : location.pathname.startsWith(to);
             return (
               <Link
                 key={to}
@@ -93,7 +104,7 @@ function WeazeLayout() {
                   "flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all",
                   active
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" /> {label}
@@ -102,7 +113,10 @@ function WeazeLayout() {
           })}
         </nav>
         <button
-          onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/auth" }); }}
+          onClick={async () => {
+            await supabase.auth.signOut();
+            navigate({ to: "/auth" });
+          }}
           className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
           <LogOut className="h-4 w-4" /> Sair
@@ -112,16 +126,16 @@ function WeazeLayout() {
       <div className="flex-1 flex flex-col">
         <header className="md:hidden border-b border-border bg-card/85 backdrop-blur-xl px-4 h-14 flex items-center gap-2 overflow-x-auto scrollbar-hide">
           {items.map(({ to, label, exact }) => {
-            const active = exact
-              ? location.pathname === to
-              : location.pathname.startsWith(to);
+            const active = exact ? location.pathname === to : location.pathname.startsWith(to);
             return (
               <Link
                 key={to}
                 to={to}
                 className={cn(
                   "shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors",
-                  active ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground"
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-secondary text-muted-foreground",
                 )}
               >
                 {label}
@@ -129,7 +143,9 @@ function WeazeLayout() {
             );
           })}
         </header>
-        <main className="flex-1 p-4 md:p-8 overflow-auto"><Outlet /></main>
+        <main className="flex-1 p-4 md:p-8 overflow-auto">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
