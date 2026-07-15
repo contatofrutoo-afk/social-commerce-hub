@@ -43,13 +43,13 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "WEAZZE — Transforme visitantes em clientes fiéis" },
+      { title: "weaze — Transforme visitantes em clientes fiéis" },
       {
         name: "description",
         content:
           "Social Commerce, CRM Inteligente, Atendimento e Catálogo Inteligente em uma única plataforma para aumentar as vendas do seu negócio local.",
       },
-      { property: "og:title", content: "WEAZZE — Social Commerce para negócios locais" },
+      { property: "og:title", content: "weaze — Social Commerce para negócios locais" },
       {
         property: "og:description",
         content: "Cada visita vira relacionamento, venda e recorrência. QR Code, Feed, CRM e Catálogo Inteligente.",
@@ -147,7 +147,7 @@ function Hero() {
           </motion.h1>
 
           <motion.p variants={fadeUp} className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            A WEAZZE transforma cada visita ao seu negócio em oportunidade de
+            A weaze transforma cada visita ao seu negócio em oportunidade de
             relacionamento, venda e fidelização. Uma experiência simples com QR
             Codes, Feed Social, CRM Inteligente e Catálogo Inteligente.
           </motion.p>
@@ -189,7 +189,7 @@ function HeroMockup() {
         <div className="overflow-hidden rounded-[2rem] border border-border/60 bg-card shadow-glow">
           <img
             src={heroDashboard}
-            alt="Dashboard da WEAZZE mostrando feed social, métricas e QR code"
+            alt="Dashboard da weaze mostrando feed social, métricas e QR code"
             width={1024}
             height={1024}
             className="h-full w-full object-cover"
@@ -311,12 +311,12 @@ function Solution() {
       <div className="mx-auto max-w-3xl text-center">
         <Eyebrow>A solução</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Conheça a <span className="weaze-text-gradient">WEAZZE</span>
+          Conheça a <span className="weaze-text-gradient">weaze</span>
         </h2>
         <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
           Uma plataforma criada para transformar clientes ocasionais em clientes
           recorrentes. Enquanto seu cliente navega, interage, comenta e faz
-          pedidos, a WEAZZE aprende automaticamente seu comportamento e entrega
+          pedidos, a weaze aprende automaticamente seu comportamento e entrega
           inteligência para o seu negócio vender mais.
         </p>
       </div>
@@ -331,7 +331,7 @@ function HowItWorks() {
       n: "01",
       icon: QrCode,
       title: "Cliente faz o check-in",
-      desc: "Basta escanear um QR Code para entrar na experiência da WEAZZE.",
+      desc: "Basta escanear um QR Code para entrar na experiência da weaze.",
     },
     {
       n: "02",
@@ -524,10 +524,10 @@ function ForWho() {
 
       <div className="mt-14 grid gap-6 md:grid-cols-2">
         <div className="overflow-hidden rounded-3xl border border-border/60 shadow-elegant">
-          <img src={sceneRestaurant} alt="Grupo em restaurante usando WEAZZE" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
+          <img src={sceneRestaurant} alt="Grupo em restaurante usando weaze" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
         </div>
         <div className="overflow-hidden rounded-3xl border border-border/60 shadow-elegant">
-          <img src={sceneShop} alt="Loja usando WEAZZE" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
+          <img src={sceneShop} alt="Loja usando weaze" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
         </div>
       </div>
     </Section>
@@ -582,7 +582,7 @@ function DashboardShowcase() {
       </motion.div>
 
       <div className="relative mt-14 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-glow">
-        <img src={heroDashboard} alt="WEAZZE dashboard completo" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
+        <img src={heroDashboard} alt="weaze dashboard completo" width={1024} height={1024} loading="lazy" className="h-full w-full object-cover" />
       </div>
     </Section>
   );
@@ -689,7 +689,7 @@ function Pricing() {
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
                 <Zap className="size-3.5" /> Acesso completo
               </div>
-              <h3 className="font-display mt-4 text-4xl font-semibold">WEAZZE PRO</h3>
+              <h3 className="font-display mt-4 text-4xl font-semibold">weaze PRO</h3>
               <div className="mt-6 flex items-baseline gap-2">
                 <span className="font-display text-6xl font-semibold weaze-text-gradient">R$ 247</span>
                 <span className="text-muted-foreground">/mês</span>
@@ -725,7 +725,7 @@ function Pricing() {
 /* ============================== FAQ ============================== */
 function FAQ() {
   const faqs = [
-    { q: "Preciso instalar aplicativo?", a: "Não. A WEAZZE funciona 100% via QR Code e navegador. Nem você nem seus clientes precisam instalar nada." },
+    { q: "Preciso instalar aplicativo?", a: "Não. A weaze funciona 100% via QR Code e navegador. Nem você nem seus clientes precisam instalar nada." },
     { q: "Funciona para qualquer negócio?", a: "Sim. Restaurantes, bares, cafés, lojas, barbearias, salões, clínicas, pet shops, academias e qualquer negócio local." },
     { q: "Posso cancelar quando quiser?", a: "Sim. Sem fidelidade, sem multa. Cancele em um clique quando quiser." },
     { q: "Como meus clientes entram?", a: "Basta escanear o QR Code do seu estabelecimento, mesa ou produto. Em 15 segundos ele está dentro da experiência." },
@@ -777,7 +777,7 @@ function FinalCTA() {
           <div className="relative mt-10">
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8 text-base shadow-elegant">
               <Link to="/auth">
-                Quero experimentar a WEAZZE <ArrowRight className="ml-2 size-4" />
+                Quero experimentar a weaze <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
           </div>
@@ -811,7 +811,7 @@ function Footer() {
           </div>
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-8 text-xs text-muted-foreground sm:flex-row">
-          <p>© {new Date().getFullYear()} WEAZZE. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} weaze. Todos os direitos reservados.</p>
           <p>Feito para negócios que querem crescer.</p>
         </div>
       </div>
