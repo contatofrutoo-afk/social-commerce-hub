@@ -84,7 +84,7 @@ function FeedPage() {
 
   if (isLoading) {
     return (
-      <div className="divide-y">
+      <div className="space-y-4 p-4">
         <SkeletonPostCard />
         <SkeletonPostCard />
         <SkeletonPostCard />
@@ -93,16 +93,20 @@ function FeedPage() {
   }
 
   return (
-    <div className="divide-y">
+    <div className="space-y-4 p-4 pb-8">
       {isError && (
-        <div className="p-8 text-center text-destructive">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
           Erro ao carregar feed: {(error as Error)?.message ?? "Erro desconhecido"}
         </div>
       )}
       {posts?.length === 0 && (
-        <div className="p-12 text-center">
-          <p className="text-muted-foreground">Ainda não há publicações. Seja o primeiro!</p>
-          <Button asChild className="mt-4">
+        <div className="post-card p-10 text-center">
+          <div className="mx-auto grid size-14 place-items-center rounded-2xl kpi-accent">
+            <Store className="size-6" />
+          </div>
+          <p className="mt-4 font-display text-lg font-semibold">Ainda não há publicações</p>
+          <p className="mt-1 text-sm text-muted-foreground">Seja o primeiro a compartilhar uma experiência.</p>
+          <Button asChild className="mt-5 rounded-full">
             <Link to="/c/$companySlug/publicar" params={{ companySlug }}>
               Publicar experiência
             </Link>
@@ -125,22 +129,22 @@ function FeedPage() {
 
 function SkeletonPostCard() {
   return (
-    <article className="bg-card">
+    <article className="post-card">
       <header className="flex items-center gap-3 px-4 py-3">
-        <Skeleton className="size-9 rounded-full" />
+        <Skeleton className="size-10 rounded-full" />
         <div className="flex-1 space-y-1.5">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-20" />
         </div>
       </header>
-      <Skeleton className="h-64 w-full" />
+      <Skeleton className="h-72 w-full" />
       <div className="px-4 py-3">
         <Skeleton className="h-4 w-full" />
       </div>
       <div className="flex items-center gap-2 border-t px-4 py-3">
-        <Skeleton className="h-8 w-16 rounded-md" />
-        <Skeleton className="h-8 w-16 rounded-md" />
-        <Skeleton className="h-8 w-20 rounded-md" />
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-16 rounded-full" />
+        <Skeleton className="h-8 w-20 rounded-full" />
       </div>
     </article>
   );
