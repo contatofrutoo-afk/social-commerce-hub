@@ -89,8 +89,7 @@ function BagPage() {
       ) : (
         <div className="space-y-3">
           {cart.items.map((i) => {
-            const fp = freshProducts?.find((p) => p.id === i.productId);
-            const freshMedia = fp?.media?.map((m: { mediaUrl: string; mediaType: "image" | "video" }) => ({ url: m.mediaUrl, type: m.mediaType }));
+            const freshMedia = mediaByProduct?.get(i.productId);
             return (
             <div key={i.productId} className="rounded-xl border bg-card p-3">
               <div className="flex gap-3">
