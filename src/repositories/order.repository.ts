@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CartItem, Order, OrderStatus } from "./types";
+import { productRepository } from "./product.repository";
 
 function mapOrder(r: any): Order {
   return {
@@ -70,6 +71,19 @@ export const orderRepository = {
       _table_id: input.tableId ?? null,
     });
     if (error) throw error;
+    // Métricas: registra `purchase` para cada item do pedido — alimenta funil
+    // e rankings da Inteligência do Catálogo.
+    await Promise.all(
+      input.items.map((i) =>
+        productRepository
+          .recordEvent(i.productId, input.companyId, "purchase", input.customerId, {
+            order_id: data,
+            quantity: i.quantity,
+            unit_price: i.price,
+          })
+          .catch(() => {}),
+      ),
+    );
     return { id: data as string };
   },
 

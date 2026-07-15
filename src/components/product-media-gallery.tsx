@@ -1,15 +1,20 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { productRepository } from "@/repositories/product.repository";
+import { getSession } from "@/lib/session";
 
 interface ProductMediaGalleryProps {
   imageUrl: string | null;
   videoUrl: string | null;
   media?: { url: string; type: "image" | "video" }[];
   size?: number;
+  /** Se informado, registra evento `view` quando o cliente amplia a mídia. */
+  productId?: string;
+  companyId?: string;
 }
 
-export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80 }: ProductMediaGalleryProps) {
+export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80, productId, companyId }: ProductMediaGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
@@ -106,7 +111,19 @@ export function ProductMediaGallery({ imageUrl, videoUrl, media, size = 80 }: Pr
             <button
               type="button"
               key={i}
-              onClick={() => setLightboxIdx(i)}
+              onClick={() => {
+                setLightboxIdx(i);
+                // Métricas: cliente ampliou uma mídia do produto → view.
+                if (productId && companyId) {
+                  const session = getSession();
+                  const customerId =
+                    session?.companyId === companyId ? session.customerId : undefined;
+                  productRepository
+                    .recordEvent(productId, companyId, "view", customerId)
+                    .catch(() => {});
+                  productRepository.incrementCounter(productId, "views_count").catch(() => {});
+                }
+              }}
               aria-label="Ampliar mídia"
               className="h-full shrink-0 snap-start cursor-zoom-in"
               style={{ width: size }}
