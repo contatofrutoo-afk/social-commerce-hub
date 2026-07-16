@@ -4,10 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Building2, Search, Plus, Shield, ShieldOff } from "lucide-react";
+import { Building2, Search, Plus, Shield, ShieldOff, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const STATUS_MAP_TO_EN: Record<string, string> = {
   ativo: "active",
@@ -39,6 +47,8 @@ function WeazeEmpresas() {
   const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState<any[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -93,6 +103,24 @@ function WeazeEmpresas() {
       toast.error(err.message ?? "Erro ao alterar status");
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const deleteCompany = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await (supabase as any).rpc("delete_company", {
+        _company_id: deleteTarget.id,
+      });
+      if (error) throw error;
+      setCompanies((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      toast.success(`Empresa "${deleteTarget.name}" excluída!`);
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao excluir empresa");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -160,6 +188,19 @@ function WeazeEmpresas() {
                           <Shield className="h-4 w-4 text-green-600" />
                         )}
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteTarget(c);
+                        }}
+                        title="Excluir empresa"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mt-2">
@@ -215,6 +256,26 @@ function WeazeEmpresas() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir empresa</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir <strong>{deleteTarget?.name}</strong>? Todos os dados
+              associados serão removidos permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={deleteCompany} disabled={deleting}>
+              {deleting ? "Excluindo…" : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

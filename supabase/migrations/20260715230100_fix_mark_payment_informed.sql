@@ -1,10 +1,10 @@
 -- ============================================================
 -- Corrige mark_payment_informed: 'manager' → 'admin'
--- (valor inválido no enum app_role causava erro ao clicar "Já realizei o pagamento")
--- Existem duas sobrecargas: uma sem parâmetro e uma com _method
+-- Adiciona cálculo automático de last_payment_date e next_due_date
 -- ============================================================
 
 -- Versão sem parâmetro
+DROP FUNCTION IF EXISTS public.mark_payment_informed();
 CREATE OR REPLACE FUNCTION public.mark_payment_informed()
 RETURNS void
 LANGUAGE plpgsql
@@ -40,7 +40,9 @@ BEGIN
   UPDATE public.companies
   SET status = 'pagamento_em_analise',
       payment_informed_at = now(),
-      payment_status = 'pending'
+      payment_status = 'pending',
+      last_payment_date = CURRENT_DATE,
+      next_due_date = (CURRENT_DATE + interval '1 month')::date
   WHERE id = _company_id;
 END;
 $$;
@@ -83,7 +85,9 @@ BEGIN
   SET status = 'pagamento_em_analise',
       payment_informed_at = now(),
       payment_status = 'pending',
-      payment_method = COALESCE(_method, payment_method)
+      payment_method = COALESCE(_method, payment_method),
+      last_payment_date = CURRENT_DATE,
+      next_due_date = (CURRENT_DATE + interval '1 month')::date
   WHERE id = _company_id
     AND (_method IS NULL OR _method IN ('PIX', 'Cartão', 'Dinheiro', 'Outro'));
 
@@ -91,8 +95,28 @@ BEGIN
     UPDATE public.companies
     SET status = 'pagamento_em_analise',
         payment_informed_at = now(),
-        payment_status = 'pending'
+        payment_status = 'pending',
+        last_payment_date = CURRENT_DATE,
+        next_due_date = (CURRENT_DATE + interval '1 month')::date
     WHERE id = _company_id;
   END IF;
 END;
 $$;
+
+-- Função para deletar empresa (cascata para user_roles, company_admin, etc.)
+CREATE OR REPLACE FUNCTION public.delete_company(_company_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM public.user_roles WHERE company_id = _company_id;
+  DELETE FROM public.company_admin WHERE company_id = _company_id;
+  DELETE FROM public.company_payments WHERE company_id = _company_id;
+  DELETE FROM public.company_licenses WHERE company_id = _company_id;
+  DELETE FROM public.companies WHERE id = _company_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.delete_company(uuid) TO authenticated;
