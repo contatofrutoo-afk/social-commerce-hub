@@ -49,13 +49,20 @@ function WeazeEmpresas() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [defaultFee, setDefaultFee] = useState(237);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const { data } = await supabase.from("companies").select("*").order("name");
-        setCompanies(data ?? []);
+        const [companiesRes, settingsRes] = await Promise.all([
+          supabase.from("companies").select("*").order("name"),
+          supabase.from("admin_settings").select("default_plan_value").limit(1).maybeSingle(),
+        ]);
+        setCompanies(companiesRes.data ?? []);
+        if (settingsRes.data) {
+          setDefaultFee(Number(settingsRes.data.default_plan_value ?? 237));
+        }
       } catch (err) {
         console.error("Erro ao carregar empresas:", err);
         toast.error("Erro ao carregar empresas.");
@@ -79,6 +86,12 @@ function WeazeEmpresas() {
         _new_status: newStatus,
       });
       if (error) throw error;
+
+      // Sincroniza monthly_fee com config global ao ativar
+      if (newStatus === "ativo") {
+        await supabase.from("companies").update({ monthly_fee: defaultFee }).eq("id", c.id);
+      }
+
       setCompanies((prev) =>
         prev.map((co) =>
           co.id === c.id
@@ -211,7 +224,7 @@ function WeazeEmpresas() {
                     <div>
                       <span className="block text-[10px] uppercase tracking-wider">Valor</span>
                       <span className="font-medium text-foreground">
-                        R$ {Number(c.monthly_fee).toFixed(2)}
+                        R$ {Number(defaultFee).toFixed(2)}
                       </span>
                     </div>
                     <div>

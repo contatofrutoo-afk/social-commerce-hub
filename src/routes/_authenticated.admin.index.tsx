@@ -46,7 +46,9 @@ function KPI({
     <div className="dash-card group relative overflow-hidden p-5 transition-all hover:dash-card-hover">
       <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 blur-2xl" />
       <div className="relative flex items-start justify-between gap-3">
-        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{label}</p>
+        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          {label}
+        </p>
         {Icon && (
           <span className={cn("grid size-9 place-items-center rounded-xl", accent)}>
             <Icon className="h-4 w-4" />
@@ -86,14 +88,19 @@ function WeazeDashboard() {
       const todayStr = now.toISOString().slice(0, 10);
 
       try {
-        const [{ data: companies }, { data: allCompanies }] = await Promise.all([
-          supabase.from("companies").select("id, name, created_at"),
-          supabase
-            .from("companies")
-            .select(
-              "id, name, status, plan_type, monthly_fee, next_due_date, payment_status, created_at",
-            ),
-        ]);
+        const [{ data: companies }, { data: allCompanies }, { data: settings }] = await Promise.all(
+          [
+            supabase.from("companies").select("id, name, created_at"),
+            supabase
+              .from("companies")
+              .select(
+                "id, name, status, plan_type, monthly_fee, next_due_date, payment_status, created_at",
+              ),
+            supabase.from("admin_settings").select("default_plan_value").limit(1).maybeSingle(),
+          ],
+        );
+
+        const defaultFee = Number(settings?.default_plan_value ?? 237);
 
         const total = companies?.length ?? 0;
         let active = 0,
@@ -107,8 +114,7 @@ function WeazeDashboard() {
         const activeCompanyIds: string[] = [];
 
         (allCompanies ?? []).forEach((c: any) => {
-          const fee = Number(c.monthly_fee) || 0;
-          monthlyRev += fee;
+          monthlyRev += defaultFee;
           if (c.status === "ativo") {
             active++;
             activeCompanyIds.push(c.id);
@@ -185,10 +191,17 @@ function WeazeDashboard() {
   }, []);
 
   return (
-    <div className={cn("dash-surface -m-4 space-y-6 p-4 md:-m-8 md:p-8", loading && "opacity-50 pointer-events-none")}>
+    <div
+      className={cn(
+        "dash-surface -m-4 space-y-6 p-4 md:-m-8 md:p-8",
+        loading && "opacity-50 pointer-events-none",
+      )}
+    >
       <div>
         <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Indicadores gerais da WEAZE em tempo real.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Indicadores gerais da WEAZE em tempo real.
+        </p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

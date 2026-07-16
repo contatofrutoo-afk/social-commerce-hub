@@ -426,18 +426,25 @@ function WeazeFinanceiro() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<any[]>([]);
+  const [defaultFee, setDefaultFee] = useState(237);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const { data } = await supabase
-          .from("companies")
-          .select(
-            "id, name, slug, city, responsible, status, plan_type, monthly_fee, payment_status, payment_method, next_due_date, last_payment_date",
-          )
-          .order("name");
-        setRows(data ?? []);
+        const [companiesRes, settingsRes] = await Promise.all([
+          supabase
+            .from("companies")
+            .select(
+              "id, name, slug, city, responsible, status, plan_type, monthly_fee, payment_status, payment_method, next_due_date, last_payment_date",
+            )
+            .order("name"),
+          supabase.from("admin_settings").select("default_plan_value").limit(1).maybeSingle(),
+        ]);
+        setRows(companiesRes.data ?? []);
+        if (settingsRes.data) {
+          setDefaultFee(Number(settingsRes.data.default_plan_value ?? 237));
+        }
       } catch (err) {
         console.error("Erro ao carregar empresas:", err);
         toast.error("Erro ao carregar dados financeiros.");
@@ -458,7 +465,7 @@ function WeazeFinanceiro() {
       paidCount = 0,
       overdueCount = 0;
     (rows ?? []).forEach((r: any) => {
-      const fee = Number(r.monthly_fee) || 0;
+      const fee = Number(defaultFee) || 0;
       if (r.payment_status === "paid") {
         received += fee;
         paidCount++;
@@ -592,7 +599,7 @@ function WeazeFinanceiro() {
                         />
                       </td>
                       <td className="px-5 py-3">
-                        <EditableNumberCell row={r} field="monthly_fee" />
+                        <span className="font-medium">R$ {Number(defaultFee).toFixed(2)}</span>
                       </td>
                       <td className="px-5 py-3">
                         <EditableDateCell row={r} field="last_payment_date" />
