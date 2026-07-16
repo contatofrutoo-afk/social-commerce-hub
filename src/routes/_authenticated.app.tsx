@@ -61,7 +61,7 @@ function AppLayout() {
     }
   }, [role, refetchRole, queryClient]);
 
-  const { data: companyStatus } = useQuery({
+  const { data: companyStatus, isLoading: statusLoading, isError: statusError } = useQuery({
     queryKey: ["company-status-block", role?.company_id],
     queryFn: async () => {
       if (!role?.company_id) return null;
@@ -89,6 +89,13 @@ function AppLayout() {
       return { status };
     },
     enabled: !!role?.company_id,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
+    refetchInterval: 30_000,
+    retry: 3,
   });
 
   const { data: settings } = useQuery({
@@ -104,6 +111,7 @@ function AppLayout() {
   });
 
   const isBlocked = companyStatus?.status === "bloqueado";
+
   const blockedMessage =
     settings?.blocked_message ||
     "Seu acesso à plataforma encontra-se temporariamente bloqueado. Para mais informações entre em contato com o administrador da WEAZE.";
