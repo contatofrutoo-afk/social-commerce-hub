@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/image-upload";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
+import { fileToBase64 } from "@/lib/file-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -442,10 +445,28 @@ function CommentsSection({
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [commentImage, setCommentImage] = useState<string | null>(null);
+  const uploadFile = useServerFn(uploadCustomerFile);
   const { data: comments } = useQuery({
     queryKey: ["comments", postId],
     queryFn: () => commentRepository.listByPost(postId),
   });
+  const uploadCommentImage = async (file: File) => {
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+    if (!ALLOWED.includes(file.type as any)) throw new Error("Formato não suportado");
+    const base64 = await fileToBase64(file);
+    const { url } = await uploadFile({
+      data: {
+        customerId,
+        sessionToken,
+        kind: "comment",
+        postId,
+        mimeType: file.type as (typeof ALLOWED)[number],
+        fileName: file.name,
+        base64,
+      },
+    });
+    return url;
+  };
   const add = useMutation({
     mutationFn: () =>
       commentRepository.create({
@@ -494,8 +515,8 @@ function CommentsSection({
         <ImageUpload
           value={commentImage}
           onChange={setCommentImage}
-          folder={`comments/${customerId}/${postId}`}
           bucket="weaze-private"
+          uploadFn={uploadCommentImage}
         />
       </div>
     </div>

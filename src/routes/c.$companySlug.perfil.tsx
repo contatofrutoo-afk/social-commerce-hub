@@ -6,7 +6,9 @@ import { getSessionForCompany, clearSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
+import { fileToBase64 } from "@/lib/file-utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
@@ -28,6 +30,7 @@ function ProfilePage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const uploadFile = useServerFn(uploadCustomerFile);
 
   useEffect(() => {
     if (customer) {
@@ -38,28 +41,31 @@ function ProfilePage() {
   }, [customer]);
 
   async function handleAvatarUpload(file: File | undefined) {
-    if (!file) return;
-    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!ALLOWED.includes(file.type)) { toast.error("Formato não suportado."); return; }
+    if (!file || !session) return;
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+    if (!ALLOWED.includes(file.type as any)) { toast.error("Formato não suportado."); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB."); return; }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `avatars/${session!.customerId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("weaze-private").upload(path, file);
-      if (error) throw error;
-      // Bucket privado: gera signed URL de 1 ano (limite máximo do Storage).
-      const { data: signed, error: signErr } = await supabase.storage
-        .from("weaze-private")
-        .createSignedUrl(path, 60 * 60 * 24 * 365);
-      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Falha ao gerar URL do avatar");
-      setAvatarUrl(signed.signedUrl);
+      const base64 = await fileToBase64(file);
+      const { url } = await uploadFile({
+        data: {
+          customerId: session.customerId,
+          sessionToken: session.sessionToken,
+          kind: "avatar",
+          mimeType: file.type as (typeof ALLOWED)[number],
+          fileName: file.name,
+          base64,
+        },
+      });
+      setAvatarUrl(url);
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao fazer upload");
     } finally {
       setUploading(false);
     }
   }
+
 
   const save = useMutation({
     mutationFn: () =>
