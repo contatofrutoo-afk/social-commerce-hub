@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ensureUserRole } from "@/lib/auth.functions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import qrMensalidade from "@/assets/qr-mensalidade-weaze.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
@@ -110,13 +111,35 @@ function AppLayout() {
 
   if (isBlocked) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-10 text-center">
         <div className="max-w-md">
           <ShieldAlert className="mx-auto h-16 w-16 text-destructive mb-6" />
           <h1 className="font-display text-2xl font-bold mb-3">
             Seu acesso está temporariamente bloqueado
           </h1>
           <p className="text-muted-foreground mb-6">{blockedMessage}</p>
+
+          <div className="rounded-lg border bg-background p-5 mb-6 text-left">
+            <h2 className="font-display text-base font-semibold mb-1 text-center">
+              Pagamento da mensalidade
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Para continuar acessando a plataforma, realize o pagamento da mensalidade
+              escaneando o QR Code abaixo.
+            </p>
+            <div className="flex justify-center">
+              <img
+                src={qrMensalidade.url}
+                alt="QR Code para pagamento da mensalidade WEAZE"
+                className="h-56 w-56 rounded-md border bg-white p-2"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-4 text-center">
+              Após realizar o pagamento, informe o administrador pelo contato abaixo
+              para reativar o seu acesso.
+            </p>
+          </div>
+
           {adminContact && (
             <p className="text-sm text-muted-foreground mb-4">Contato: {adminContact}</p>
           )}
