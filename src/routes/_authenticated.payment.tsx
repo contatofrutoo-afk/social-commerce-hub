@@ -27,8 +27,8 @@ import {
 import qrMensalidade from "@/assets/qr-mensalidade-weaze.png.asset.json";
 import { Logo } from "@/components/logo";
 
-// Chave PIX WEAZZE (substituir pela chave definitiva quando disponível)
-const PIX_KEY = "admin@weaze.com.br";
+// Link de pagamento WEAZZE
+const PIX_KEY = "https://mpago.la/17de55g";
 const PLAN_PRICE = "R$ 247/mês";
 const PLAN_NAME = "WEAZZE PRO";
 
