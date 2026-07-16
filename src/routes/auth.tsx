@@ -61,6 +61,16 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
+      // Auto-promoção do super admin (admin@weaze.com.br)
+      try {
+        const { data: isAdmin } = await (supabase as any).rpc("ensure_super_admin");
+        if (isAdmin) {
+          navigate({ to: "/admin" });
+          return;
+        }
+      } catch {
+        // silencioso — usuário comum
+      }
       navigate({ to: destination as never });
     } catch (err: any) {
       toast.error(err.message ?? "Erro");

@@ -18,6 +18,7 @@ import {
   TrendingUp,
   LogOut,
   Shield,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +68,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
+  { to: "/admin/aprovacoes", label: "Aprovações", icon: ClipboardCheck },
   { to: "/admin/empresas", label: "Empresas", icon: Building2 },
   { to: "/admin/financeiro", label: "Financeiro", icon: DollarSign },
   { to: "/admin/licencas", label: "Licenças", icon: FileText },
