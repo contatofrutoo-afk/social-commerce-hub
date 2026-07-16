@@ -15,13 +15,17 @@ interface ImageUploadProps {
   /**
    * Bucket alvo. Padrão: `weaze-media` (público). Para uploads sensíveis
    * (avatares de clientes, imagens de comentários), passe `weaze-private`
-   * e o componente gerará uma signed URL de 1 ano ao invés da URL pública.
+   * junto com `uploadFn` (upload delegado a um server function que valida a
+   * sessão do cliente antes de gravar).
    */
   bucket?: "weaze-media" | "weaze-private";
+  /**
+   * Uploader customizado. Quando fornecido, substitui o upload direto ao
+   * Storage e é usado para enviar o arquivo (útil para buckets privados que
+   * exigem validação server-side).
+   */
+  uploadFn?: (file: File) => Promise<string>;
 }
-
-// 1 ano em segundos (limite máximo de signed URL do Supabase Storage)
-const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
 
 export function ImageUpload({
   value,
@@ -29,6 +33,7 @@ export function ImageUpload({
   folder = "general",
   className,
   bucket = "weaze-media",
+  uploadFn,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value);
@@ -50,18 +55,14 @@ export function ImageUpload({
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from(bucket).upload(path, file);
-      if (error) throw error;
       let url: string;
-      if (bucket === "weaze-private") {
-        const { data: signed, error: signErr } = await supabase.storage
-          .from(bucket)
-          .createSignedUrl(path, SIGNED_URL_TTL);
-        if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Falha ao gerar URL");
-        url = signed.signedUrl;
+      if (uploadFn) {
+        url = await uploadFn(file);
       } else {
+        const ext = file.name.split(".").pop() ?? "jpg";
+        const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from(bucket).upload(path, file);
+        if (error) throw error;
         const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
         url = urlData.publicUrl;
       }
@@ -73,6 +74,7 @@ export function ImageUpload({
       setUploading(false);
     }
   }
+
 
 
   function handleRemove() {
