@@ -11,8 +11,6 @@ import {
   Store,
   Settings,
   LogOut,
-  ShieldAlert,
-  MessageCircle,
   QrCode,
   ChartColumn,
 } from "lucide-react";
@@ -20,8 +18,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ensureUserRole } from "@/lib/auth.functions";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import qrMensalidade from "@/assets/qr-mensalidade-weaze.png.asset.json";
+
+// Status que precisam ser tratados na página /payment
+const PAYMENT_GATE_STATUSES = new Set([
+  "aguardando_pagamento",
+  "pagamento_em_analise",
+  "bloqueado",
+  "cancelado",
+]);
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
@@ -32,7 +36,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: role, refetch: refetchRole } = useQuery({
+  const { data: role, refetch: refetchRole, isLoading: roleLoading } = useQuery({
     queryKey: ["my-role"],
     queryFn: async () => {
       const { data } = await supabase
@@ -43,6 +47,15 @@ function AppLayout() {
       return data;
     },
   });
+
+  const isSuperAdmin = role?.role === "admin";
+
+  useEffect(() => {
+    // Super admin não deve ficar em /app
+    if (isSuperAdmin) {
+      navigate({ to: "/admin" });
+    }
+  }, [isSuperAdmin, navigate]);
 
   useEffect(() => {
     if (role === null) {
@@ -65,30 +78,14 @@ function AppLayout() {
     queryKey: ["company-status-block", role?.company_id],
     queryFn: async () => {
       if (!role?.company_id) return null;
-
-      let status: string | undefined;
       const { data: coData } = await supabase
         .from("companies")
         .select("status")
         .eq("id", role.company_id)
         .single();
-      status = coData?.status;
-
-      if (!status) {
-        const { data: adminData } = await supabase
-          .from("company_admin")
-          .select("status")
-          .eq("company_id", role.company_id)
-          .maybeSingle();
-        if (adminData?.status === "blocked") status = "bloqueado";
-        else if (adminData?.status === "active") status = "ativo";
-        else if (adminData?.status === "trial") status = "teste";
-        else if (adminData?.status === "cancelled") status = "cancelado";
-      }
-
-      return { status };
+      return { status: coData?.status as string | undefined };
     },
-    enabled: !!role?.company_id,
+    enabled: !!role?.company_id && !isSuperAdmin,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -98,31 +95,19 @@ function AppLayout() {
     retry: 3,
   });
 
-  const { data: settings } = useQuery({
-    queryKey: ["admin-settings-block"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("admin_settings")
-        .select("blocked_message, admin_contact")
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  const isBlocked = companyStatus?.status === "bloqueado";
-
-  const blockedMessage =
-    settings?.blocked_message ||
-    "Seu acesso à plataforma encontra-se temporariamente bloqueado. Para mais informações entre em contato com o administrador da WEAZE.";
-  const adminContact = settings?.admin_contact || "";
+  // Redireciona para /payment se status exige gate
+  useEffect(() => {
+    const s = companyStatus?.status;
+    if (s && PAYMENT_GATE_STATUSES.has(s)) {
+      navigate({ to: "/payment" });
+    }
+  }, [companyStatus?.status, navigate]);
 
   // Fail-safe: enquanto o status da empresa não é confirmado (ou se houve erro
-  // na consulta), NÃO renderizamos o conteúdo da plataforma. Isso impede que
-  // um dono bloqueado veja qualquer parte do painel abrindo uma nova aba,
-  // aba anônima ou recarregando — o acesso só volta depois que o admin
-  // reativa na /admin e a próxima verificação retorna "ativo/teste".
-  if (role?.company_id && (statusLoading || statusError || !companyStatus)) {
+  // na consulta), NÃO renderizamos o conteúdo. Isso impede que um dono com
+  // status pendente/bloqueado veja qualquer parte do painel via nova aba,
+  // aba anônima ou recarregamento antes do redirect para /payment ocorrer.
+  if (!isSuperAdmin && role?.company_id && (statusLoading || statusError || !companyStatus)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="text-sm text-muted-foreground">Verificando acesso…</div>
@@ -130,52 +115,20 @@ function AppLayout() {
     );
   }
 
-  if (isBlocked) {
-
+  // Se status exige gate de pagamento, não renderiza o painel enquanto o
+  // useEffect faz o redirect para /payment.
+  if (
+    !isSuperAdmin &&
+    companyStatus?.status &&
+    PAYMENT_GATE_STATUSES.has(companyStatus.status)
+  ) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-10 text-center">
-        <div className="max-w-md">
-          <ShieldAlert className="mx-auto h-16 w-16 text-destructive mb-6" />
-          <h1 className="font-display text-2xl font-bold mb-3">
-            Seu acesso está temporariamente bloqueado
-          </h1>
-          <p className="text-muted-foreground mb-6">{blockedMessage}</p>
-
-          <div className="rounded-lg border bg-background p-5 mb-6 text-left">
-            <h2 className="font-display text-base font-semibold mb-1 text-center">
-              Pagamento da mensalidade
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4 text-center">
-              Para continuar acessando a plataforma, realize o pagamento da mensalidade
-              escaneando o QR Code abaixo.
-            </p>
-            <div className="flex justify-center">
-              <img
-                src={qrMensalidade.url}
-                alt="QR Code para pagamento da mensalidade WEAZE"
-                className="h-56 w-56 rounded-md border bg-white p-2"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-4 text-center">
-              Após realizar o pagamento, informe o administrador pelo contato abaixo
-              para reativar o seu acesso.
-            </p>
-          </div>
-
-          {adminContact && (
-            <p className="text-sm text-muted-foreground mb-4">Contato: {adminContact}</p>
-          )}
-          <Button disabled className="gap-2">
-            <MessageCircle className="h-4 w-4" />
-            Entrar em contato
-          </Button>
-          <p className="text-xs text-muted-foreground mt-3">
-            * Chamada via WhatsApp será implementada em breve
-          </p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="text-sm text-muted-foreground">Redirecionando…</div>
       </div>
     );
   }
+
 
   const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },

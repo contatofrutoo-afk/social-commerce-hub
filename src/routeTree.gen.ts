@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
+import { Route as AuthenticatedPaymentRouteImport } from './routes/_authenticated.payment'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
@@ -37,6 +38,7 @@ import { Route as AuthenticatedAdminLicencasRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_authenticated.admin.financeiro'
 import { Route as AuthenticatedAdminEmpresasRouteImport } from './routes/_authenticated.admin.empresas'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated.admin.configuracoes'
+import { Route as AuthenticatedAdminAprovacoesRouteImport } from './routes/_authenticated.admin.aprovacoes'
 import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
 import { Route as AuthenticatedAdminEmpresasIdRouteImport } from './routes/_authenticated.admin.empresas.$id'
 
@@ -63,6 +65,11 @@ const CCompanySlugRoute = CCompanySlugRouteImport.update({
   id: '/c/$companySlug',
   path: '/c/$companySlug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPaymentRoute = AuthenticatedPaymentRouteImport.update({
+  id: '/payment',
+  path: '/payment',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
@@ -190,6 +197,12 @@ const AuthenticatedAdminConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAprovacoesRoute =
+  AuthenticatedAdminAprovacoesRouteImport.update({
+    id: '/aprovacoes',
+    path: '/aprovacoes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
   id: '/m/$tableSlug',
   path: '/m/$tableSlug',
@@ -207,8 +220,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/payment': typeof AuthenticatedPaymentRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
   '/p/$slug': typeof PSlugRoute
+  '/admin/aprovacoes': typeof AuthenticatedAdminAprovacoesRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
@@ -236,7 +251,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/payment': typeof AuthenticatedPaymentRoute
   '/p/$slug': typeof PSlugRoute
+  '/admin/aprovacoes': typeof AuthenticatedAdminAprovacoesRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
@@ -268,8 +285,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/payment': typeof AuthenticatedPaymentRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
   '/p/$slug': typeof PSlugRoute
+  '/_authenticated/admin/aprovacoes': typeof AuthenticatedAdminAprovacoesRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
@@ -301,8 +320,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/app'
+    | '/payment'
     | '/c/$companySlug'
     | '/p/$slug'
+    | '/admin/aprovacoes'
     | '/admin/configuracoes'
     | '/admin/empresas'
     | '/admin/financeiro'
@@ -330,7 +351,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/payment'
     | '/p/$slug'
+    | '/admin/aprovacoes'
     | '/admin/configuracoes'
     | '/admin/empresas'
     | '/admin/financeiro'
@@ -361,8 +384,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/payment'
     | '/c/$companySlug'
     | '/p/$slug'
+    | '/_authenticated/admin/aprovacoes'
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/empresas'
     | '/_authenticated/admin/financeiro'
@@ -432,6 +457,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/c/$companySlug'
       preLoaderRoute: typeof CCompanySlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/payment': {
+      id: '/_authenticated/payment'
+      path: '/payment'
+      fullPath: '/payment'
+      preLoaderRoute: typeof AuthenticatedPaymentRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app': {
       id: '/_authenticated/app'
@@ -594,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/aprovacoes': {
+      id: '/_authenticated/admin/aprovacoes'
+      path: '/aprovacoes'
+      fullPath: '/admin/aprovacoes'
+      preLoaderRoute: typeof AuthenticatedAdminAprovacoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/c/$companySlug/m/$tableSlug': {
       id: '/c/$companySlug/m/$tableSlug'
       path: '/m/$tableSlug'
@@ -626,6 +665,7 @@ const AuthenticatedAdminEmpresasRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAprovacoesRoute: typeof AuthenticatedAdminAprovacoesRoute
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEmpresasRoute: typeof AuthenticatedAdminEmpresasRouteWithChildren
   AuthenticatedAdminFinanceiroRoute: typeof AuthenticatedAdminFinanceiroRoute
@@ -635,6 +675,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAprovacoesRoute: AuthenticatedAdminAprovacoesRoute,
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminEmpresasRoute: AuthenticatedAdminEmpresasRouteWithChildren,
   AuthenticatedAdminFinanceiroRoute: AuthenticatedAdminFinanceiroRoute,
@@ -676,11 +717,13 @@ const AuthenticatedAppRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedPaymentRoute: typeof AuthenticatedPaymentRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedPaymentRoute: AuthenticatedPaymentRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

@@ -200,6 +200,10 @@ export type Database = {
       }
       companies: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
+          blocked_at: string | null
+          blocked_reason: string | null
           city: string | null
           created_at: string
           email_principal: string | null
@@ -210,6 +214,8 @@ export type Database = {
           monthly_fee: number
           name: string
           next_due_date: string | null
+          payment_confirmation_date: string | null
+          payment_informed_at: string | null
           payment_method: string
           payment_status: string
           phone: string | null
@@ -222,6 +228,10 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          blocked_at?: string | null
+          blocked_reason?: string | null
           city?: string | null
           created_at?: string
           email_principal?: string | null
@@ -232,6 +242,8 @@ export type Database = {
           monthly_fee?: number
           name: string
           next_due_date?: string | null
+          payment_confirmation_date?: string | null
+          payment_informed_at?: string | null
           payment_method?: string
           payment_status?: string
           phone?: string | null
@@ -244,6 +256,10 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          blocked_at?: string | null
+          blocked_reason?: string | null
           city?: string | null
           created_at?: string
           email_principal?: string | null
@@ -254,6 +270,8 @@ export type Database = {
           monthly_fee?: number
           name?: string
           next_due_date?: string | null
+          payment_confirmation_date?: string | null
+          payment_informed_at?: string | null
           payment_method?: string
           payment_status?: string
           phone?: string | null
@@ -942,21 +960,21 @@ export type Database = {
       }
       user_roles: {
         Row: {
-          company_id: string
+          company_id: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
-          company_id: string
+          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
-          company_id?: string
+          company_id?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -977,6 +995,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_company_status: {
+        Args: { _company_id: string; _new_status: string; _reason?: string }
+        Returns: undefined
+      }
       auto_checkin:
         | {
             Args: {
@@ -1067,6 +1089,7 @@ export type Database = {
         Returns: undefined
       }
       delete_order_item: { Args: { _item_id: string }; Returns: Json }
+      ensure_super_admin: { Args: never; Returns: boolean }
       get_company_public: {
         Args: { _slug: string }
         Returns: {
@@ -1157,6 +1180,7 @@ export type Database = {
           slug: string
         }[]
       }
+      mark_payment_informed: { Args: never; Returns: undefined }
       record_product_event: {
         Args: {
           _company_id: string
