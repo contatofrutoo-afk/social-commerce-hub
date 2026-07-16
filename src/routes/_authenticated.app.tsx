@@ -103,31 +103,11 @@ function AppLayout() {
     }
   }, [companyStatus?.status, navigate]);
 
-  const { data: settings } = useQuery({
-    queryKey: ["admin-settings-block"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("admin_settings")
-        .select("blocked_message, admin_contact")
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
-
-  const isBlocked = companyStatus?.status === "bloqueado";
-
-  const blockedMessage =
-    settings?.blocked_message ||
-    "Seu acesso à plataforma encontra-se temporariamente bloqueado. Para mais informações entre em contato com o administrador da WEAZE.";
-  const adminContact = settings?.admin_contact || "";
-
   // Fail-safe: enquanto o status da empresa não é confirmado (ou se houve erro
-  // na consulta), NÃO renderizamos o conteúdo da plataforma. Isso impede que
-  // um dono bloqueado veja qualquer parte do painel abrindo uma nova aba,
-  // aba anônima ou recarregando — o acesso só volta depois que o admin
-  // reativa na /admin e a próxima verificação retorna "ativo/teste".
-  if (role?.company_id && (statusLoading || statusError || !companyStatus)) {
+  // na consulta), NÃO renderizamos o conteúdo. Isso impede que um dono com
+  // status pendente/bloqueado veja qualquer parte do painel via nova aba,
+  // aba anônima ou recarregamento antes do redirect para /payment ocorrer.
+  if (!isSuperAdmin && role?.company_id && (statusLoading || statusError || !companyStatus)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="text-sm text-muted-foreground">Verificando acesso…</div>
@@ -135,52 +115,20 @@ function AppLayout() {
     );
   }
 
-  if (isBlocked) {
-
+  // Se status exige gate de pagamento, não renderiza o painel enquanto o
+  // useEffect faz o redirect para /payment.
+  if (
+    !isSuperAdmin &&
+    companyStatus?.status &&
+    PAYMENT_GATE_STATUSES.has(companyStatus.status)
+  ) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-10 text-center">
-        <div className="max-w-md">
-          <ShieldAlert className="mx-auto h-16 w-16 text-destructive mb-6" />
-          <h1 className="font-display text-2xl font-bold mb-3">
-            Seu acesso está temporariamente bloqueado
-          </h1>
-          <p className="text-muted-foreground mb-6">{blockedMessage}</p>
-
-          <div className="rounded-lg border bg-background p-5 mb-6 text-left">
-            <h2 className="font-display text-base font-semibold mb-1 text-center">
-              Pagamento da mensalidade
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4 text-center">
-              Para continuar acessando a plataforma, realize o pagamento da mensalidade
-              escaneando o QR Code abaixo.
-            </p>
-            <div className="flex justify-center">
-              <img
-                src={qrMensalidade.url}
-                alt="QR Code para pagamento da mensalidade WEAZE"
-                className="h-56 w-56 rounded-md border bg-white p-2"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-4 text-center">
-              Após realizar o pagamento, informe o administrador pelo contato abaixo
-              para reativar o seu acesso.
-            </p>
-          </div>
-
-          {adminContact && (
-            <p className="text-sm text-muted-foreground mb-4">Contato: {adminContact}</p>
-          )}
-          <Button disabled className="gap-2">
-            <MessageCircle className="h-4 w-4" />
-            Entrar em contato
-          </Button>
-          <p className="text-xs text-muted-foreground mt-3">
-            * Chamada via WhatsApp será implementada em breve
-          </p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="text-sm text-muted-foreground">Redirecionando…</div>
       </div>
     );
   }
+
 
   const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },
