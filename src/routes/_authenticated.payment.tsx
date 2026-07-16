@@ -57,6 +57,8 @@ function PaymentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [informing, setInforming] = useState(false);
+  const [methodDialogOpen, setMethodDialogOpen] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<string>("PIX");
 
   const { data: role } = useQuery({
     queryKey: ["my-role"],
@@ -84,6 +86,11 @@ function PaymentPage() {
 
   const status = (role?.company as any)?.status as string | undefined;
 
+  // Touch login on entry (para rastreio de atividade)
+  useEffect(() => {
+    (supabase as any).rpc("touch_company_login").catch(() => {});
+  }, []);
+
   // Se já está ativo/teste, sai daqui
   useEffect(() => {
     if (status === "ativo" || status === "teste") {
@@ -104,12 +111,15 @@ function PaymentPage() {
     }
   }
 
-  async function informPayment() {
+  async function confirmInformPayment() {
     setInforming(true);
     try {
-      const { error } = await (supabase as any).rpc("mark_payment_informed");
+      const { error } = await (supabase as any).rpc("mark_payment_informed", {
+        _method: selectedMethod,
+      });
       if (error) throw error;
       toast.success("Pagamento informado! Aguarde a confirmação da equipe WEAZZE.");
+      setMethodDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["my-role"] });
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao informar pagamento.");
