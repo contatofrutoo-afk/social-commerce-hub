@@ -51,7 +51,22 @@ function AuthPage() {
           password,
           options: { emailRedirectTo: window.location.origin + destination },
         });
-        if (error) throw error;
+        if (error) {
+          const msg = (error.message || "").toLowerCase();
+          if (
+            error.status === 422 ||
+            (error as any).code === "user_already_exists" ||
+            msg.includes("already registered") ||
+            msg.includes("already been registered") ||
+            msg.includes("user already")
+          ) {
+            toast.error("Este email já está cadastrado. Faça login para continuar.");
+            setMode("signin");
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
         if (!data.session) {
           toast.success("Conta criada! Verifique seu email para confirmar.");
           setLoading(false);
@@ -78,6 +93,7 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
