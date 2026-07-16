@@ -61,7 +61,7 @@ function AppLayout() {
     }
   }, [role, refetchRole, queryClient]);
 
-  const { data: companyStatus } = useQuery({
+  const { data: companyStatus, isLoading: statusLoading, isError: statusError } = useQuery({
     queryKey: ["company-status-block", role?.company_id],
     queryFn: async () => {
       if (!role?.company_id) return null;
@@ -89,6 +89,13 @@ function AppLayout() {
       return { status };
     },
     enabled: !!role?.company_id,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
+    refetchInterval: 30_000,
+    retry: 3,
   });
 
   const { data: settings } = useQuery({
@@ -104,12 +111,27 @@ function AppLayout() {
   });
 
   const isBlocked = companyStatus?.status === "bloqueado";
+
   const blockedMessage =
     settings?.blocked_message ||
     "Seu acesso à plataforma encontra-se temporariamente bloqueado. Para mais informações entre em contato com o administrador da WEAZE.";
   const adminContact = settings?.admin_contact || "";
 
+  // Fail-safe: enquanto o status da empresa não é confirmado (ou se houve erro
+  // na consulta), NÃO renderizamos o conteúdo da plataforma. Isso impede que
+  // um dono bloqueado veja qualquer parte do painel abrindo uma nova aba,
+  // aba anônima ou recarregando — o acesso só volta depois que o admin
+  // reativa na /admin e a próxima verificação retorna "ativo/teste".
+  if (role?.company_id && (statusLoading || statusError || !companyStatus)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="text-sm text-muted-foreground">Verificando acesso…</div>
+      </div>
+    );
+  }
+
   if (isBlocked) {
+
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4 py-10 text-center">
         <div className="max-w-md">
