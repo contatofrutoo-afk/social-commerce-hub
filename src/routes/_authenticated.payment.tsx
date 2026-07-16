@@ -60,6 +60,14 @@ function PaymentPage() {
   const [methodDialogOpen, setMethodDialogOpen] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<string>("PIX");
 
+  const [companyName, setCompanyName] = useState("");
+  const [responsible, setResponsible] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [city, setCity] = useState("");
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const { data: role } = useQuery({
     queryKey: ["my-role"],
     queryFn: async () => {
@@ -71,6 +79,23 @@ function PaymentPage() {
       return data;
     },
   });
+
+  const company = role?.company as any;
+
+  // Preenche o formulário quando os dados da empresa chegam
+  useEffect(() => {
+    if (company) {
+      setCompanyName(company.name === "Minha Empresa" ? "" : company.name ?? "");
+      setResponsible(company.responsible ?? "");
+      setEmail(company.email_principal ?? "");
+      setPhone(company.phone ?? "");
+      setCity(company.city ?? "");
+      // Se já tem dados preenchidos, considera salvo
+      if (company.responsible || company.city) {
+        setProfileSaved(true);
+      }
+    }
+  }, [company?.id]);
 
   const { data: settings } = useQuery({
     queryKey: ["admin-settings-block"],
@@ -84,7 +109,7 @@ function PaymentPage() {
     },
   });
 
-  const status = (role?.company as any)?.status as string | undefined;
+  const status = company?.status as string | undefined;
 
   // Touch login on entry (para rastreio de atividade)
   useEffect(() => {
@@ -114,6 +139,33 @@ function PaymentPage() {
       toast.success("Link de pagamento copiado!");
     } catch {
       toast.error("Não foi possível copiar. Copie manualmente: " + PIX_KEY);
+    }
+  }
+
+  const canSubmitProfile = companyName.trim().length > 0 && responsible.trim().length > 0;
+
+  async function saveProfile() {
+    if (!company?.id || !canSubmitProfile) return;
+    setSavingProfile(true);
+    try {
+      const { error } = await supabase
+        .from("companies")
+        .update({
+          name: companyName.trim(),
+          responsible: responsible.trim(),
+          email_principal: email.trim() || null,
+          phone: phone.trim() || null,
+          city: city.trim() || null,
+        })
+        .eq("id", company.id);
+      if (error) throw error;
+      setProfileSaved(true);
+      toast.success("Dados do estabelecimento salvos!");
+      await queryClient.invalidateQueries({ queryKey: ["my-role"] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao salvar dados.");
+    } finally {
+      setSavingProfile(false);
     }
   }
 
@@ -212,6 +264,88 @@ function PaymentPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Dados do Estabelecimento */}
+          <div className="dash-card p-6 md:col-span-2">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
+              Dados do Estabelecimento
+            </div>
+            <h2 className="font-display text-xl font-bold">
+              {profileSaved ? "Dados confirmados" : "Preencha os dados do seu negócio"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Essas informações serão exibidas no painel administrativo da weaze.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="c-name">Nome do estabelecimento *</Label>
+                <input
+                  id="c-name"
+                  value={companyName}
+                  onChange={(e) => { setCompanyName(e.target.value); setProfileSaved(false); }}
+                  placeholder="Ex: Café do Centro"
+                  className="mt-1.5 flex h-10 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="c-responsible">Responsável *</Label>
+                <input
+                  id="c-responsible"
+                  value={responsible}
+                  onChange={(e) => { setResponsible(e.target.value); setProfileSaved(false); }}
+                  placeholder="Nome do responsável"
+                  className="mt-1.5 flex h-10 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="c-email">Email</Label>
+                <input
+                  id="c-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); setProfileSaved(false); }}
+                  placeholder="contato@empresa.com"
+                  className="mt-1.5 flex h-10 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="c-phone">Telefone</Label>
+                <input
+                  id="c-phone"
+                  value={phone}
+                  onChange={(e) => { setPhone(e.target.value); setProfileSaved(false); }}
+                  placeholder="(11) 99999-0000"
+                  className="mt-1.5 flex h-10 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="c-city">Cidade</Label>
+                <input
+                  id="c-city"
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); setProfileSaved(false); }}
+                  placeholder="São Paulo"
+                  className="mt-1.5 flex h-10 w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-end">
+                {!profileSaved ? (
+                  <Button
+                    onClick={saveProfile}
+                    disabled={!canSubmitProfile || savingProfile}
+                    className="w-full"
+                  >
+                    {savingProfile ? "Salvando…" : "Salvar dados"}
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-emerald-600">
+                    <CheckCircle2 className="h-4 w-4" /> Dados salvos
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Plano */}
           <div className="dash-card p-6">
             <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary">
@@ -259,10 +393,15 @@ function PaymentPage() {
                 className="w-full"
                 size="lg"
                 onClick={() => setMethodDialogOpen(true)}
-                disabled={informing}
+                disabled={informing || !profileSaved}
               >
                 {informing ? "Enviando…" : "Já realizei o pagamento"}
               </Button>
+              {!profileSaved && (
+                <p className="text-center text-xs text-muted-foreground">
+                  Preencha os dados do estabelecimento acima para continuar.
+                </p>
+              )}
               {whatsappHref && (
                 <a href={whatsappHref} target="_blank" rel="noreferrer">
                   <Button variant="outline" className="w-full gap-2" size="lg">
