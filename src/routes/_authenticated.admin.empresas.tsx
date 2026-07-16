@@ -74,29 +74,29 @@ function WeazeEmpresas() {
     const newStatus = c.status === "bloqueado" ? "ativo" : "bloqueado";
     setTogglingId(c.id);
     try {
-      const { error } = await supabase
-        .from("companies")
-        .update({ status: newStatus })
-        .eq("id", c.id);
-      if (error) {
-        if (
-          error.code === "42703" ||
-          error.message?.includes("column") ||
-          error.message?.includes("does not exist")
-        ) {
-          const { error: fbErr } = await supabase
-            .from("company_admin")
-            .upsert(
-              { company_id: c.id, status: STATUS_MAP_TO_EN[newStatus] ?? newStatus },
-              { onConflict: "company_id" },
-            );
-          if (fbErr) throw fbErr;
-        } else {
-          throw error;
-        }
-      }
+      const { error } = await (supabase as any).rpc("admin_set_company_status", {
+        _company_id: c.id,
+        _new_status: newStatus,
+      });
+      if (error) throw error;
       setCompanies((prev) =>
-        prev.map((co) => (co.id === c.id ? { ...co, status: newStatus } : co)),
+        prev.map((co) =>
+          co.id === c.id
+            ? {
+                ...co,
+                status: newStatus,
+                ...(newStatus === "ativo"
+                  ? {
+                      payment_status: "paid",
+                      last_payment_date: new Date().toISOString().slice(0, 10),
+                      next_due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                        .toISOString()
+                        .slice(0, 10),
+                    }
+                  : {}),
+              }
+            : co,
+        ),
       );
       toast.success(newStatus === "bloqueado" ? "Empresa bloqueada!" : "Empresa desbloqueada!");
     } catch (err: any) {
