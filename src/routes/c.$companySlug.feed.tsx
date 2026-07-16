@@ -515,8 +515,8 @@ function CommentsSection({
         <ImageUpload
           value={commentImage}
           onChange={setCommentImage}
-          folder={`comments/${customerId}/${postId}`}
           bucket="weaze-private"
+          uploadFn={uploadCommentImage}
         />
       </div>
     </div>
