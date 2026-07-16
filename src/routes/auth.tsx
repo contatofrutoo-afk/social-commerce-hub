@@ -72,6 +72,17 @@ function AuthPage() {
           setLoading(false);
           return;
         }
+        // Novo cadastro B2B: garante empresa e vai direto para /payment,
+        // evitando flicker do painel enquanto o status é verificado.
+        try {
+          await (supabase as any).rpc("ensure_super_admin");
+        } catch { /* silencioso */ }
+        try {
+          const { ensureUserRole } = await import("@/lib/auth.functions");
+          await ensureUserRole();
+        } catch { /* silencioso */ }
+        navigate({ to: "/payment" });
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
