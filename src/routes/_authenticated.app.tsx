@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ensureUserRole } from "@/lib/auth.functions";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import qrMensalidade from "@/assets/qr-mensalidade-weaze.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
