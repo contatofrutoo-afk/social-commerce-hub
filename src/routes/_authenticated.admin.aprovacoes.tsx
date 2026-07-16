@@ -72,6 +72,7 @@ function ApprovalsPage() {
   const [filter, setFilter] = useState<string>("pagamento_em_analise");
   const [blockingId, setBlockingId] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [approvingCompany, setApprovingCompany] = useState<Company | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data: companies, isLoading } = useQuery({
