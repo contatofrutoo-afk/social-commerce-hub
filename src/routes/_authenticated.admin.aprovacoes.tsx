@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Ban, RotateCcw, ArchiveX, Filter } from "lucide-react";
+import { CheckCircle2, XCircle, Ban, RotateCcw, ArchiveX, Filter, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/aprovacoes")({
