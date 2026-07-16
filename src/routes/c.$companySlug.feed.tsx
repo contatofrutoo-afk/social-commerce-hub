@@ -495,6 +495,7 @@ function CommentsSection({
           value={commentImage}
           onChange={setCommentImage}
           folder={`comments/${customerId}/${postId}`}
+          bucket="weaze-private"
         />
       </div>
     </div>

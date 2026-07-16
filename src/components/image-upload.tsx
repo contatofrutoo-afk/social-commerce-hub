@@ -12,9 +12,24 @@ interface ImageUploadProps {
   onChange: (url: string | null) => void;
   folder?: string;
   className?: string;
+  /**
+   * Bucket alvo. Padrão: `weaze-media` (público). Para uploads sensíveis
+   * (avatares de clientes, imagens de comentários), passe `weaze-private`
+   * e o componente gerará uma signed URL de 1 ano ao invés da URL pública.
+   */
+  bucket?: "weaze-media" | "weaze-private";
 }
 
-export function ImageUpload({ value, onChange, folder = "general", className }: ImageUploadProps) {
+// 1 ano em segundos (limite máximo de signed URL do Supabase Storage)
+const SIGNED_URL_TTL = 60 * 60 * 24 * 365;
+
+export function ImageUpload({
+  value,
+  onChange,
+  folder = "general",
+  className,
+  bucket = "weaze-media",
+}: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,18 +52,28 @@ export function ImageUpload({ value, onChange, folder = "general", className }: 
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
       const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("weaze-media").upload(path, file);
+      const { error } = await supabase.storage.from(bucket).upload(path, file);
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("weaze-media").getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-      setPreview(publicUrl);
-      onChange(publicUrl);
+      let url: string;
+      if (bucket === "weaze-private") {
+        const { data: signed, error: signErr } = await supabase.storage
+          .from(bucket)
+          .createSignedUrl(path, SIGNED_URL_TTL);
+        if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Falha ao gerar URL");
+        url = signed.signedUrl;
+      } else {
+        const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path);
+        url = urlData.publicUrl;
+      }
+      setPreview(url);
+      onChange(url);
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao fazer upload");
     } finally {
       setUploading(false);
     }
   }
+
 
   function handleRemove() {
     setPreview(null);
