@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/image-upload";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
+import { fileToBase64 } from "@/lib/file-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
