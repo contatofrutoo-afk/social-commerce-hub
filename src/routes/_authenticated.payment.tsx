@@ -111,7 +111,7 @@ function PaymentPage() {
   async function copyPix() {
     try {
       await navigator.clipboard.writeText(PIX_KEY);
-      toast.success("Chave PIX copiada!");
+      toast.success("Link de pagamento copiado!");
     } catch {
       toast.error("Não foi possível copiar. Copie manualmente: " + PIX_KEY);
     }
