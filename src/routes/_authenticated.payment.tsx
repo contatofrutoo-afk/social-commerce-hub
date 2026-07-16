@@ -166,7 +166,7 @@ function PaymentPage() {
         title="Sua assinatura foi encerrada"
         description="Para voltar a usar a WEAZZE, reative sua assinatura informando um novo pagamento."
         primaryAction={
-          <Button size="lg" onClick={informPayment} disabled={informing}>
+          <Button size="lg" onClick={() => setMethodDialogOpen(true)} disabled={informing}>
             {informing ? "Enviando…" : "Reativar assinatura"}
           </Button>
         }
