@@ -252,7 +252,7 @@ function PaymentPage() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={informPayment}
+                onClick={() => setMethodDialogOpen(true)}
                 disabled={informing}
               >
                 {informing ? "Enviando…" : "Já realizei o pagamento"}
