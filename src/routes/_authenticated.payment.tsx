@@ -272,7 +272,65 @@ function PaymentPage() {
           Após confirmarmos seu pagamento, seu acesso será liberado automaticamente.
         </p>
       </main>
+
+      <PaymentMethodDialog
+        open={methodDialogOpen}
+        onOpenChange={setMethodDialogOpen}
+        method={selectedMethod}
+        setMethod={setSelectedMethod}
+        onConfirm={confirmInformPayment}
+        loading={informing}
+      />
     </div>
+  );
+}
+
+function PaymentMethodDialog({
+  open,
+  onOpenChange,
+  method,
+  setMethod,
+  onConfirm,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  method: string;
+  setMethod: (m: string) => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  const opts = ["PIX", "Cartão", "Dinheiro", "Outro"];
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirmar pagamento</DialogTitle>
+          <DialogDescription>
+            Selecione o método utilizado. Após confirmar, sua solicitação entrará em análise pela equipe WEAZZE.
+          </DialogDescription>
+        </DialogHeader>
+        <RadioGroup value={method} onValueChange={setMethod} className="grid grid-cols-2 gap-2 py-2">
+          {opts.map((o) => (
+            <label
+              key={o}
+              className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 hover:bg-accent"
+            >
+              <RadioGroupItem value={o} id={`m-${o}`} />
+              <Label htmlFor={`m-${o}`} className="cursor-pointer">{o}</Label>
+            </label>
+          ))}
+        </RadioGroup>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={onConfirm} disabled={loading}>
+            {loading ? "Enviando…" : "Confirmar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
