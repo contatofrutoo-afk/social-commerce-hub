@@ -1090,6 +1090,7 @@ export type Database = {
             }
             Returns: string
           }
+      delete_company: { Args: { _company_id: string }; Returns: undefined }
       delete_customer_post: {
         Args: { _customer_id: string; _post_id: string; _token: string }
         Returns: undefined
