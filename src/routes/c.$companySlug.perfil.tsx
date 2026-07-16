@@ -6,7 +6,9 @@ import { getSessionForCompany, clearSession } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
+import { fileToBase64 } from "@/lib/file-utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
