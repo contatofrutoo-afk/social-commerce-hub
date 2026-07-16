@@ -445,10 +445,28 @@ function CommentsSection({
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const [commentImage, setCommentImage] = useState<string | null>(null);
+  const uploadFile = useServerFn(uploadCustomerFile);
   const { data: comments } = useQuery({
     queryKey: ["comments", postId],
     queryFn: () => commentRepository.listByPost(postId),
   });
+  const uploadCommentImage = async (file: File) => {
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+    if (!ALLOWED.includes(file.type as any)) throw new Error("Formato não suportado");
+    const base64 = await fileToBase64(file);
+    const { url } = await uploadFile({
+      data: {
+        customerId,
+        sessionToken,
+        kind: "comment",
+        postId,
+        mimeType: file.type as (typeof ALLOWED)[number],
+        fileName: file.name,
+        base64,
+      },
+    });
+    return url;
+  };
   const add = useMutation({
     mutationFn: () =>
       commentRepository.create({
