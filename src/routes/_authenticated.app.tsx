@@ -11,8 +11,6 @@ import {
   Store,
   Settings,
   LogOut,
-  ShieldAlert,
-  MessageCircle,
   QrCode,
   ChartColumn,
 } from "lucide-react";
@@ -20,8 +18,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ensureUserRole } from "@/lib/auth.functions";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
-import qrMensalidade from "@/assets/qr-mensalidade-weaze.png.asset.json";
+
+// Status que precisam ser tratados na página /payment
+const PAYMENT_GATE_STATUSES = new Set([
+  "aguardando_pagamento",
+  "pagamento_em_analise",
+  "bloqueado",
+  "cancelado",
+]);
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
@@ -32,7 +36,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: role, refetch: refetchRole } = useQuery({
+  const { data: role, refetch: refetchRole, isLoading: roleLoading } = useQuery({
     queryKey: ["my-role"],
     queryFn: async () => {
       const { data } = await supabase
@@ -43,6 +47,15 @@ function AppLayout() {
       return data;
     },
   });
+
+  const isSuperAdmin = role?.role === "admin";
+
+  useEffect(() => {
+    // Super admin não deve ficar em /app
+    if (isSuperAdmin) {
+      navigate({ to: "/admin" });
+    }
+  }, [isSuperAdmin, navigate]);
 
   useEffect(() => {
     if (role === null) {
@@ -65,30 +78,14 @@ function AppLayout() {
     queryKey: ["company-status-block", role?.company_id],
     queryFn: async () => {
       if (!role?.company_id) return null;
-
-      let status: string | undefined;
       const { data: coData } = await supabase
         .from("companies")
         .select("status")
         .eq("id", role.company_id)
         .single();
-      status = coData?.status;
-
-      if (!status) {
-        const { data: adminData } = await supabase
-          .from("company_admin")
-          .select("status")
-          .eq("company_id", role.company_id)
-          .maybeSingle();
-        if (adminData?.status === "blocked") status = "bloqueado";
-        else if (adminData?.status === "active") status = "ativo";
-        else if (adminData?.status === "trial") status = "teste";
-        else if (adminData?.status === "cancelled") status = "cancelado";
-      }
-
-      return { status };
+      return { status: coData?.status as string | undefined };
     },
-    enabled: !!role?.company_id,
+    enabled: !!role?.company_id && !isSuperAdmin,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -97,6 +94,14 @@ function AppLayout() {
     refetchInterval: 30_000,
     retry: 3,
   });
+
+  // Redireciona para /payment se status exige gate
+  useEffect(() => {
+    const s = companyStatus?.status;
+    if (s && PAYMENT_GATE_STATUSES.has(s)) {
+      navigate({ to: "/payment" });
+    }
+  }, [companyStatus?.status, navigate]);
 
   const { data: settings } = useQuery({
     queryKey: ["admin-settings-block"],
