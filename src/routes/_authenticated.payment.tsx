@@ -1,8 +1,18 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -47,6 +57,8 @@ function PaymentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [informing, setInforming] = useState(false);
+  const [methodDialogOpen, setMethodDialogOpen] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<string>("PIX");
 
   const { data: role } = useQuery({
     queryKey: ["my-role"],
@@ -74,6 +86,11 @@ function PaymentPage() {
 
   const status = (role?.company as any)?.status as string | undefined;
 
+  // Touch login on entry (para rastreio de atividade)
+  useEffect(() => {
+    (supabase as any).rpc("touch_company_login").catch(() => {});
+  }, []);
+
   // Se já está ativo/teste, sai daqui
   useEffect(() => {
     if (status === "ativo" || status === "teste") {
@@ -94,12 +111,15 @@ function PaymentPage() {
     }
   }
 
-  async function informPayment() {
+  async function confirmInformPayment() {
     setInforming(true);
     try {
-      const { error } = await (supabase as any).rpc("mark_payment_informed");
+      const { error } = await (supabase as any).rpc("mark_payment_informed", {
+        _method: selectedMethod,
+      });
       if (error) throw error;
       toast.success("Pagamento informado! Aguarde a confirmação da equipe WEAZZE.");
+      setMethodDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["my-role"] });
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao informar pagamento.");
@@ -146,7 +166,7 @@ function PaymentPage() {
         title="Sua assinatura foi encerrada"
         description="Para voltar a usar a WEAZZE, reative sua assinatura informando um novo pagamento."
         primaryAction={
-          <Button size="lg" onClick={informPayment} disabled={informing}>
+          <Button size="lg" onClick={() => setMethodDialogOpen(true)} disabled={informing}>
             {informing ? "Enviando…" : "Reativar assinatura"}
           </Button>
         }
@@ -232,7 +252,7 @@ function PaymentPage() {
               <Button
                 className="w-full"
                 size="lg"
-                onClick={informPayment}
+                onClick={() => setMethodDialogOpen(true)}
                 disabled={informing}
               >
                 {informing ? "Enviando…" : "Já realizei o pagamento"}
@@ -252,7 +272,65 @@ function PaymentPage() {
           Após confirmarmos seu pagamento, seu acesso será liberado automaticamente.
         </p>
       </main>
+
+      <PaymentMethodDialog
+        open={methodDialogOpen}
+        onOpenChange={setMethodDialogOpen}
+        method={selectedMethod}
+        setMethod={setSelectedMethod}
+        onConfirm={confirmInformPayment}
+        loading={informing}
+      />
     </div>
+  );
+}
+
+function PaymentMethodDialog({
+  open,
+  onOpenChange,
+  method,
+  setMethod,
+  onConfirm,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  method: string;
+  setMethod: (m: string) => void;
+  onConfirm: () => void;
+  loading: boolean;
+}) {
+  const opts = ["PIX", "Cartão", "Dinheiro", "Outro"];
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirmar pagamento</DialogTitle>
+          <DialogDescription>
+            Selecione o método utilizado. Após confirmar, sua solicitação entrará em análise pela equipe WEAZZE.
+          </DialogDescription>
+        </DialogHeader>
+        <RadioGroup value={method} onValueChange={setMethod} className="grid grid-cols-2 gap-2 py-2">
+          {opts.map((o) => (
+            <label
+              key={o}
+              className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 hover:bg-accent"
+            >
+              <RadioGroupItem value={o} id={`m-${o}`} />
+              <Label htmlFor={`m-${o}`} className="cursor-pointer">{o}</Label>
+            </label>
+          ))}
+        </RadioGroup>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button onClick={onConfirm} disabled={loading}>
+            {loading ? "Enviando…" : "Confirmar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

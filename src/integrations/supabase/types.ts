@@ -209,6 +209,8 @@ export type Database = {
           email_principal: string | null
           id: string
           internal_notes: string | null
+          last_activity: string | null
+          last_login: string | null
           last_payment_date: string | null
           logo_url: string | null
           monthly_fee: number
@@ -237,6 +239,8 @@ export type Database = {
           email_principal?: string | null
           id?: string
           internal_notes?: string | null
+          last_activity?: string | null
+          last_login?: string | null
           last_payment_date?: string | null
           logo_url?: string | null
           monthly_fee?: number
@@ -265,6 +269,8 @@ export type Database = {
           email_principal?: string | null
           id?: string
           internal_notes?: string | null
+          last_activity?: string | null
+          last_login?: string | null
           last_payment_date?: string | null
           logo_url?: string | null
           monthly_fee?: number
@@ -1180,7 +1186,9 @@ export type Database = {
           slug: string
         }[]
       }
-      mark_payment_informed: { Args: never; Returns: undefined }
+      mark_payment_informed:
+        | { Args: never; Returns: undefined }
+        | { Args: { _method?: string }; Returns: undefined }
       record_product_event: {
         Args: {
           _company_id: string
@@ -1218,6 +1226,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      touch_company_activity: { Args: never; Returns: undefined }
+      touch_company_login: { Args: never; Returns: undefined }
       update_customer_post: {
         Args: {
           _customer_id: string
