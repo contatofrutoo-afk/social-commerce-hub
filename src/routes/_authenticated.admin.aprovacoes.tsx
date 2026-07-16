@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Ban, RotateCcw, ArchiveX, Filter } from "lucide-react";
+import { CheckCircle2, XCircle, Ban, RotateCcw, ArchiveX, Filter, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin/aprovacoes")({
@@ -72,6 +72,7 @@ function ApprovalsPage() {
   const [filter, setFilter] = useState<string>("pagamento_em_analise");
   const [blockingId, setBlockingId] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [approvingCompany, setApprovingCompany] = useState<Company | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data: companies, isLoading } = useQuery({
@@ -189,10 +190,13 @@ function ApprovalsPage() {
                     <Button
                       size="sm"
                       disabled={busy}
-                      onClick={() => setStatus(c.id, "ativo")}
+                      onClick={() => setApprovingCompany(c)}
                       className="gap-1"
                     >
-                      <CheckCircle2 className="h-4 w-4" /> Liberar acesso
+                      <ShieldCheck className="h-4 w-4" />
+                      {c.status === "pagamento_em_analise"
+                        ? "Confirmar pagamento e liberar"
+                        : "Liberar acesso"}
                     </Button>
                   )}
                   {c.status === "pagamento_em_analise" && (
@@ -280,7 +284,69 @@ function ApprovalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!approvingCompany} onOpenChange={(o) => !o && setApprovingCompany(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              Confirmar pagamento e liberar acesso
+            </DialogTitle>
+          </DialogHeader>
+          {approvingCompany && (
+            <div className="space-y-3 text-sm">
+              <p className="text-muted-foreground">
+                Confirme que o pagamento foi recebido antes de liberar o acesso desta empresa.
+              </p>
+              <div className="rounded-lg border bg-muted/40 p-3 space-y-1.5">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Empresa</span>
+                  <span className="font-medium">{approvingCompany.name}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Plano</span>
+                  <span className="font-medium">{approvingCompany.plan_type || "—"}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Forma de pagamento</span>
+                  <span className="font-medium">{approvingCompany.payment_method || "—"}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Informado em</span>
+                  <span className="font-medium">{formatDate(approvingCompany.payment_informed_at)}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Responsável</span>
+                  <span className="font-medium">{approvingCompany.responsible || "—"}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ao confirmar, o status ficará <strong>Ativo</strong> e a data de aprovação/pagamento será registrada.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setApprovingCompany(null)}>
+              Cancelar
+            </Button>
+            <Button
+              className="gap-1 bg-emerald-600 hover:bg-emerald-700"
+              disabled={busyId === approvingCompany?.id}
+              onClick={async () => {
+                if (!approvingCompany) return;
+                const id = approvingCompany.id;
+                setApprovingCompany(null);
+                await setStatus(id, "ativo");
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Confirmar e liberar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
 
