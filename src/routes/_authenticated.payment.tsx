@@ -88,7 +88,13 @@ function PaymentPage() {
 
   // Touch login on entry (para rastreio de atividade)
   useEffect(() => {
-    (supabase as any).rpc("touch_company_login").catch(() => {});
+    (async () => {
+      try {
+        await (supabase as any).rpc("touch_company_login");
+      } catch {
+        /* silencioso */
+      }
+    })();
   }, []);
 
   // Se já está ativo/teste, sai daqui
