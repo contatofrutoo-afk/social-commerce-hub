@@ -46,10 +46,14 @@ function ProfilePage() {
     try {
       const ext = file.name.split(".").pop() ?? "jpg";
       const path = `avatars/${session!.customerId}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("weaze-media").upload(path, file);
+      const { error } = await supabase.storage.from("weaze-private").upload(path, file);
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("weaze-media").getPublicUrl(path);
-      setAvatarUrl(urlData.publicUrl);
+      // Bucket privado: gera signed URL de 1 ano (limite máximo do Storage).
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("weaze-private")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Falha ao gerar URL do avatar");
+      setAvatarUrl(signed.signedUrl);
     } catch (err: any) {
       toast.error(err?.message ?? "Erro ao fazer upload");
     } finally {
