@@ -245,7 +245,7 @@ function PaymentPage() {
             </div>
 
             <div className="mt-4">
-              <div className="text-xs font-medium text-muted-foreground">Chave PIX</div>
+              <div className="text-xs font-medium text-muted-foreground">Link de pagamento</div>
               <div className="mt-1 flex items-center gap-2 rounded-lg border bg-muted/40 p-2">
                 <code className="flex-1 truncate text-sm">{PIX_KEY}</code>
                 <Button size="sm" variant="secondary" onClick={copyPix} className="gap-1">
