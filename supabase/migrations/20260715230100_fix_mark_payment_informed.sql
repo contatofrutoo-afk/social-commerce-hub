@@ -46,6 +46,7 @@ END;
 $$;
 
 -- Versão com _method (usada pelo card de confirmação de pagamento)
+DROP FUNCTION IF EXISTS public.mark_payment_informed(text);
 CREATE OR REPLACE FUNCTION public.mark_payment_informed(_method text)
 RETURNS void
 LANGUAGE plpgsql
