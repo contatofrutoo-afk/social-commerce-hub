@@ -27,16 +27,16 @@ import {
 import qrMensalidade from "@/assets/qr-mensalidade-weaze.png.asset.json";
 import { Logo } from "@/components/logo";
 
-// Link de pagamento WEAZZE
+// Link de pagamento weaze
 const PIX_KEY = "https://mpago.la/17de55g";
 const PLAN_PRICE = "R$ 247/mês";
-const PLAN_NAME = "WEAZZE PRO";
+const PLAN_NAME = "weaze PRO";
 
 export const Route = createFileRoute("/_authenticated/payment")({
   ssr: false,
   component: PaymentPage,
   head: () => ({
-    meta: [{ title: "Finalize sua assinatura — WEAZZE" }],
+    meta: [{ title: "Finalize sua assinatura — weaze" }],
   }),
 });
 
@@ -124,7 +124,7 @@ function PaymentPage() {
         _method: selectedMethod,
       });
       if (error) throw error;
-      toast.success("Pagamento informado! Aguarde a confirmação da equipe WEAZZE.");
+      toast.success("Pagamento informado! Aguarde a confirmação da equipe weaze.");
       setMethodDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["my-role"] });
     } catch (err: any) {
@@ -158,7 +158,7 @@ function PaymentPage() {
       <StatusScreen
         icon={<ShieldAlert className="h-16 w-16 text-destructive" />}
         title="Seu acesso foi bloqueado temporariamente"
-        description="Seu acesso encontra-se indisponível. Entre em contato com a equipe WEAZZE para regularização."
+        description="Seu acesso encontra-se indisponível. Entre em contato com a equipe weaze para regularização."
         whatsappHref={whatsappHref}
         onSignOut={signOut}
       />
@@ -170,7 +170,7 @@ function PaymentPage() {
       <StatusScreen
         icon={<XCircle className="h-16 w-16 text-muted-foreground" />}
         title="Sua assinatura foi encerrada"
-        description="Para voltar a usar a WEAZZE, reative sua assinatura informando um novo pagamento."
+        description="Para voltar a usar a weaze, reative sua assinatura informando um novo pagamento."
         primaryAction={
           <Button size="lg" onClick={() => setMethodDialogOpen(true)} disabled={informing}>
             {informing ? "Enviando…" : "Reativar assinatura"}
@@ -207,7 +207,7 @@ function PaymentPage() {
             Seu cadastro foi realizado com sucesso
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Para liberar seu acesso à WEAZZE basta finalizar sua assinatura abaixo.
+            Para liberar seu acesso à weaze basta finalizar sua assinatura abaixo.
           </p>
         </div>
 
@@ -239,7 +239,7 @@ function PaymentPage() {
             <div className="mt-4 flex justify-center">
               <img
                 src={qrMensalidade.url}
-                alt="QR Code PIX WEAZZE"
+                alt="QR Code PIX weaze"
                 className="h-56 w-56 rounded-md border bg-white p-2"
               />
             </div>
@@ -313,7 +313,7 @@ function PaymentMethodDialog({
         <DialogHeader>
           <DialogTitle>Confirmar pagamento</DialogTitle>
           <DialogDescription>
-            Selecione o método utilizado. Após confirmar, sua solicitação entrará em análise pela equipe WEAZZE.
+            Selecione o método utilizado. Após confirmar, sua solicitação entrará em análise pela equipe weaze.
           </DialogDescription>
         </DialogHeader>
         <RadioGroup value={method} onValueChange={setMethod} className="grid grid-cols-2 gap-2 py-2">
