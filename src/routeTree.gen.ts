@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as CCompanySlugRouteImport } from './routes/c.$companySlug'
+import { Route as AuthenticatedPaymentRouteImport } from './routes/_authenticated.payment'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
@@ -63,6 +64,11 @@ const CCompanySlugRoute = CCompanySlugRouteImport.update({
   id: '/c/$companySlug',
   path: '/c/$companySlug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPaymentRoute = AuthenticatedPaymentRouteImport.update({
+  id: '/payment',
+  path: '/payment',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/payment': typeof AuthenticatedPaymentRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
   '/p/$slug': typeof PSlugRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/payment': typeof AuthenticatedPaymentRoute
   '/p/$slug': typeof PSlugRoute
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/payment': typeof AuthenticatedPaymentRoute
   '/c/$companySlug': typeof CCompanySlugRouteWithChildren
   '/p/$slug': typeof PSlugRoute
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin'
     | '/app'
+    | '/payment'
     | '/c/$companySlug'
     | '/p/$slug'
     | '/admin/configuracoes'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/payment'
     | '/p/$slug'
     | '/admin/configuracoes'
     | '/admin/empresas'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/payment'
     | '/c/$companySlug'
     | '/p/$slug'
     | '/_authenticated/admin/configuracoes'
@@ -432,6 +444,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/c/$companySlug'
       preLoaderRoute: typeof CCompanySlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/payment': {
+      id: '/_authenticated/payment'
+      path: '/payment'
+      fullPath: '/payment'
+      preLoaderRoute: typeof AuthenticatedPaymentRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app': {
       id: '/_authenticated/app'
@@ -676,11 +695,13 @@ const AuthenticatedAppRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedPaymentRoute: typeof AuthenticatedPaymentRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedPaymentRoute: AuthenticatedPaymentRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
