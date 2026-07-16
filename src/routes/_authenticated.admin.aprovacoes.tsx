@@ -190,10 +190,13 @@ function ApprovalsPage() {
                     <Button
                       size="sm"
                       disabled={busy}
-                      onClick={() => setStatus(c.id, "ativo")}
+                      onClick={() => setApprovingCompany(c)}
                       className="gap-1"
                     >
-                      <CheckCircle2 className="h-4 w-4" /> Liberar acesso
+                      <ShieldCheck className="h-4 w-4" />
+                      {c.status === "pagamento_em_analise"
+                        ? "Confirmar pagamento e liberar"
+                        : "Liberar acesso"}
                     </Button>
                   )}
                   {c.status === "pagamento_em_analise" && (
