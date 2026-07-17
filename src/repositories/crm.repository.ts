@@ -123,7 +123,7 @@ export const crmRepository = {
       supabase
         .from("customers")
         .select(
-          "id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at",
+          "id, company_id, name, whatsapp, avatar_url, gender, age_range, first_visit_at, last_visit_at, visit_count, created_at",
         )
         .eq("id", customerId)
         .maybeSingle(),
@@ -729,6 +729,8 @@ export const crmRepository = {
       name: customer.name,
       whatsapp: customer.whatsapp,
       avatarUrl: customer.avatar_url,
+      gender: customer.gender ?? null,
+      ageRange: customer.age_range ?? null,
       customerSince: customer.created_at,
 
       dislikeCount,

@@ -118,7 +118,7 @@ function InteligenciaPage() {
   const { data: customers } = useQuery({
     queryKey: ["customers-all", companyId],
     queryFn: async () => {
-      const { data } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("company_id", companyId!);
+      const { data } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, gender, age_range, first_visit_at, last_visit_at, visit_count, created_at").eq("company_id", companyId!);
       return data ?? [];
     },
     enabled: !!companyId,
@@ -600,6 +600,78 @@ function InteligenciaPage() {
     }));
   }, [periodCheckins, periodOrders]);
 
+  // ── Demographic analysis ──
+  const demographicAnalysis = useMemo(() => {
+    const genderCounts: Record<string, number> = {};
+    const ageRangeCounts: Record<string, number> = {};
+    const genderSpend: Record<string, number> = {};
+    const ageRangeSpend: Record<string, number> = {};
+    const genderOrders: Record<string, number> = {};
+    const ageRangeOrders: Record<string, number> = {};
+
+    (customers ?? []).forEach((c: any) => {
+      const g = c.gender || "nao_informado";
+      const a = c.age_range || "nao_informado";
+      genderCounts[g] = (genderCounts[g] ?? 0) + 1;
+      ageRangeCounts[a] = (ageRangeCounts[a] ?? 0) + 1;
+      genderSpend[g] = (genderSpend[g] ?? 0);
+      ageRangeSpend[a] = (ageRangeSpend[a] ?? 0);
+      genderOrders[g] = (genderOrders[g] ?? 0);
+      ageRangeOrders[a] = (ageRangeOrders[a] ?? 0);
+    });
+
+    periodOrders.forEach((o: any) => {
+      const customer = (customers ?? []).find((c: any) => c.id === o.customer_id);
+      if (!customer) return;
+      const g = customer.gender || "nao_informado";
+      const a = customer.age_range || "nao_informado";
+      genderSpend[g] = (genderSpend[g] ?? 0) + Number(o.total);
+      ageRangeSpend[a] = (ageRangeSpend[a] ?? 0) + Number(o.total);
+      genderOrders[g] = (genderOrders[g] ?? 0) + 1;
+      ageRangeOrders[a] = (ageRangeOrders[a] ?? 0) + 1;
+    });
+
+    const genderLabels: Record<string, string> = {
+      mulher: "Mulher",
+      homem: "Homem",
+      prefiro_nao_informar: "Prefiro não informar",
+      nao_informado: "Não informado",
+    };
+    const ageRangeLabels: Record<string, string> = {
+      ate_17: "Até 17 anos",
+      "18-24": "18–24 anos",
+      "25-34": "25–34 anos",
+      "35-44": "35–44 anos",
+      "45-54": "45–54 anos",
+      "55_mais": "55+ anos",
+      nao_informado: "Não informado",
+    };
+
+    const genderDistribution = Object.entries(genderCounts)
+      .map(([key, count]) => ({
+        key,
+        label: genderLabels[key] ?? key,
+        count,
+        avgSpend: genderOrders[key] > 0 ? genderSpend[key] / genderOrders[key] : 0,
+        totalSpend: genderSpend[key] ?? 0,
+        orders: genderOrders[key] ?? 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const ageRangeDistribution = Object.entries(ageRangeCounts)
+      .map(([key, count]) => ({
+        key,
+        label: ageRangeLabels[key] ?? key,
+        count,
+        avgSpend: ageRangeOrders[key] > 0 ? ageRangeSpend[key] / ageRangeOrders[key] : 0,
+        totalSpend: ageRangeSpend[key] ?? 0,
+        orders: ageRangeOrders[key] ?? 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return { genderDistribution, ageRangeDistribution };
+  }, [customers, periodOrders]);
+
   // ── Interest map ──
   const interestMap = useMemo(() => {
     if (!productRanking) return [];
@@ -1069,6 +1141,58 @@ function InteligenciaPage() {
           {contextAnalysis.length === 0 && (
             <p className="text-sm text-muted-foreground">Nenhum dado de contexto no período.</p>
           )}
+        </div>
+      </Section>
+
+      {/* Demographics */}
+      <Section title="Demografia dos clientes">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="mb-3 text-sm font-semibold">Distribuição por sexo</h3>
+            <div className="space-y-2">
+              {demographicAnalysis.genderDistribution.map((g) => {
+                const maxCount = Math.max(...demographicAnalysis.genderDistribution.map((x) => x.count), 1);
+                const pct = (g.count / maxCount) * 100;
+                return (
+                  <div key={g.key}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-medium">{g.label}</span>
+                      <span className="text-muted-foreground">{g.count} clientes · {formatBRL(g.avgSpend)} ticket médio</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {demographicAnalysis.genderDistribution.length === 0 && (
+                <p className="text-xs text-muted-foreground">Sem dados de sexo no período.</p>
+              )}
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <h3 className="mb-3 text-sm font-semibold">Distribuição por faixa etária</h3>
+            <div className="space-y-2">
+              {demographicAnalysis.ageRangeDistribution.map((a) => {
+                const maxCount = Math.max(...demographicAnalysis.ageRangeDistribution.map((x) => x.count), 1);
+                const pct = (a.count / maxCount) * 100;
+                return (
+                  <div key={a.key}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="font-medium">{a.label}</span>
+                      <span className="text-muted-foreground">{a.count} clientes · {formatBRL(a.avgSpend)} ticket médio</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-muted">
+                      <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {demographicAnalysis.ageRangeDistribution.length === 0 && (
+                <p className="text-xs text-muted-foreground">Sem dados de faixa etária no período.</p>
+              )}
+            </div>
+          </div>
         </div>
       </Section>
 

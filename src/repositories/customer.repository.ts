@@ -8,6 +8,8 @@ function map(r: any): Customer {
     name: r.name,
     whatsapp: r.whatsapp,
     avatarUrl: r.avatar_url,
+    gender: r.gender ?? null,
+    ageRange: r.age_range ?? null,
     firstVisitAt: r.first_visit_at,
     lastVisitAt: r.last_visit_at,
     visitCount: r.visit_count,
@@ -16,7 +18,7 @@ function map(r: any): Customer {
 
 export const customerRepository = {
   async findById(id: string): Promise<Customer | null> {
-    const { data, error } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("id", id).maybeSingle();
+    const { data, error } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, gender, age_range, first_visit_at, last_visit_at, visit_count, created_at").eq("id", id).maybeSingle();
     if (error) throw error;
     return data ? map(data) : null;
   },
@@ -40,7 +42,7 @@ export const customerRepository = {
   async listByCompany(companyId: string): Promise<Customer[]> {
     const { data, error } = await supabase
       .from("customers")
-      .select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at")
+      .select("id, company_id, name, whatsapp, avatar_url, gender, age_range, first_visit_at, last_visit_at, visit_count, created_at")
       .eq("company_id", companyId)
       .order("last_visit_at", { ascending: false });
     if (error) throw error;
@@ -52,11 +54,15 @@ export const customerRepository = {
     companyId: string;
     name: string;
     whatsapp: string;
+    gender?: string | null;
+    ageRange?: string | null;
   }): Promise<{ customerId: string; sessionToken: string }> {
     const { data, error } = await supabase.rpc("upsert_customer_visit", {
       _company_id: input.companyId,
       _name: input.name,
       _whatsapp: input.whatsapp,
+      _gender: input.gender ?? null,
+      _age_range: input.ageRange ?? null,
     });
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
@@ -68,7 +74,7 @@ export const customerRepository = {
   async updateSelf(
     customerId: string,
     token: string,
-    patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl">>,
+    patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl" | "gender" | "ageRange">>,
   ) {
     const { error } = await supabase.rpc("update_customer_self", {
       _customer_id: customerId,
@@ -76,6 +82,8 @@ export const customerRepository = {
       _name: (patch.name ?? null) as string,
       _whatsapp: (patch.whatsapp ?? null) as string,
       _avatar_url: (patch.avatarUrl ?? null) as string,
+      _gender: (patch.gender ?? null) as string,
+      _age_range: (patch.ageRange ?? null) as string,
     });
     if (error) throw error;
   },

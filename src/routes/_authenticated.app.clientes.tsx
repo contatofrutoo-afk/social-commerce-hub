@@ -114,6 +114,21 @@ const trendDescriptions: Record<string, string> = {
   inactive: "Cliente inativo — sem visitas recentes",
 };
 
+const genderLabels: Record<string, string> = {
+  mulher: "Mulher",
+  homem: "Homem",
+  prefiro_nao_informar: "Prefiro não informar",
+};
+
+const ageRangeLabels: Record<string, string> = {
+  ate_17: "Até 17 anos",
+  "18-24": "18–24 anos",
+  "25-34": "25–34 anos",
+  "35-44": "35–44 anos",
+  "45-54": "45–54 anos",
+  "55_mais": "55 anos ou mais",
+};
+
 // ======= MAIN PAGE =======
 
 function CustomersPage() {
@@ -363,6 +378,20 @@ function Bloco1({
           <p className="text-[11px] text-muted-foreground">
             Cliente desde {new Date(insights.customerSince).toLocaleDateString("pt-BR")}
           </p>
+          {(insights.gender || insights.ageRange) && (
+            <div className="flex items-center gap-2 mt-1">
+              {insights.gender && insights.gender !== "prefiro_nao_informar" && (
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium">
+                  {genderLabels[insights.gender] ?? insights.gender}
+                </span>
+              )}
+              {insights.ageRange && (
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium">
+                  {ageRangeLabels[insights.ageRange] ?? insights.ageRange}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

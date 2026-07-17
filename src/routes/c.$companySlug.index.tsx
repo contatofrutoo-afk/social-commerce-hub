@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { User, Heart, Users, Home } from "lucide-react";
+import { User, Heart, Users, Home, Mars, Venus, HelpCircle } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export const Route = createFileRoute("/c/$companySlug/")({
@@ -22,12 +22,29 @@ const contexts: { id: VisitContext; label: string; icon: any }[] = [
   { id: "familia", label: "Família", icon: Home },
 ];
 
+const genderOptions = [
+  { id: "mulher", label: "Mulher", icon: Venus },
+  { id: "homem", label: "Homem", icon: Mars },
+  { id: "prefiro_nao_informar", label: "Prefiro não informar", icon: HelpCircle },
+];
+
+const ageRangeOptions = [
+  { id: "ate_17", label: "Até 17 anos" },
+  { id: "18-24", label: "18–24 anos" },
+  { id: "25-34", label: "25–34 anos" },
+  { id: "35-44", label: "35–44 anos" },
+  { id: "45-54", label: "45–54 anos" },
+  { id: "55_mais", label: "55 anos ou mais" },
+];
+
 function CheckinPage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
+  const [gender, setGender] = useState<string | null>(null);
+  const [ageRange, setAgeRange] = useState<string | null>(null);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
@@ -86,6 +103,8 @@ function CheckinPage() {
           companyId: company.id,
           name: profile.name,
           whatsapp: profile.whatsapp,
+          gender: profile.gender,
+          ageRange: profile.ageRange,
         });
         setSession({
           customerId: upserted.customerId,
@@ -120,6 +139,8 @@ function CheckinPage() {
     if (existingCustomer) {
       setName(existingCustomer.name);
       setWhatsapp(existingCustomer.whatsapp);
+      if (existingCustomer.gender) setGender(existingCustomer.gender);
+      if (existingCustomer.ageRange) setAgeRange(existingCustomer.ageRange);
     }
   }, [existingCustomer]);
 
@@ -135,6 +156,8 @@ function CheckinPage() {
         companyId: company.id,
         name: nameValue,
         whatsapp: whatsappValue,
+        gender,
+        ageRange,
       });
       await checkinRepository.create({
         customerId: upserted.customerId,
@@ -150,7 +173,7 @@ function CheckinPage() {
         sessionToken: upserted.sessionToken,
         createdAt: Date.now(),
       });
-      setLastProfile({ name: nameValue, whatsapp: whatsappValue });
+      setLastProfile({ name: nameValue, whatsapp: whatsappValue, gender, ageRange });
     },
     onSuccess: () => {
       navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
@@ -226,6 +249,53 @@ function CheckinPage() {
                   >
                     <c.icon className="size-5" />
                     <span className="font-medium">{c.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <Label>Sexo <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {genderOptions.map((g) => {
+                const active = gender === g.id;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setGender(active ? null : g.id)}
+                    className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 text-left transition ${
+                      active
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    <g.icon className="size-4" />
+                    <span className="text-sm font-medium">{g.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <Label>Faixa etária <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {ageRangeOptions.map((a) => {
+                const active = ageRange === a.id;
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setAgeRange(active ? null : a.id)}
+                    className={`flex items-center justify-center rounded-xl border-2 p-3 text-left transition ${
+                      active
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{a.label}</span>
                   </button>
                 );
               })}

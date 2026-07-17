@@ -3,7 +3,7 @@
 const KEY = "weaze.session.v1";
 const PROFILE_KEY = "weaze.profile.v1";
 
-export type WeazeProfile = { name: string; whatsapp: string };
+export type WeazeProfile = { name: string; whatsapp: string; gender?: string | null; ageRange?: string | null };
 
 export function getLastProfile(): WeazeProfile | null {
   if (typeof window === "undefined") return null;

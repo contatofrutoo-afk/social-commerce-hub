@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { fileToBase64 } from "@/lib/file-utils";
 import { toast } from "sonner";
+import { Mars, Venus, HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
   component: ProfilePage,
@@ -29,14 +30,33 @@ function ProfilePage() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [gender, setGender] = useState<string | null>(null);
+  const [ageRange, setAgeRange] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadFile = useServerFn(uploadCustomerFile);
+
+  const genderOptions = [
+    { id: "mulher", label: "Mulher", icon: Venus },
+    { id: "homem", label: "Homem", icon: Mars },
+    { id: "prefiro_nao_informar", label: "Prefiro não informar", icon: HelpCircle },
+  ];
+
+  const ageRangeOptions = [
+    { id: "ate_17", label: "Até 17 anos" },
+    { id: "18-24", label: "18–24 anos" },
+    { id: "25-34", label: "25–34 anos" },
+    { id: "35-44", label: "35–44 anos" },
+    { id: "45-54", label: "45–54 anos" },
+    { id: "55_mais", label: "55 anos ou mais" },
+  ];
 
   useEffect(() => {
     if (customer) {
       setName(customer.name);
       setWhatsapp(customer.whatsapp);
       setAvatarUrl(customer.avatarUrl ?? "");
+      setGender(customer.gender ?? null);
+      setAgeRange(customer.ageRange ?? null);
     }
   }, [customer]);
 
@@ -73,6 +93,8 @@ function ProfilePage() {
         name,
         whatsapp,
         avatarUrl: avatarUrl || null,
+        gender,
+        ageRange,
       }),
     onSuccess: () => {
       toast.success("Perfil atualizado");
@@ -136,6 +158,54 @@ function ProfilePage() {
           <Label>WhatsApp</Label>
           <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} maxLength={20} />
         </div>
+
+        <div>
+          <Label>Sexo <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {genderOptions.map((g) => {
+              const active = gender === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGender(active ? null : g.id)}
+                  className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 text-left transition ${
+                    active
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <g.icon className="size-4" />
+                  <span className="text-sm font-medium">{g.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <Label>Faixa etária <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {ageRangeOptions.map((a) => {
+              const active = ageRange === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAgeRange(active ? null : a.id)}
+                  className={`flex items-center justify-center rounded-xl border-2 p-3 text-left transition ${
+                    active
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{a.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           Salvar
         </Button>

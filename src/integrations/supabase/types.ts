@@ -437,10 +437,12 @@ export type Database = {
       }
       customers: {
         Row: {
+          age_range: string | null
           avatar_url: string | null
           company_id: string
           created_at: string
           first_visit_at: string
+          gender: string | null
           id: string
           last_visit_at: string
           name: string
@@ -449,10 +451,12 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          age_range?: string | null
           avatar_url?: string | null
           company_id: string
           created_at?: string
           first_visit_at?: string
+          gender?: string | null
           id?: string
           last_visit_at?: string
           name: string
@@ -461,10 +465,12 @@ export type Database = {
           whatsapp: string
         }
         Update: {
+          age_range?: string | null
           avatar_url?: string | null
           company_id?: string
           created_at?: string
           first_visit_at?: string
+          gender?: string | null
           id?: string
           last_visit_at?: string
           name?: string
@@ -1241,8 +1247,10 @@ export type Database = {
       }
       update_customer_self: {
         Args: {
+          _age_range?: string
           _avatar_url: string
           _customer_id: string
+          _gender?: string
           _name: string
           _token: string
           _whatsapp: string
@@ -1250,7 +1258,7 @@ export type Database = {
         Returns: undefined
       }
       upsert_customer_visit: {
-        Args: { _company_id: string; _name: string; _whatsapp: string }
+        Args: { _age_range?: string; _company_id: string; _gender?: string; _name: string; _whatsapp: string }
         Returns: {
           customer_id: string
           session_token: string
