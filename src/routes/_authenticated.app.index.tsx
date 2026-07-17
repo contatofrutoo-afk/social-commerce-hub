@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -44,6 +44,7 @@ import {
   Hash,
   Activity,
   ChevronDown,
+  BrainCircuit,
 } from "lucide-react";
 import type { VisitContext } from "@/repositories";
 import { useState, useMemo } from "react";
@@ -544,7 +545,9 @@ function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Visão geral do seu negócio em tempo real.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Visão geral do seu negócio em tempo real.
+          </p>
         </div>
         <PeriodSelector current={period} onChange={setPeriod} />
       </div>
@@ -567,7 +570,6 @@ function DashboardPage() {
           </div>
         </div>
       )}
-
 
       {/* Linha 1 — KPIs */}
       <HideableSection
@@ -933,6 +935,29 @@ function DashboardPage() {
         )}
       </HideableSection>
 
+      {/* Persona Inteligente — Card promocional */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 place-items-center rounded-xl bg-primary/10">
+              <BrainCircuit className="size-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">Persona Inteligente</h3>
+              <p className="text-xs text-muted-foreground">
+                Conheça profundamente o perfil coletivo dos seus clientes
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/app/persona"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Ver análise completa
+          </Link>
+        </div>
+      </div>
+
       {/* Linha 7 — Últimas atividades */}
       <HideableSection
         id="activities"
@@ -1033,7 +1058,9 @@ function ActivityDot({ type }: { type: string }) {
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="dash-card p-5">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{title}</h3>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        {title}
+      </h3>
       {children}
     </div>
   );
@@ -1120,7 +1147,9 @@ function KpiCard({
     <div className="dash-card group relative overflow-hidden p-5 hover:dash-card-hover">
       <div className="pointer-events-none absolute -right-8 -top-8 size-24 rounded-full bg-primary/5 blur-2xl transition-opacity group-hover:opacity-100" />
       <div className="relative flex items-start justify-between">
-        <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{label}</span>
+        <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          {label}
+        </span>
         <span className="grid size-9 place-items-center rounded-xl kpi-accent">
           <Icon className="size-4" />
         </span>
@@ -1138,12 +1167,15 @@ function KpiCard({
 function ComparisonBadge({ pct, dir }: { pct: number; dir: "up" | "down" | "flat" }) {
   if (dir === "flat") return <span className="text-xs text-muted-foreground">— sem alteração</span>;
   const Icon = dir === "up" ? ArrowUp : ArrowDown;
-  const badge = dir === "up"
-    ? "text-green-700 bg-green-500/10 border-green-500/20"
-    : "text-destructive bg-destructive/10 border-destructive/20";
+  const badge =
+    dir === "up"
+      ? "text-green-700 bg-green-500/10 border-green-500/20"
+      : "text-destructive bg-destructive/10 border-destructive/20";
   return (
     <span className="inline-flex items-center gap-1 text-xs">
-      <span className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 font-semibold ${badge}`}>
+      <span
+        className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 font-semibold ${badge}`}
+      >
         <Icon className="size-3" />
         {pctStr(pct)}
       </span>
@@ -1178,11 +1210,12 @@ function CustomerTile({
         <Icon className="size-4" />
       </div>
       <div className="mt-3 number-display text-2xl">{value}</div>
-      <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }
-
 
 // ─── Hideable section (card with ⋮ menu) ───
 

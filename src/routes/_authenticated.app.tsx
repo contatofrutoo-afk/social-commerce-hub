@@ -13,6 +13,7 @@ import {
   LogOut,
   QrCode,
   ChartColumn,
+  BrainCircuit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -36,7 +37,11 @@ function AppLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: role, refetch: refetchRole, isLoading: roleLoading } = useQuery({
+  const {
+    data: role,
+    refetch: refetchRole,
+    isLoading: roleLoading,
+  } = useQuery({
     queryKey: ["my-role"],
     queryFn: async () => {
       const { data } = await supabase
@@ -74,7 +79,11 @@ function AppLayout() {
     }
   }, [role, refetchRole, queryClient]);
 
-  const { data: companyStatus, isLoading: statusLoading, isError: statusError } = useQuery({
+  const {
+    data: companyStatus,
+    isLoading: statusLoading,
+    isError: statusError,
+  } = useQuery({
     queryKey: ["company-status-block", role?.company_id],
     queryFn: async () => {
       if (!role?.company_id) return null;
@@ -117,11 +126,7 @@ function AppLayout() {
 
   // Se status exige gate de pagamento, não renderiza o painel enquanto o
   // useEffect faz o redirect para /payment.
-  if (
-    !isSuperAdmin &&
-    companyStatus?.status &&
-    PAYMENT_GATE_STATUSES.has(companyStatus.status)
-  ) {
+  if (!isSuperAdmin && companyStatus?.status && PAYMENT_GATE_STATUSES.has(companyStatus.status)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
         <div className="text-sm text-muted-foreground">Redirecionando…</div>
@@ -129,10 +134,10 @@ function AppLayout() {
     );
   }
 
-
   const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },
     { to: "/app/clientes", label: "Clientes", icon: Users },
+    { to: "/app/persona", label: "Persona Inteligente", icon: BrainCircuit },
     { to: "/app/feed", label: "Publicações", icon: Newspaper },
     { to: "/app/produtos", label: "Produtos", icon: Package },
     { to: "/app/catalogo", label: "Catálogo Inteligente", icon: QrCode },
@@ -199,9 +204,7 @@ function AppLayout() {
 
       {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/85 backdrop-blur-xl px-4 py-3 md:hidden">
-        <span className="truncate text-sm font-semibold">
-          {role?.company?.name ?? ""}
-        </span>
+        <span className="truncate text-sm font-semibold">{role?.company?.name ?? ""}</span>
       </div>
 
       <main className="flex-1 overflow-x-hidden p-6 pt-20 md:pt-6">
@@ -211,9 +214,7 @@ function AppLayout() {
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-10 grid grid-cols-6 border-t bg-card/95 backdrop-blur-xl md:hidden">
         {nav.slice(0, 6).map((n) => {
-          const active = n.exact
-            ? location.pathname === n.to
-            : location.pathname.startsWith(n.to);
+          const active = n.exact ? location.pathname === n.to : location.pathname.startsWith(n.to);
           return (
             <Link
               key={n.to}
