@@ -9,21 +9,15 @@ import {
   Clock,
   Calendar,
   ShoppingCart,
-  Package,
-  Eye,
   Heart,
   MessageCircle,
   Share2,
   Crown,
-  UserPlus,
-  Activity,
   Target,
   Zap,
   AlertTriangle,
   Sparkles,
   Lightbulb,
-  BarChart3,
-  ScanLine,
   Star,
   Repeat,
   UserCheck,
@@ -129,23 +123,6 @@ const DAY_NAMES = [
   "sexta-feira",
   "sábado",
 ];
-const DAY_NAMES_SHORT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
-
-function mode<T>(arr: T[]): T | null {
-  if (arr.length === 0) return null;
-  const counts = new Map<T, number>();
-  arr.forEach((v) => counts.set(v, (counts.get(v) ?? 0) + 1));
-  let max = 0;
-  let result: T | null = null;
-  counts.forEach((c, v) => {
-    if (c > max) {
-      max = c;
-      result = v;
-    }
-  });
-  return result;
-}
-
 function PersonaInteligentePage() {
   const companyId = useCompanyId();
   const [period, setPeriod] = useState<PeriodKey>("30d");
@@ -216,15 +193,6 @@ function PersonaInteligentePage() {
         .from("comments")
         .select("customer_id, text, post:posts!inner(company_id)")
         .eq("post.company_id", companyId!);
-      return data ?? [];
-    },
-    enabled: !!companyId,
-  });
-
-  const { data: allReactions } = useQuery({
-    queryKey: ["persona-reactions", companyId],
-    queryFn: async () => {
-      const { data } = await supabase.from("post_reactions").select("customer_id, type");
       return data ?? [];
     },
     enabled: !!companyId,
