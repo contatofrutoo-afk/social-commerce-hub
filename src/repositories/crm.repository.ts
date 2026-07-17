@@ -122,7 +122,9 @@ export const crmRepository = {
     const results = await Promise.allSettled([
       supabase
         .from("customers")
-        .select("*")
+        .select(
+          "id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at",
+        )
         .eq("id", customerId)
         .maybeSingle(),
       supabase
@@ -792,7 +794,9 @@ export const crmRepository = {
       await Promise.all([
         supabase
           .from("customers")
-          .select("*")
+          .select(
+            "id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at",
+          )
           .eq("id", customerId)
           .single(),
         supabase

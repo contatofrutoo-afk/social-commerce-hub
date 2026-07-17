@@ -18,7 +18,7 @@ function map(r: any): Customer {
 
 export const customerRepository = {
   async findById(id: string): Promise<Customer | null> {
-    const { data, error } = await supabase.from("customers").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("id", id).maybeSingle();
     if (error) throw error;
     return data ? map(data) : null;
   },
@@ -42,7 +42,7 @@ export const customerRepository = {
   async listByCompany(companyId: string): Promise<Customer[]> {
     const { data, error } = await supabase
       .from("customers")
-      .select("*")
+      .select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at")
       .eq("company_id", companyId)
       .order("last_visit_at", { ascending: false });
     if (error) throw error;
