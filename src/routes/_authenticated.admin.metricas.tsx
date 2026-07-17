@@ -285,7 +285,7 @@ async function fetchAllData(): Promise<RawData> {
     supabase.from("post_reactions").select("*"),
     supabase.from("comments").select("*"),
     supabase.from("products").select("*"),
-    supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at"),
+    supabase.from("customers").select("*"),
     supabase.from("company_licenses").select("*"),
     supabase.from("tables").select("*"),
     supabase.from("order_items").select("*"),
