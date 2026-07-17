@@ -446,7 +446,7 @@ export const dashboardRepository = {
       postsResult,
       commentsResult,
     ] = await Promise.all([
-      supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("company_id", companyId),
+      supabase.from("customers").select("*").eq("company_id", companyId),
       supabase.from("checkins").select("context, source, created_at, customer_id").eq("company_id", companyId),
       supabase.from("orders").select("total, created_at, customer_id").eq("company_id", companyId),
       supabase.from("posts").select("id").eq("company_id", companyId),
@@ -568,7 +568,7 @@ export const dashboardRepository = {
     const insights: Insight[] = [];
 
     const [customersResult, ordersResult, productsResult] = await Promise.all([
-      supabase.from("customers").select("id, name, visit_count, last_visit_at").eq("company_id", companyId),
+      supabase.from("customers").select("*").eq("company_id", companyId),
       supabase.from("orders").select("customer_id, total, created_at").eq("company_id", companyId),
       supabase
         .from("products")

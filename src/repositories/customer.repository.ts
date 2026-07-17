@@ -18,7 +18,7 @@ function map(r: any): Customer {
 
 export const customerRepository = {
   async findById(id: string): Promise<Customer | null> {
-    const { data, error } = await supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, gender, age_range, first_visit_at, last_visit_at, visit_count, created_at").eq("id", id).maybeSingle();
+    const { data, error } = await supabase.from("customers").select("*").eq("id", id).maybeSingle();
     if (error) throw error;
     return data ? map(data) : null;
   },
@@ -42,7 +42,7 @@ export const customerRepository = {
   async listByCompany(companyId: string): Promise<Customer[]> {
     const { data, error } = await supabase
       .from("customers")
-      .select("id, company_id, name, whatsapp, avatar_url, gender, age_range, first_visit_at, last_visit_at, visit_count, created_at")
+      .select("*")
       .eq("company_id", companyId)
       .order("last_visit_at", { ascending: false });
     if (error) throw error;
@@ -61,8 +61,8 @@ export const customerRepository = {
       _company_id: input.companyId,
       _name: input.name,
       _whatsapp: input.whatsapp,
-      _gender: input.gender ?? null,
-      _age_range: input.ageRange ?? null,
+      _gender: input.gender ?? undefined,
+      _age_range: input.ageRange ?? undefined,
     });
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
