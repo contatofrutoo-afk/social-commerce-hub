@@ -47,6 +47,31 @@ function PublishPage() {
   const [text, setText] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [companions, setCompanions] = useState<VisitContext | null>(null);
+  const uploadFile = useServerFn(uploadCustomerFile);
+
+  const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+  const VIDEO_MIMES = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"] as const;
+
+  const handleUpload = async (file: File): Promise<{ url: string; kind: "image" | "video" }> => {
+    if (!company || !session) throw new Error("Sessão inválida");
+    const isVideo = (VIDEO_MIMES as readonly string[]).includes(file.type);
+    const isImage = (IMAGE_MIMES as readonly string[]).includes(file.type);
+    if (!isImage && !isVideo) throw new Error("Formato não suportado");
+    const base64 = await fileToBase64(file);
+    const { url } = await uploadFile({
+      data: {
+        customerId: session.customerId,
+        sessionToken: session.sessionToken,
+        kind: "post",
+        companyId: company.id,
+        mimeType: file.type as (typeof IMAGE_MIMES)[number] | (typeof VIDEO_MIMES)[number],
+        fileName: file.name,
+        base64,
+      },
+    });
+    return { url, kind: isVideo ? "video" : "image" };
+  };
+
 
   const publish = useMutation({
     mutationFn: async () => {
