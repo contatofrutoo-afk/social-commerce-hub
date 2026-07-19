@@ -142,10 +142,10 @@ function AuthPage() {
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
               <ArrowLeft className="size-4" /> Voltar
             </Link>
-            <Logo className="h-6" />
+            <Logo className="h-14" />
           </div>
           <div className="mb-8 hidden lg:block">
-            <Logo className="h-8" />
+            <Logo className="h-20" />
           </div>
 
           <h1 className="font-display text-3xl font-extrabold tracking-tight">
