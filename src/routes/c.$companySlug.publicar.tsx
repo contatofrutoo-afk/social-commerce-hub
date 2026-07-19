@@ -1,18 +1,32 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { companyRepository, postRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
 import { getSessionForCompany } from "@/lib/session";
+import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MediaUpload } from "@/components/media-upload";
 import { toast } from "sonner";
 
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 export const Route = createFileRoute("/c/$companySlug/publicar")({
   component: PublishPage,
 });
+
 
 const contexts: VisitContext[] = ["sozinho", "casal", "amigos", "familia"];
 const categories = ["Prato", "Bebida", "Momento", "Pet", "Amigos", "Família"];
@@ -33,6 +47,31 @@ function PublishPage() {
   const [text, setText] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [companions, setCompanions] = useState<VisitContext | null>(null);
+  const uploadFile = useServerFn(uploadCustomerFile);
+
+  const IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+  const VIDEO_MIMES = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"] as const;
+
+  const handleUpload = async (file: File): Promise<{ url: string; kind: "image" | "video" }> => {
+    if (!company || !session) throw new Error("Sessão inválida");
+    const isVideo = (VIDEO_MIMES as readonly string[]).includes(file.type);
+    const isImage = (IMAGE_MIMES as readonly string[]).includes(file.type);
+    if (!isImage && !isVideo) throw new Error("Formato não suportado");
+    const base64 = await fileToBase64(file);
+    const { url } = await uploadFile({
+      data: {
+        customerId: session.customerId,
+        sessionToken: session.sessionToken,
+        kind: "post",
+        companyId: company.id,
+        mimeType: file.type as (typeof IMAGE_MIMES)[number] | (typeof VIDEO_MIMES)[number],
+        fileName: file.name,
+        base64,
+      },
+    });
+    return { url, kind: isVideo ? "video" : "image" };
+  };
+
 
   const publish = useMutation({
     mutationFn: async () => {
@@ -77,9 +116,10 @@ function PublishPage() {
             setImageUrl(i);
             setVideoUrl(v);
           }}
-          folder={`publicar/${companySlug}`}
+          uploadFn={handleUpload}
           className="mt-1.5"
         />
+
       </div>
       <div>
         <Label>Conte como está sendo</Label>
