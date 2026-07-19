@@ -116,9 +116,10 @@ function PublishPage() {
             setImageUrl(i);
             setVideoUrl(v);
           }}
-          folder={`publicar/${companySlug}`}
+          uploadFn={handleUpload}
           className="mt-1.5"
         />
+
       </div>
       <div>
         <Label>Conte como está sendo</Label>
