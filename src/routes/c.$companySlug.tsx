@@ -64,7 +64,7 @@ function ClientLayout() {
             </div>
           </Link>
           <Link to="/c/$companySlug/perfil" params={{ companySlug }}>
-            <Logo className="h-24" />
+            <Logo className="h-16 sm:h-20" />
           </Link>
         </div>
       </header>
