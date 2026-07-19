@@ -159,52 +159,6 @@ function ProfilePage() {
           <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} maxLength={20} />
         </div>
 
-        <div>
-          <Label>Sexo <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {genderOptions.map((g) => {
-              const active = gender === g.id;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => setGender(active ? null : g.id)}
-                  className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 text-left transition ${
-                    active
-                      ? "border-primary bg-accent text-accent-foreground"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  <g.icon className="size-4" />
-                  <span className="text-sm font-medium">{g.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div>
-          <Label>Faixa etária <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {ageRangeOptions.map((a) => {
-              const active = ageRange === a.id;
-              return (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => setAgeRange(active ? null : a.id)}
-                  className={`flex items-center justify-center rounded-xl border-2 p-3 text-left transition ${
-                    active
-                      ? "border-primary bg-accent text-accent-foreground"
-                      : "border-border hover:bg-muted"
-                  }`}
-                >
-                  <span className="text-sm font-medium">{a.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           Salvar
