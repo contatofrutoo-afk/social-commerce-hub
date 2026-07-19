@@ -1,18 +1,32 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { companyRepository, postRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
 import { getSessionForCompany } from "@/lib/session";
+import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { MediaUpload } from "@/components/media-upload";
 import { toast } from "sonner";
 
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 export const Route = createFileRoute("/c/$companySlug/publicar")({
   component: PublishPage,
 });
+
 
 const contexts: VisitContext[] = ["sozinho", "casal", "amigos", "familia"];
 const categories = ["Prato", "Bebida", "Momento", "Pet", "Amigos", "Família"];
