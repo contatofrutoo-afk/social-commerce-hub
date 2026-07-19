@@ -17,9 +17,14 @@ interface MediaUploadProps {
   onChange: (val: { imageUrl: string | null; videoUrl: string | null }) => void;
   folder?: string;
   className?: string;
+  /**
+   * Upload alternativo. Se fornecido, o componente delega o envio a esta função
+   * (útil para uploads verificados via server function). Retorna a URL final.
+   */
+  uploadFn?: (file: File) => Promise<{ url: string; kind: MediaKind }>;
 }
 
-export function MediaUpload({ imageUrl, videoUrl, onChange, folder = "general", className }: MediaUploadProps) {
+export function MediaUpload({ imageUrl, videoUrl, onChange, folder = "general", className, uploadFn }: MediaUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [kind, setKind] = useState<MediaKind>(videoUrl ? "video" : "image");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,15 +49,23 @@ export function MediaUpload({ imageUrl, videoUrl, onChange, folder = "general", 
     }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? (isVideo ? "mp4" : "jpg");
-      const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("weaze-media").upload(path, file, {
-        contentType: file.type,
-      });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage.from("weaze-media").getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-      if (isVideo) {
+      let publicUrl: string;
+      let resolvedKind: MediaKind = isVideo ? "video" : "image";
+      if (uploadFn) {
+        const res = await uploadFn(file);
+        publicUrl = res.url;
+        resolvedKind = res.kind;
+      } else {
+        const ext = file.name.split(".").pop() ?? (isVideo ? "mp4" : "jpg");
+        const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from("weaze-media").upload(path, file, {
+          contentType: file.type,
+        });
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from("weaze-media").getPublicUrl(path);
+        publicUrl = urlData.publicUrl;
+      }
+      if (resolvedKind === "video") {
         onChange({ imageUrl: null, videoUrl: publicUrl });
         setKind("video");
       } else {
@@ -65,6 +78,7 @@ export function MediaUpload({ imageUrl, videoUrl, onChange, folder = "general", 
       setUploading(false);
     }
   }
+
 
   function handleRemove() {
     onChange({ imageUrl: null, videoUrl: null });
