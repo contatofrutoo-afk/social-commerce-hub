@@ -1117,10 +1117,12 @@ export type Database = {
       get_customer_self: {
         Args: { _customer_id: string; _token: string }
         Returns: {
+          age_range: string | null
           avatar_url: string | null
           company_id: string
           created_at: string
           first_visit_at: string
+          gender: string | null
           id: string
           last_visit_at: string
           name: string
@@ -1258,7 +1260,13 @@ export type Database = {
         Returns: undefined
       }
       upsert_customer_visit: {
-        Args: { _age_range?: string; _company_id: string; _gender?: string; _name: string; _whatsapp: string }
+        Args: {
+          _age_range?: string
+          _company_id: string
+          _gender?: string
+          _name: string
+          _whatsapp: string
+        }
         Returns: {
           customer_id: string
           session_token: string
