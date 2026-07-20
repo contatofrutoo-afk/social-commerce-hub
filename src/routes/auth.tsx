@@ -138,14 +138,14 @@ function AuthPage() {
       {/* Right form panel */}
       <div className="flex items-center justify-center bg-background p-6">
         <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center justify-between lg:hidden">
+          <div className="mb-10 flex items-center justify-between lg:hidden">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
               <ArrowLeft className="size-4" /> Voltar
             </Link>
-            <Logo className="h-14" />
-          </div>
-          <div className="mb-8 hidden lg:block">
             <Logo className="h-20" />
+          </div>
+          <div className="mb-10 hidden lg:block">
+            <Logo className="h-28" />
           </div>
 
           <h1 className="font-display text-3xl font-extrabold tracking-tight">
