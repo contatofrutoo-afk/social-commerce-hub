@@ -318,7 +318,7 @@ export function LojaView({ companyId }: { companyId: string }) {
               >
                 <div className="relative shrink-0">
                   {avatar ? (
-                    <img src={avatar} alt="" className="size-10 rounded-full object-cover" />
+                    <img src={optimizedImageUrl(avatar, 40)} alt="" loading="lazy" decoding="async" className="size-10 rounded-full object-cover" />
                   ) : (
                     <div className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                       {name.charAt(0).toUpperCase()}
