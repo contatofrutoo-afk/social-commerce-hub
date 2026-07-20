@@ -13,6 +13,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { fileToBase64 } from "@/lib/file-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { optimizedImageUrl } from "@/lib/image-url";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
