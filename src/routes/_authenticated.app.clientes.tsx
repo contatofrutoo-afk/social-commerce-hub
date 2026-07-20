@@ -207,7 +207,7 @@ function CustomersPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="relative shrink-0">
                     {c.avatarUrl ? (
-                      <img src={c.avatarUrl} alt="" className="size-8 rounded-full object-cover" />
+                      <img src={optimizedImageUrl(c.avatarUrl, 32)} alt="" loading="lazy" decoding="async" className="size-8 rounded-full object-cover" />
                     ) : (
                       <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                         {c.name.charAt(0).toUpperCase()}
