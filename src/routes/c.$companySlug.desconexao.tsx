@@ -32,8 +32,8 @@ function DesconexaoPage() {
         </h1>
 
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Sua sessão foi encerrada. Para acessar novamente, basta ler o{" "}
-          <strong>QR code</strong> no estabelecimento.
+          Sua sessão foi encerrada. Para acessar novamente, escaneie o{" "}
+          <strong>QR code</strong> ou acesse pelo <strong>link</strong> fornecido pelo estabelecimento.
         </p>
 
         <div className="pt-4">
