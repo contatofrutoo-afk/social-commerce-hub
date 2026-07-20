@@ -160,6 +160,7 @@ function CustomersPage() {
     queryKey: ["present", companyId],
     queryFn: () => checkinRepository.listPresentByCompany(companyId!),
     enabled: !!companyId,
+    refetchInterval: 15000,
   });
 
   const presentCustomerIds = new Set((present ?? []).map((p: any) => p.customer_id));
@@ -236,7 +237,7 @@ function CustomersPage() {
                     )}
                     <span
                       className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background ${
-                        isPresent(c.lastVisitAt) ? "bg-green-500" : "bg-gray-400"
+                        presentCustomerIds.has(c.id) ? "bg-green-500" : "bg-gray-400"
                       }`}
                     />
                   </div>
