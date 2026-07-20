@@ -173,6 +173,7 @@ export function MesasView({ companyId }: { companyId: string }) {
           tableLabel={selectedCheckin.table?.label}
           context={selectedCheckin.context}
           mode="mesas"
+          onCheckout={() => setSelectedCheckin(null)}
         />
       </div>
     );
@@ -286,6 +287,10 @@ export function LojaView({ companyId }: { companyId: string }) {
       qc.invalidateQueries({ queryKey: ["present", companyId] });
       setSelectedCheckin(null);
     },
+    onError: (err: any) => {
+      console.error("[checkout]", err);
+      alert("Erro ao fazer checkout: " + (err?.message ?? "tente novamente"));
+    },
   });
 
   if (selectedCheckin) {
@@ -303,6 +308,7 @@ export function LojaView({ companyId }: { companyId: string }) {
           checkinAt={selectedCheckin.created_at}
           context={selectedCheckin.context}
           mode="loja"
+          onCheckout={() => setSelectedCheckin(null)}
         />
       </div>
     );
@@ -387,6 +393,7 @@ export function CustomerPanel({
   tableLabel,
   context,
   mode,
+  onCheckout,
 }: {
   companyId: string;
   customerId: string;
@@ -394,6 +401,7 @@ export function CustomerPanel({
   tableLabel?: string;
   context?: string;
   mode: "mesas" | "loja";
+  onCheckout?: () => void;
 }) {
   const qc = useQueryClient();
   const { data: p, isError } = useQuery({
@@ -405,6 +413,11 @@ export function CustomerPanel({
     mutationFn: () => checkinRepository.checkout(customerId, companyId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["present", companyId] });
+      onCheckout?.();
+    },
+    onError: (err: any) => {
+      console.error("[checkout]", err);
+      alert("Erro ao fazer checkout: " + (err?.message ?? "tente novamente"));
     },
   });
 

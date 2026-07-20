@@ -182,6 +182,10 @@ function CustomersPage() {
       queryClient.invalidateQueries({ queryKey: ["present", companyId] });
       queryClient.invalidateQueries({ queryKey: ["customers", companyId] });
     },
+    onError: (err: any) => {
+      console.error("[checkout]", err);
+      alert("Erro ao fazer checkout: " + (err?.message ?? "tente novamente"));
+    },
   });
 
   const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
