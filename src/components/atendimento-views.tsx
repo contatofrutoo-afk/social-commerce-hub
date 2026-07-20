@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { tableRepository, checkinRepository, crmRepository } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
+import { optimizedImageUrl } from "@/lib/image-url";
 import {
   User,
   Heart,
