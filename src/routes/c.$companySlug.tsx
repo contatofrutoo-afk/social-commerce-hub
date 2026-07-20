@@ -63,10 +63,10 @@ function ClientLayout() {
               </div>
             )}
             <div className="min-w-0">
-              <div className="truncate font-poppins text-sm font-bold">
-                {company?.name ?? "Estabelecimento"}
+              <div className="truncate font-poppins text-sm font-bold" translate="no">
+                {company?.name || "\u00A0"}
               </div>
-              <div className="font-poppins text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="font-poppins text-[10px] uppercase tracking-widest text-muted-foreground" translate="no">
                 by WEAZE
               </div>
             </div>
