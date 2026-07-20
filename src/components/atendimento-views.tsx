@@ -397,7 +397,7 @@ export function CustomerPanel({
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-start gap-3">
           {p.avatarUrl ? (
-            <img src={p.avatarUrl} alt="" className="size-12 rounded-full object-cover shrink-0" />
+            <img src={optimizedImageUrl(p.avatarUrl, 48)} alt="" loading="lazy" decoding="async" className="size-12 rounded-full object-cover shrink-0" />
           ) : (
             <div className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
               {p.name.charAt(0).toUpperCase()}
