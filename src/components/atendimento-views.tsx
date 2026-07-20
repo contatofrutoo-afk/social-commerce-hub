@@ -223,7 +223,7 @@ export function MesasView({ companyId }: { companyId: string }) {
                     >
                       <div className="relative shrink-0">
                         {avatar ? (
-                          <img src={avatar} alt="" className="size-8 rounded-full object-cover" />
+                          <img src={optimizedImageUrl(avatar, 32)} alt="" loading="lazy" decoding="async" className="size-8 rounded-full object-cover" />
                         ) : (
                           <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                             {name.charAt(0).toUpperCase()}
