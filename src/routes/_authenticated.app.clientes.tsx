@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { customerRepository, crmRepository } from "@/repositories";
+import { customerRepository, crmRepository, checkinRepository } from "@/repositories";
 import type { CustomerInsights, TimelineEvent, ProductInteraction } from "@/repositories/types";
 import { useState } from "react";
 import { formatBRL, relativeTime } from "@/lib/format";
@@ -37,6 +37,7 @@ import {
   Minus,
   Trash2,
   Flame,
+  LogOut,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/clientes")({
@@ -155,6 +156,14 @@ function CustomersPage() {
     enabled: !!companyId,
   });
 
+  const { data: present } = useQuery({
+    queryKey: ["present", companyId],
+    queryFn: () => checkinRepository.listPresentByCompany(companyId!),
+    enabled: !!companyId,
+  });
+
+  const presentCustomerIds = new Set((present ?? []).map((p: any) => p.customer_id));
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => customerRepository.delete(id),
     onSuccess: (_data, id) => {
@@ -164,6 +173,14 @@ function CustomersPage() {
     },
     onError: () => {
       setDeletingId(null);
+    },
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: (customerId: string) => checkinRepository.checkout(customerId, companyId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["present", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["customers", companyId] });
     },
   });
 
@@ -231,6 +248,21 @@ function CustomersPage() {
                   </div>
                 </div>
               </button>
+              {presentCustomerIds.has(c.id) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Fazer checkout de "${c.name}"? O cliente será desconectado.`)) {
+                      checkoutMutation.mutate(c.id);
+                    }
+                  }}
+                  disabled={checkoutMutation.isPending}
+                  className="ml-1 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100 disabled:opacity-50"
+                  title="Checkout — desconectar cliente"
+                >
+                  <LogOut className="size-4" />
+                </button>
+              )}
               <button
                 onClick={(e) => handleDelete(e, c.id, c.name)}
                 disabled={deletingId === c.id}

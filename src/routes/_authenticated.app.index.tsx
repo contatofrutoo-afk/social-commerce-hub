@@ -218,7 +218,7 @@ function DashboardPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("checkins")
-        .select("context, source, created_at, customer_id, customer:customers(name)")
+        .select("context, source, created_at, customer_id, checked_out_at, customer:customers(name)")
         .eq("company_id", companyId!)
         .order("created_at", { ascending: false });
       return data ?? [];
@@ -461,6 +461,18 @@ function DashboardPage() {
     return { contexts, hours, days };
   }, [allCheckins, pStart, pEnd]);
 
+  // Check-in duration (average time between created_at and checked_out_at)
+  const avgDuration = useMemo(() => {
+    const checkedOut = (allCheckins ?? []).filter(
+      (c: any) => c.checked_out_at && inRange(c.created_at, pStart, pEnd),
+    );
+    if (checkedOut.length === 0) return null;
+    const totalMs = checkedOut.reduce((sum: number, c: any) => {
+      return sum + (new Date(c.checked_out_at).getTime() - new Date(c.created_at).getTime());
+    }, 0);
+    return Math.round(totalMs / checkedOut.length / 60000); // minutes
+  }, [allCheckins, pStart, pEnd]);
+
   // Enhanced insights (period-aware)
   const enhancedInsights = useMemo(() => {
     const list: { type: "alert" | "positive" | "info"; title: string; description: string }[] = [];
@@ -579,7 +591,7 @@ function DashboardPage() {
         title="Métricas principais"
       >
         {periodData ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <KpiCard
               icon={UserCheck}
               label="Clientes ativos"
@@ -606,9 +618,17 @@ function DashboardPage() {
               prevValue={periodData.prevTicket}
               format="brl"
             />
+            <KpiCard
+              icon={Clock}
+              label="Tempo médio"
+              value={avgDuration ?? 0}
+              format="min"
+              subtitle={avgDuration != null ? "min por visita" : "Sem dados de checkout"}
+            />
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -1132,14 +1152,16 @@ function KpiCard({
   value,
   prevValue,
   format,
+  subtitle,
 }: {
   icon: any;
   label: string;
   value: number;
   prevValue?: number;
-  format?: "brl";
+  format?: "brl" | "min";
+  subtitle?: string;
 }) {
-  const display = format === "brl" ? formatBRL(value) : String(value);
+  const display = format === "brl" ? formatBRL(value) : format === "min" ? `${value}min` : String(value);
   const prevNumber = prevValue ?? 0;
   const comp = computeChange(value, prevNumber);
 
@@ -1155,8 +1177,11 @@ function KpiCard({
         </span>
       </div>
       <div className="relative mt-3 number-display text-3xl">{display}</div>
+      {subtitle && (
+        <div className="relative mt-1 text-xs text-muted-foreground">{subtitle}</div>
+      )}
       <div className="relative mt-2">
-        <ComparisonBadge {...comp} />
+        {prevValue != null ? <ComparisonBadge {...comp} /> : <span className="text-xs text-muted-foreground">—</span>}
       </div>
     </div>
   );

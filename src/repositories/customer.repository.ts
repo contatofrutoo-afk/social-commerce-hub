@@ -181,4 +181,16 @@ export const checkinRepository = {
     }));
   },
 
+  /** Checkout: registra saída do cliente e invalida sessão (rotaciona token). */
+  async checkout(customerId: string, companyId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Não autenticado");
+    const { error } = await supabase.rpc("checkout_customer" as any, {
+      _staff_user_id: user.id,
+      _company_id: companyId,
+      _customer_id: customerId,
+    });
+    if (error) throw error;
+  },
+
 };

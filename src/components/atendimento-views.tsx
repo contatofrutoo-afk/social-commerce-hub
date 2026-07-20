@@ -167,6 +167,7 @@ export function MesasView({ companyId }: { companyId: string }) {
           <ChevronRight className="size-3 rotate-180" /> Voltar para mesas
         </button>
         <CustomerPanel
+          companyId={companyId}
           customerId={selectedCheckin.customer_id}
           checkinAt={selectedCheckin.created_at}
           tableLabel={selectedCheckin.table?.label}
@@ -279,6 +280,14 @@ export function LojaView({ companyId }: { companyId: string }) {
     },
   });
 
+  const checkoutCustomer = useMutation({
+    mutationFn: (customerId: string) => checkinRepository.checkout(customerId, companyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["present", companyId] });
+      setSelectedCheckin(null);
+    },
+  });
+
   if (selectedCheckin) {
     return (
       <div className="mt-4">
@@ -289,6 +298,7 @@ export function LojaView({ companyId }: { companyId: string }) {
           <ChevronRight className="size-3 rotate-180" /> Voltar
         </button>
         <CustomerPanel
+          companyId={companyId}
           customerId={selectedCheckin.customer_id}
           checkinAt={selectedCheckin.created_at}
           context={selectedCheckin.context}
@@ -339,6 +349,16 @@ export function LojaView({ companyId }: { companyId: string }) {
               </button>
               <button
                 onClick={() => {
+                  if (window.confirm(`Fazer checkout de ${name}? O cliente será desconectado e a sessão invalidada.`)) checkoutCustomer.mutate(c.customer_id);
+                }}
+                disabled={checkoutCustomer.isPending}
+                className="shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100 disabled:opacity-50"
+                title="Checkout — desconectar cliente"
+              >
+                <LogOut className="size-4" />
+              </button>
+              <button
+                onClick={() => {
                   if (window.confirm(`Remover ${name} da loja?`)) removeCheckin.mutate(c.id);
                 }}
                 disabled={removeCheckin.isPending}
@@ -361,21 +381,31 @@ export function LojaView({ companyId }: { companyId: string }) {
 // ======= CUSTOMER PANEL =======
 
 export function CustomerPanel({
+  companyId,
   customerId,
   checkinAt,
   tableLabel,
   context,
   mode,
 }: {
+  companyId: string;
   customerId: string;
   checkinAt?: string;
   tableLabel?: string;
   context?: string;
   mode: "mesas" | "loja";
 }) {
+  const qc = useQueryClient();
   const { data: p, isError } = useQuery({
     queryKey: ["customer-service-profile", customerId],
     queryFn: () => crmRepository.getCustomerServiceProfile(customerId),
+  });
+
+  const checkoutMut = useMutation({
+    mutationFn: () => checkinRepository.checkout(customerId, companyId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["present", companyId] });
+    },
   });
 
   if (isError)
@@ -423,6 +453,16 @@ export function CustomerPanel({
               Cliente desde {new Date(p.customerSince).toLocaleDateString("pt-BR")}
             </p>
           </div>
+          <button
+            onClick={() => {
+              if (window.confirm(`Fazer checkout de ${p.name}? O cliente será desconectado e a sessão invalidada.`)) checkoutMut.mutate();
+            }}
+            disabled={checkoutMut.isPending}
+            className="shrink-0 rounded-lg p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+            title="Checkout — desconectar cliente"
+          >
+            <LogOut className="size-4" />
+          </button>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
