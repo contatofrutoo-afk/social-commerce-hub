@@ -25,6 +25,7 @@ import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
 import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.perfil'
 import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
+import { Route as CCompanySlugDesconexaoRouteImport } from './routes/c.$companySlug.desconexao'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated.app.produtos'
 import { Route as AuthenticatedAppPersonaRouteImport } from './routes/_authenticated.app.persona'
 import { Route as AuthenticatedAppPedidosRouteImport } from './routes/_authenticated.app.pedidos'
@@ -120,6 +121,11 @@ const CCompanySlugPerfilRoute = CCompanySlugPerfilRouteImport.update({
 const CCompanySlugFeedRoute = CCompanySlugFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugDesconexaoRoute = CCompanySlugDesconexaoRouteImport.update({
+  id: '/desconexao',
+  path: '/desconexao',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
 const AuthenticatedAppProdutosRoute =
@@ -276,6 +282,7 @@ export interface FileRoutesByTo {
   '/app/persona': typeof AuthenticatedAppPersonaRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -312,6 +319,7 @@ export interface FileRoutesById {
   '/_authenticated/app/persona': typeof AuthenticatedAppPersonaRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -379,6 +387,7 @@ export interface FileRouteTypes {
     | '/app/persona'
     | '/app/produtos'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/desconexao'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/persona'
     | '/_authenticated/app/produtos'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/desconexao'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -545,6 +555,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/c/$companySlug/feed'
       preLoaderRoute: typeof CCompanySlugFeedRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/desconexao': {
+      id: '/c/$companySlug/desconexao'
+      path: '/desconexao'
+      fullPath: '/c/$companySlug/desconexao'
+      preLoaderRoute: typeof CCompanySlugDesconexaoRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
     '/_authenticated/app/produtos': {
@@ -753,6 +770,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 interface CCompanySlugRouteChildren {
   CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
+  CCompanySlugDesconexaoRoute: typeof CCompanySlugDesconexaoRoute
   CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
   CCompanySlugPublicarRoute: typeof CCompanySlugPublicarRoute
   CCompanySlugSacolaRoute: typeof CCompanySlugSacolaRoute
@@ -763,6 +781,7 @@ interface CCompanySlugRouteChildren {
 
 const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
   CCompanySlugFeedRoute: CCompanySlugFeedRoute,
+  CCompanySlugDesconexaoRoute: CCompanySlugDesconexaoRoute,
   CCompanySlugPerfilRoute: CCompanySlugPerfilRoute,
   CCompanySlugPublicarRoute: CCompanySlugPublicarRoute,
   CCompanySlugSacolaRoute: CCompanySlugSacolaRoute,

@@ -37,12 +37,13 @@ function ClientLayout() {
   ] as const;
 
   const isVendas = path.includes("/vendas");
-  const showTabs = !path.match(new RegExp(`/c/${companySlug}/?$`)) && !path.includes("/m/") && !isVendas;
+  const isDesconectado = path.includes("/desconexao");
+  const showTabs = !path.match(new RegExp(`/c/${companySlug}/?$`)) && !path.includes("/m/") && !isVendas && !isDesconectado;
 
   return (
-    <div className={`min-h-screen bg-background ${isVendas ? "" : "pb-20"}`}>
+    <div className={`min-h-screen bg-background ${isVendas || isDesconectado ? "" : "pb-20"}`}>
       {showTabs && <ClientSessionGuard />}
-      {!isVendas && (
+      {!isVendas && !isDesconectado && (
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-3">
           <Link

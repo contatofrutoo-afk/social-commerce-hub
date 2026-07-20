@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { getSessionForCompany, clearSession, clearLastProfile, getSessionRemainingMs } from "@/lib/session";
+import { customerRepository } from "@/repositories";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -14,6 +16,7 @@ import { Clock, LogOut } from "lucide-react";
 
 const SESSION_WARNING_MS = 5 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 1000;
+const TOKEN_CHECK_MS = 30 * 1000;
 
 function formatTimeRemaining(ms: number): string {
   if (ms <= 0) return "00:00";
@@ -29,6 +32,13 @@ export default function ClientSessionGuard() {
   const [showWarning, setShowWarning] = useState(false);
   const [expired, setExpired] = useState(false);
   const [countdown, setCountdown] = useState("");
+  const sessionRef = useRef(getSessionForCompany(companySlug));
+
+  const redirectToDesconexão = useCallback(() => {
+    clearSession();
+    clearLastProfile();
+    navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
+  }, [companySlug, navigate]);
 
   const redirectToCheckin = useCallback(() => {
     clearSession();
@@ -36,6 +46,57 @@ export default function ClientSessionGuard() {
     navigate({ to: "/c/$companySlug", params: { companySlug } });
   }, [companySlug, navigate]);
 
+  // ── Realtime: detecta rotação de session_token (checkout pelo staff) ──
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (!session) return;
+
+    const channel = supabase
+      .channel(`session-guard-${session.customerId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "customers",
+          filter: `id=eq.${session.customerId}`,
+        },
+        () => {
+          // Token pode ter sido rotacionado — verifica no servidor
+          customerRepository
+            .findSelf(session.customerId, session.sessionToken)
+            .then((data) => {
+              if (!data) redirectToDesconexão();
+            })
+            .catch(() => redirectToDesconexão());
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companySlug, redirectToDesconexão]);
+
+  // ── Polling: verifica token no servidor a cada 30s (fallback do Realtime) ──
+  useEffect(() => {
+    const session = sessionRef.current;
+    if (!session) return;
+
+    const check = () => {
+      customerRepository
+        .findSelf(session.customerId, session.sessionToken)
+        .then((data) => {
+          if (!data) redirectToDesconexão();
+        })
+        .catch(() => redirectToDesconexão());
+    };
+
+    const interval = setInterval(check, TOKEN_CHECK_MS);
+    return () => clearInterval(interval);
+  }, [companySlug, redirectToDesconexão]);
+
+  // ── Timer: expiração de 7h ──
   useEffect(() => {
     const remaining = getSessionRemainingMs();
     if (remaining === null) return;
@@ -43,15 +104,13 @@ export default function ClientSessionGuard() {
     if (remaining <= 0) {
       setExpired(true);
       setCountdown("00:00");
-      clearSession();
-      clearLastProfile();
-      navigate({ to: "/c/$companySlug", params: { companySlug } });
+      redirectToDesconexão();
       return;
     }
 
     setCountdown(formatTimeRemaining(remaining));
     setShowWarning(remaining <= SESSION_WARNING_MS);
-  }, [companySlug, navigate]);
+  }, [companySlug, redirectToDesconexão]);
 
   useEffect(() => {
     const session = getSessionForCompany(companySlug);
@@ -64,9 +123,7 @@ export default function ClientSessionGuard() {
       if (remaining <= 0) {
         setExpired(true);
         setCountdown("00:00");
-        clearSession();
-        clearLastProfile();
-        navigate({ to: "/c/$companySlug", params: { companySlug } });
+        redirectToDesconexão();
         return;
       }
 
@@ -77,7 +134,7 @@ export default function ClientSessionGuard() {
     check();
     const interval = setInterval(check, CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [companySlug, navigate]);
+  }, [companySlug, redirectToDesconexão]);
 
   useEffect(() => {
     const session = getSessionForCompany(companySlug);
@@ -88,9 +145,7 @@ export default function ClientSessionGuard() {
       if (remaining === null || remaining <= 0) {
         setExpired(true);
         setCountdown("00:00");
-        clearSession();
-        clearLastProfile();
-        navigate({ to: "/c/$companySlug", params: { companySlug } });
+        redirectToDesconexão();
         return;
       }
       setCountdown(formatTimeRemaining(remaining));
@@ -100,7 +155,7 @@ export default function ClientSessionGuard() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [companySlug, expired, navigate]);
+  }, [companySlug, expired, redirectToDesconexão]);
 
   return (
     <>
@@ -127,7 +182,7 @@ export default function ClientSessionGuard() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={redirectToCheckin}
+              onClick={redirectToDesconexão}
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sair agora
@@ -153,9 +208,9 @@ export default function ClientSessionGuard() {
           <AlertDialogFooter>
             <Button
               className="w-full"
-              onClick={redirectToCheckin}
+              onClick={redirectToDesconexão}
             >
-              Fazer check-in novamente
+              OK
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
