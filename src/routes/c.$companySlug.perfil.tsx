@@ -116,7 +116,7 @@ function ProfilePage() {
         <label className="relative cursor-pointer">
           <div className="size-16 overflow-hidden rounded-full bg-accent">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="size-full object-cover" />
+              <img src={optimizedImageUrl(avatarUrl, 64)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
             ) : (
               <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
                 {uploading ? (
