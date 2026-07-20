@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { companyRepository, customerRepository, checkinRepository } from "@/repositories";
@@ -40,6 +40,7 @@ const ageRangeOptions = [
 function CheckinPage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
@@ -71,7 +72,8 @@ function CheckinPage() {
       .catch((err) => {
         console.warn("[auto_checkin] erro:", err?.message ?? err);
       })
-      .finally(() => {
+      .finally(async () => {
+        await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       });
   }, [session, companySlug, navigate]);
@@ -123,6 +125,7 @@ function CheckinPage() {
       } catch (err: any) {
         console.warn("[auto_onboard]", err?.message ?? err);
       } finally {
+        await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       }
     })();
@@ -175,7 +178,8 @@ function CheckinPage() {
       });
       setLastProfile({ name: nameValue, whatsapp: whatsappValue, gender, ageRange });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
       navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao entrar"),

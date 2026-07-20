@@ -6,9 +6,16 @@ import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import ClientSessionGuard from "@/components/ClientSessionGuard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/c/$companySlug")({
   component: ClientLayout,
+  pendingComponent: () => (
+    <div className="space-y-4 p-4">
+      <Skeleton className="h-48 w-full rounded-2xl" />
+      <Skeleton className="h-48 w-full rounded-2xl" />
+    </div>
+  ),
 });
 
 function ClientLayout() {
@@ -41,6 +48,7 @@ function ClientLayout() {
           <Link
             to="/c/$companySlug/feed"
             params={{ companySlug }}
+            preload="viewport"
             className="flex items-center gap-3"
           >
             {company?.logoUrl ? (
@@ -84,6 +92,7 @@ function ClientLayout() {
                   key={t.to}
                   to={t.to}
                   params={{ companySlug }}
+                  preload={t.to.includes("feed") ? "viewport" : "intent"}
                   className={cn(
                     "flex flex-col items-center gap-1 py-3 text-xs",
                     active ? "text-primary" : "text-muted-foreground",

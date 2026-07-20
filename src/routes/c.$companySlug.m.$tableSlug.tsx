@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -45,6 +45,7 @@ const ageRangeOptions = [
 function TableCheckin() {
   const { companySlug, tableSlug } = Route.useParams();
   const navigate = useNavigate();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
@@ -104,6 +105,7 @@ function TableCheckin() {
       } catch (err: any) {
         console.warn("[auto_onboard_mesa]", err?.message ?? err);
       } finally {
+        await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       }
     })();
@@ -142,7 +144,8 @@ function TableCheckin() {
       .catch((err) => {
         console.warn("[mesa_checkin] erro:", err?.message ?? err);
       })
-      .finally(() => {
+      .finally(async () => {
+        await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       });
   }, [session, company, table, companySlug, navigate, tableSlug]);
@@ -195,7 +198,8 @@ function TableCheckin() {
       });
       setLastProfile({ name: nameValue, whatsapp: whatsappValue, gender, ageRange });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
       navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro"),
