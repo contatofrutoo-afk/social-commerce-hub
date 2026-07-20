@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { companyRepository, postRepository, commentRepository } from "@/repositories";
 import type { Post, ReactionType } from "@/repositories/types";
-import { getSessionForCompany } from "@/lib/session";
+import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +78,9 @@ function FeedPage() {
 
   useEffect(() => {
     if (!session) {
-      navigate({ to: "/c/$companySlug", params: { companySlug } });
+      clearSession();
+      clearLastProfile();
+      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
     }
   }, [session, companySlug, navigate]);
 

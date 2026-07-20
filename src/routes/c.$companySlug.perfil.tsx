@@ -105,7 +105,7 @@ function ProfilePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !session) {
-      navigate({ to: "/c/$companySlug", params: { companySlug } });
+      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
     }
   }, [session, companySlug, navigate]);
 
@@ -172,7 +172,7 @@ function ProfilePage() {
         onClick={() => {
           clearSession();
           clearLastProfile();
-          navigate({ to: "/c/$companySlug", params: { companySlug } });
+          navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
         }}
       >
         Sair

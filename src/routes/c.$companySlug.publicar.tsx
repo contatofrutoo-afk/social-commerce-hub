@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { companyRepository, postRepository } from "@/repositories";
 import type { VisitContext } from "@/repositories/types";
-import { getSessionForCompany } from "@/lib/session";
+import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/session";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,7 +98,7 @@ function PublishPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !session) {
-      navigate({ to: "/c/$companySlug", params: { companySlug } });
+      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
     }
   }, [session, companySlug, navigate]);
 

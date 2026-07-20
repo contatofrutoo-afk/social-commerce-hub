@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyRepository, orderRepository } from "@/repositories";
 import { supabase } from "@/integrations/supabase/client";
-import { getSessionForCompany } from "@/lib/session";
+import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +75,7 @@ function BagPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !session) {
-      navigate({ to: "/c/$companySlug", params: { companySlug } });
+      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
     }
   }, [session, companySlug, navigate]);
 

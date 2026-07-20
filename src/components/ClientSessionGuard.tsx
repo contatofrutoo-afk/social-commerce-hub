@@ -16,7 +16,7 @@ import { Clock, LogOut } from "lucide-react";
 
 const SESSION_WARNING_MS = 5 * 60 * 1000;
 const CHECK_INTERVAL_MS = 60 * 1000;
-const TOKEN_CHECK_MS = 30 * 1000;
+const TOKEN_CHECK_MS = 15 * 1000;
 
 function formatTimeRemaining(ms: number): string {
   if (ms <= 0) return "00:00";
@@ -32,23 +32,42 @@ export default function ClientSessionGuard() {
   const [showWarning, setShowWarning] = useState(false);
   const [expired, setExpired] = useState(false);
   const [countdown, setCountdown] = useState("");
-  const sessionRef = useRef(getSessionForCompany(companySlug));
+  const [verifying, setVerifying] = useState(true);
+  const redirectedRef = useRef(false);
 
   const redirectToDesconexão = useCallback(() => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
     clearSession();
     clearLastProfile();
     navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
   }, [companySlug, navigate]);
 
-  const redirectToCheckin = useCallback(() => {
-    clearSession();
-    clearLastProfile();
-    navigate({ to: "/c/$companySlug", params: { companySlug } });
-  }, [companySlug, navigate]);
+  // ── Verificação imediata do token ao montar ──
+  useEffect(() => {
+    const session = getSessionForCompany(companySlug);
+    if (!session) {
+      setVerifying(false);
+      return;
+    }
+
+    customerRepository
+      .findSelf(session.customerId, session.sessionToken)
+      .then((data) => {
+        if (!data) {
+          redirectToDesconexão();
+          return;
+        }
+        setVerifying(false);
+      })
+      .catch(() => {
+        redirectToDesconexão();
+      });
+  }, [companySlug, redirectToDesconexão]);
 
   // ── Realtime: detecta rotação de session_token (checkout pelo staff) ──
   useEffect(() => {
-    const session = sessionRef.current;
+    const session = getSessionForCompany(companySlug);
     if (!session) return;
 
     const channel = supabase
@@ -62,7 +81,6 @@ export default function ClientSessionGuard() {
           filter: `id=eq.${session.customerId}`,
         },
         () => {
-          // Token pode ter sido rotacionado — verifica no servidor
           customerRepository
             .findSelf(session.customerId, session.sessionToken)
             .then((data) => {
@@ -78,9 +96,9 @@ export default function ClientSessionGuard() {
     };
   }, [companySlug, redirectToDesconexão]);
 
-  // ── Polling: verifica token no servidor a cada 30s (fallback do Realtime) ──
+  // ── Polling: verifica token no servidor a cada 15s ──
   useEffect(() => {
-    const session = sessionRef.current;
+    const session = getSessionForCompany(companySlug);
     if (!session) return;
 
     const check = () => {
@@ -156,6 +174,15 @@ export default function ClientSessionGuard() {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [companySlug, expired, redirectToDesconexão]);
+
+  // ── Enquanto verifica o token, bloqueia o conteúdo ──
+  if (verifying) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground animate-pulse">Verificando sessao...</div>
+      </div>
+    );
+  }
 
   return (
     <>
