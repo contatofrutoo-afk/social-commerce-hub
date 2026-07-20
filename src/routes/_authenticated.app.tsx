@@ -112,24 +112,20 @@ function AppLayout() {
     }
   }, [companyStatus?.status, navigate]);
 
-  // Fail-safe: enquanto o status da empresa não é confirmado (ou se houve erro
-  // na consulta), NÃO renderizamos o conteúdo. Isso impede que um dono com
-  // status pendente/bloqueado veja qualquer parte do painel via nova aba,
-  // aba anônima ou recarregamento antes do redirect para /payment ocorrer.
-  if (!isSuperAdmin && role?.company_id && (statusLoading || statusError || !companyStatus)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30">
-        <div className="text-sm text-muted-foreground">Verificando acesso…</div>
-      </div>
-    );
-  }
+  // Gate único: bloqueia render até termos certeza de role + status. Evita
+  // flicker do painel logo após /auth enquanto queries carregam ou enquanto
+  // o super admin é redirecionado para /admin.
+  const gate =
+    roleLoading ||
+    role === null ||
+    isSuperAdmin ||
+    (!isSuperAdmin && role?.company_id && (statusLoading || statusError || !companyStatus)) ||
+    (!isSuperAdmin && companyStatus?.status && PAYMENT_GATE_STATUSES.has(companyStatus.status));
 
-  // Se status exige gate de pagamento, não renderiza o painel enquanto o
-  // useEffect faz o redirect para /payment.
-  if (!isSuperAdmin && companyStatus?.status && PAYMENT_GATE_STATUSES.has(companyStatus.status)) {
+  if (gate) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
-        <div className="text-sm text-muted-foreground">Redirecionando…</div>
+        <div className="text-sm text-muted-foreground">Carregando…</div>
       </div>
     );
   }
