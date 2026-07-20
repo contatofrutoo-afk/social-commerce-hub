@@ -175,10 +175,9 @@ function PostCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isAuthor = post.authorType === "customer" && post.customerId === customerId;
-  const isCompanyMember = post.companyId === companyId;
 
   const canEdit = isAuthor;
-  const canDelete = isAuthor || (post.authorType === "customer" && isCompanyMember);
+  const canDelete = isAuthor;
 
   const showMenu = canEdit || canDelete;
 
