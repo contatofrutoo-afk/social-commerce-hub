@@ -399,9 +399,9 @@ function PostDetail({
           <div className="flex items-center gap-2">
             <Avatar className="size-7">
               {post.authorType === "business" && post.companyLogoUrl ? (
-                <AvatarImage src={post.companyLogoUrl} alt="" />
+                <AvatarImage src={optimizedImageUrl(post.companyLogoUrl, 28)} alt="" />
               ) : post.authorType === "customer" && post.customerAvatarUrl ? (
-                <AvatarImage src={post.customerAvatarUrl} alt="" />
+                <AvatarImage src={optimizedImageUrl(post.customerAvatarUrl, 28)} alt="" />
               ) : null}
               <AvatarFallback>
                 {post.authorType === "business" ? (
