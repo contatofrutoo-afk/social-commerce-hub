@@ -355,7 +355,7 @@ function Bloco1({
     <div className="rounded-xl border bg-card p-5">
       <div className="flex items-start gap-4">
         {insights.avatarUrl ? (
-          <img src={insights.avatarUrl} alt="" className="size-14 rounded-full object-cover" />
+          <img src={optimizedImageUrl(insights.avatarUrl, 56)} alt="" loading="lazy" decoding="async" className="size-14 rounded-full object-cover" />
         ) : (
           <div className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
             {insights.name.charAt(0).toUpperCase()}
