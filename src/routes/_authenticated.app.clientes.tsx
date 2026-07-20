@@ -5,6 +5,7 @@ import { customerRepository, crmRepository } from "@/repositories";
 import type { CustomerInsights, TimelineEvent, ProductInteraction } from "@/repositories/types";
 import { useState } from "react";
 import { formatBRL, relativeTime } from "@/lib/format";
+import { optimizedImageUrl } from "@/lib/image-url";
 import { Input } from "@/components/ui/input";
 import {
   User,
