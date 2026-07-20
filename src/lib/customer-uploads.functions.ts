@@ -4,7 +4,7 @@ import { z } from "zod";
 const ALLOWED_IMAGE_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 const ALLOWED_VIDEO_MIME = ["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"] as const;
 const ALLOWED_ALL_MIME = [...ALLOWED_IMAGE_MIME, ...ALLOWED_VIDEO_MIME] as const;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB
 const SIGNED_URL_TTL = 60 * 60 * 24 * 365; // 1 ano
 
@@ -59,7 +59,7 @@ export const uploadCustomerFile = createServerFn({ method: "POST" })
     if (buffer.length === 0) throw new Error("Arquivo vazio");
     const maxBytes = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
     if (buffer.length > maxBytes) {
-      throw new Error(`Arquivo maior que ${isVideo ? "50MB" : "5MB"}`);
+      throw new Error(`Arquivo maior que ${isVideo ? "50MB" : "10MB"}`);
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

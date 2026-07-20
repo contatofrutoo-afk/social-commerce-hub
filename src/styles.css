@@ -115,6 +115,9 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
+  img {
+    image-rendering: -webkit-optimize-contrast;
+  }
 }
 
 @utility weaze-gradient {

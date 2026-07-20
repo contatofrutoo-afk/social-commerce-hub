@@ -65,7 +65,7 @@ function ProfilePage() {
     if (!file || !session) return;
     const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
     if (!ALLOWED.includes(file.type as any)) { toast.error("Formato não suportado."); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB."); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Máximo 10MB."); return; }
     setUploading(true);
     try {
       const base64 = await fileToBase64(file);
