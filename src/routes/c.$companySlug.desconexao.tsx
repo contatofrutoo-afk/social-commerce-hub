@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { clearSession, clearLastProfile } from "@/lib/session";
 import { Logo } from "@/components/logo";
@@ -36,15 +36,7 @@ function DesconexaoPage() {
           <strong>QR code</strong> ou acesse pelo <strong>link</strong> fornecido pelo estabelecimento.
         </p>
 
-        <div className="pt-4">
-          <Link
-            to="/c/$companySlug"
-            params={{ companySlug }}
-            className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Fazer check-in novamente
-          </Link>
-        </div>
+
       </div>
     </div>
   );
