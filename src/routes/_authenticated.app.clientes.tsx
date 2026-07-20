@@ -5,6 +5,7 @@ import { customerRepository, crmRepository } from "@/repositories";
 import type { CustomerInsights, TimelineEvent, ProductInteraction } from "@/repositories/types";
 import { useState } from "react";
 import { formatBRL, relativeTime } from "@/lib/format";
+import { optimizedImageUrl } from "@/lib/image-url";
 import { Input } from "@/components/ui/input";
 import {
   User,
@@ -206,7 +207,7 @@ function CustomersPage() {
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="relative shrink-0">
                     {c.avatarUrl ? (
-                      <img src={c.avatarUrl} alt="" className="size-8 rounded-full object-cover" />
+                      <img src={optimizedImageUrl(c.avatarUrl, 32)} alt="" loading="lazy" decoding="async" className="size-8 rounded-full object-cover" />
                     ) : (
                       <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                         {c.name.charAt(0).toUpperCase()}
@@ -354,7 +355,7 @@ function Bloco1({
     <div className="rounded-xl border bg-card p-5">
       <div className="flex items-start gap-4">
         {insights.avatarUrl ? (
-          <img src={insights.avatarUrl} alt="" className="size-14 rounded-full object-cover" />
+          <img src={optimizedImageUrl(insights.avatarUrl, 56)} alt="" loading="lazy" decoding="async" className="size-14 rounded-full object-cover" />
         ) : (
           <div className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
             {insights.name.charAt(0).toUpperCase()}

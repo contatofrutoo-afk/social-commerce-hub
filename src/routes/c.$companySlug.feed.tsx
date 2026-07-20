@@ -13,6 +13,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { fileToBase64 } from "@/lib/file-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { optimizedImageUrl } from "@/lib/image-url";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -225,9 +226,9 @@ function PostCard({
       <header className="flex items-center gap-3 px-4 pt-4 pb-3">
         <Avatar className="size-10 ring-2 ring-primary/10">
           {post.authorType === "business" && post.companyLogoUrl ? (
-            <AvatarImage src={post.companyLogoUrl} alt={post.customerName ?? ""} />
+            <AvatarImage src={optimizedImageUrl(post.companyLogoUrl, 40)} alt={post.customerName ?? ""} />
           ) : post.authorType === "customer" && post.customerAvatarUrl ? (
-            <AvatarImage src={post.customerAvatarUrl} alt={post.customerName ?? ""} />
+            <AvatarImage src={optimizedImageUrl(post.customerAvatarUrl, 40)} alt={post.customerName ?? ""} />
           ) : null}
           <AvatarFallback className="bg-accent text-accent-foreground">
             {post.authorType === "business" ? (

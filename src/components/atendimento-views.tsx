@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { tableRepository, checkinRepository, crmRepository } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
+import { optimizedImageUrl } from "@/lib/image-url";
 import {
   User,
   Heart,
@@ -222,7 +223,7 @@ export function MesasView({ companyId }: { companyId: string }) {
                     >
                       <div className="relative shrink-0">
                         {avatar ? (
-                          <img src={avatar} alt="" className="size-8 rounded-full object-cover" />
+                          <img src={optimizedImageUrl(avatar, 32)} alt="" loading="lazy" decoding="async" className="size-8 rounded-full object-cover" />
                         ) : (
                           <div className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
                             {name.charAt(0).toUpperCase()}
@@ -317,7 +318,7 @@ export function LojaView({ companyId }: { companyId: string }) {
               >
                 <div className="relative shrink-0">
                   {avatar ? (
-                    <img src={avatar} alt="" className="size-10 rounded-full object-cover" />
+                    <img src={optimizedImageUrl(avatar, 40)} alt="" loading="lazy" decoding="async" className="size-10 rounded-full object-cover" />
                   ) : (
                     <div className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
                       {name.charAt(0).toUpperCase()}
@@ -396,7 +397,7 @@ export function CustomerPanel({
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-start gap-3">
           {p.avatarUrl ? (
-            <img src={p.avatarUrl} alt="" className="size-12 rounded-full object-cover shrink-0" />
+            <img src={optimizedImageUrl(p.avatarUrl, 48)} alt="" loading="lazy" decoding="async" className="size-12 rounded-full object-cover shrink-0" />
           ) : (
             <div className="grid size-12 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground text-lg font-bold">
               {p.name.charAt(0).toUpperCase()}
