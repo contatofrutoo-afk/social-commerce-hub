@@ -225,6 +225,31 @@ export const crmRepository = {
         description: `Check-in: ${c.context}`,
         metadata: { context: c.context },
       });
+      if (c.checked_out_at) {
+        timeline.push({
+          id: `cko-${c.id}`,
+          type: "checkin",
+          createdAt: c.checked_out_at,
+          description: `Check-out`,
+          metadata: { context: c.context, checkout: true },
+        });
+      }
+    });
+
+    // --- Visit history (checkin/checkout por data) ---
+    const visitHistory: import("./types").VisitHistoryEntry[] = checkins.map((c: any) => {
+      const inMs = new Date(c.created_at).getTime();
+      const outMs = c.checked_out_at ? new Date(c.checked_out_at).getTime() : null;
+      return {
+        id: c.id,
+        checkinAt: c.created_at,
+        checkoutAt: c.checked_out_at ?? null,
+        context: c.context ?? null,
+        tableId: c.table_id ?? null,
+        tableLabel: c.table?.label ?? null,
+        source: c.source ?? null,
+        durationMinutes: outMs ? Math.max(0, Math.round((outMs - inMs) / 60000)) : null,
+      };
     });
     orders.forEach((o: any) => {
       const items = (o.order_items ?? []).map((i: any) => i.product?.name ?? "Produto").join(", ");
