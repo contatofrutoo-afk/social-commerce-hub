@@ -85,6 +85,7 @@ export type Database = {
       }
       checkins: {
         Row: {
+          checked_out_at: string | null
           company_id: string
           context: Database["public"]["Enums"]["visit_context"]
           created_at: string
@@ -101,6 +102,7 @@ export type Database = {
           visit_context: string
         }
         Insert: {
+          checked_out_at?: string | null
           company_id: string
           context: Database["public"]["Enums"]["visit_context"]
           created_at?: string
@@ -117,6 +119,7 @@ export type Database = {
           visit_context?: string
         }
         Update: {
+          checked_out_at?: string | null
           company_id?: string
           context?: Database["public"]["Enums"]["visit_context"]
           created_at?: string
@@ -1033,6 +1036,14 @@ export type Database = {
             }
             Returns: boolean
           }
+      checkout_customer: {
+        Args: {
+          _company_id: string
+          _customer_id: string
+          _staff_user_id: string
+        }
+        Returns: undefined
+      }
       claim_own_company: {
         Args: { _name: string; _slug: string }
         Returns: string

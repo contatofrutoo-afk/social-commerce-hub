@@ -250,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/persona': typeof AuthenticatedAppPersonaRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
@@ -281,8 +282,8 @@ export interface FileRoutesByTo {
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/persona': typeof AuthenticatedAppPersonaRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
-  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
+  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -318,8 +319,8 @@ export interface FileRoutesById {
   '/_authenticated/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/_authenticated/app/persona': typeof AuthenticatedAppPersonaRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
-  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
+  '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -355,6 +356,7 @@ export interface FileRouteTypes {
     | '/app/pedidos'
     | '/app/persona'
     | '/app/produtos'
+    | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
@@ -386,8 +388,8 @@ export interface FileRouteTypes {
     | '/app/pedidos'
     | '/app/persona'
     | '/app/produtos'
-    | '/c/$companySlug/feed'
     | '/c/$companySlug/desconexao'
+    | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -422,8 +424,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/pedidos'
     | '/_authenticated/app/persona'
     | '/_authenticated/app/produtos'
-    | '/c/$companySlug/feed'
     | '/c/$companySlug/desconexao'
+    | '/c/$companySlug/feed'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -769,8 +771,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface CCompanySlugRouteChildren {
-  CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
   CCompanySlugDesconexaoRoute: typeof CCompanySlugDesconexaoRoute
+  CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
   CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
   CCompanySlugPublicarRoute: typeof CCompanySlugPublicarRoute
   CCompanySlugSacolaRoute: typeof CCompanySlugSacolaRoute
@@ -780,8 +782,8 @@ interface CCompanySlugRouteChildren {
 }
 
 const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
-  CCompanySlugFeedRoute: CCompanySlugFeedRoute,
   CCompanySlugDesconexaoRoute: CCompanySlugDesconexaoRoute,
+  CCompanySlugFeedRoute: CCompanySlugFeedRoute,
   CCompanySlugPerfilRoute: CCompanySlugPerfilRoute,
   CCompanySlugPublicarRoute: CCompanySlugPublicarRoute,
   CCompanySlugSacolaRoute: CCompanySlugSacolaRoute,
