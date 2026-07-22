@@ -766,3 +766,73 @@ function Section({
     </div>
   );
 }
+
+function VisitHistoryList({
+  entries,
+}: {
+  entries: import("@/repositories/types").VisitHistoryEntry[];
+}) {
+  const groups = new Map<string, typeof entries>();
+  for (const e of entries) {
+    const key = new Date(e.checkinAt).toISOString().slice(0, 10);
+    const arr = groups.get(key) ?? [];
+    arr.push(e);
+    groups.set(key, arr);
+  }
+  const sortedKeys = Array.from(groups.keys()).sort((a, b) => (a < b ? 1 : -1));
+  const fmtDate = (iso: string) =>
+    new Date(iso + "T00:00:00").toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      weekday: "short",
+    });
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const fmtDur = (min: number | null) => {
+    if (min == null) return "—";
+    if (min < 60) return `${min}min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m ? `${h}h${m}min` : `${h}h`;
+  };
+  return (
+    <div className="space-y-3 max-h-80 overflow-y-auto">
+      {sortedKeys.map((k) => {
+        const dayEntries = (groups.get(k) ?? [])
+          .slice()
+          .sort((a, b) => new Date(b.checkinAt).getTime() - new Date(a.checkinAt).getTime());
+        return (
+          <div key={k}>
+            <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {fmtDate(k)}
+            </div>
+            <div className="space-y-1">
+              {dayEntries.map((e) => (
+                <div
+                  key={e.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border bg-muted/40 px-2.5 py-1.5 text-[11px]"
+                >
+                  <span className="flex items-center gap-1 font-medium">
+                    <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+                    Entrada {fmtTime(e.checkinAt)}
+                  </span>
+                  <span className="flex items-center gap-1 font-medium">
+                    <span
+                      className={`inline-block size-1.5 rounded-full ${e.checkoutAt ? "bg-rose-500" : "bg-amber-500"}`}
+                    />
+                    {e.checkoutAt ? `Saída ${fmtTime(e.checkoutAt)}` : "Em andamento"}
+                  </span>
+                  <span className="text-muted-foreground">Duração: {fmtDur(e.durationMinutes)}</span>
+                  {e.tableLabel && (
+                    <span className="text-muted-foreground">Mesa {e.tableLabel}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
