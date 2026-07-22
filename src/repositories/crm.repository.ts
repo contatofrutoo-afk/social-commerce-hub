@@ -801,7 +801,7 @@ export const crmRepository = {
           .single(),
         supabase
           .from("checkins")
-          .select("id, context, created_at, table_id")
+          .select("id, context, created_at, checked_out_at, source, table_id, table:tables(label)")
           .eq("customer_id", customerId)
           .order("created_at", { ascending: false }),
         supabase
