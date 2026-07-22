@@ -525,6 +525,12 @@ export function CustomerPanel({
         </div>
       </Section>
 
+      {p.visitHistory && p.visitHistory.length > 0 && (
+        <Section title="Histórico de visitas" icon={Clock}>
+          <VisitHistoryList entries={p.visitHistory} />
+        </Section>
+      )}
+
       <Section title="Preferências" icon={Star}>
         {p.totalOrders === 0 && p.likedProducts.length === 0 && p.wishedProducts.length === 0 ? (
           <p className="text-sm text-muted-foreground">
