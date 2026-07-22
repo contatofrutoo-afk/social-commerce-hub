@@ -811,6 +811,7 @@ export const crmRepository = {
       lastLikeAt,
       likedButNotOrdered,
       interestFunnel,
+      visitHistory,
     };
   },
 
