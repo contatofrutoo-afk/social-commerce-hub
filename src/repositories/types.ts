@@ -406,4 +406,5 @@ export interface CustomerInsights {
   lastLikeAt: string | null;
   likedButNotOrdered: ProductInteraction[];
   interestFunnel: InterestFunnel;
+  visitHistory: VisitHistoryEntry[];
 }
