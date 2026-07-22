@@ -365,6 +365,13 @@ function CustomerDetail({ id, companyId }: { id: string; companyId?: string }) {
         </Section>
       )}
 
+      {/* HISTÓRICO DE VISITAS (check-in / check-out) */}
+      {insights.visitHistory.length > 0 && (
+        <Section title="Histórico de visitas" icon={Clock}>
+          <VisitHistoryList entries={insights.visitHistory} />
+        </Section>
+      )}
+
       {/* LINHA DO TEMPO */}
       {insights.timeline.length > 0 && (
         <Section title="Linha do tempo" icon={Calendar}>
