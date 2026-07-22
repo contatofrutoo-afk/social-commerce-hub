@@ -246,6 +246,7 @@ export interface CustomerServiceProfile {
   opportunities: string[];
   weazeSuggestions: string[];
   interestFunnel: InterestFunnel;
+  visitHistory: VisitHistoryEntry[];
 }
 
 export interface Insight {
