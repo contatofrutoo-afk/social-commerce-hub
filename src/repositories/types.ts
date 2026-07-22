@@ -246,6 +246,7 @@ export interface CustomerServiceProfile {
   opportunities: string[];
   weazeSuggestions: string[];
   interestFunnel: InterestFunnel;
+  visitHistory: VisitHistoryEntry[];
 }
 
 export interface Insight {
@@ -311,6 +312,17 @@ export type CustomerClassification = "new" | "frequent" | "vip" | "at_risk" | "i
 export type TrendType = "increasing" | "stable" | "decreasing" | "inactive";
 
 export type InterestLevel = "nenhum" | "curioso" | "interessado" | "intencao" | "quente";
+
+export interface VisitHistoryEntry {
+  id: string;
+  checkinAt: string;
+  checkoutAt: string | null;
+  context: string | null;
+  tableId: string | null;
+  tableLabel?: string | null;
+  source?: string | null;
+  durationMinutes: number | null;
+}
 
 export interface InterestFunnel {
   level: InterestLevel;
@@ -394,4 +406,5 @@ export interface CustomerInsights {
   lastLikeAt: string | null;
   likedButNotOrdered: ProductInteraction[];
   interestFunnel: InterestFunnel;
+  visitHistory: VisitHistoryEntry[];
 }
