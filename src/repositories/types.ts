@@ -312,6 +312,17 @@ export type TrendType = "increasing" | "stable" | "decreasing" | "inactive";
 
 export type InterestLevel = "nenhum" | "curioso" | "interessado" | "intencao" | "quente";
 
+export interface VisitHistoryEntry {
+  id: string;
+  checkinAt: string;
+  checkoutAt: string | null;
+  context: string | null;
+  tableId: string | null;
+  tableLabel?: string | null;
+  source?: string | null;
+  durationMinutes: number | null;
+}
+
 export interface InterestFunnel {
   level: InterestLevel;
   label: string;
