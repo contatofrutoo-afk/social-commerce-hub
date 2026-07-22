@@ -1129,6 +1129,20 @@ export const crmRepository = {
       opportunities,
       weazeSuggestions,
       interestFunnel,
+      visitHistory: checkins.map((c: any) => {
+        const inMs = new Date(c.created_at).getTime();
+        const outMs = c.checked_out_at ? new Date(c.checked_out_at).getTime() : null;
+        return {
+          id: c.id,
+          checkinAt: c.created_at,
+          checkoutAt: c.checked_out_at ?? null,
+          context: c.context ?? null,
+          tableId: c.table_id ?? null,
+          tableLabel: c.table?.label ?? null,
+          source: c.source ?? null,
+          durationMinutes: outMs ? Math.max(0, Math.round((outMs - inMs) / 60000)) : null,
+        };
+      }),
     };
   },
 };
