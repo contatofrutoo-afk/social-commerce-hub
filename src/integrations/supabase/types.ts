@@ -438,8 +438,56 @@ export type Database = {
           },
         ]
       }
+      consent_log: {
+        Row: {
+          company_id: string
+          consent_type: string
+          created_at: string
+          customer_id: string
+          granted: boolean
+          id: string
+          ip_address: string | null
+        }
+        Insert: {
+          company_id: string
+          consent_type: string
+          created_at?: string
+          customer_id: string
+          granted?: boolean
+          id?: string
+          ip_address?: string | null
+        }
+        Update: {
+          company_id?: string
+          consent_type?: string
+          created_at?: string
+          customer_id?: string
+          granted?: boolean
+          id?: string
+          ip_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consent_log_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
+          accepted_checkin_privacy_at: string | null
+          accepted_privacy_at: string | null
+          accepted_terms_at: string | null
           age_range: string | null
           avatar_url: string | null
           company_id: string
@@ -454,6 +502,9 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          accepted_checkin_privacy_at?: string | null
+          accepted_privacy_at?: string | null
+          accepted_terms_at?: string | null
           age_range?: string | null
           avatar_url?: string | null
           company_id: string
@@ -468,6 +519,9 @@ export type Database = {
           whatsapp: string
         }
         Update: {
+          accepted_checkin_privacy_at?: string | null
+          accepted_privacy_at?: string | null
+          accepted_terms_at?: string | null
           age_range?: string | null
           avatar_url?: string | null
           company_id?: string
@@ -1112,6 +1166,10 @@ export type Database = {
         Args: { _customer_id: string; _post_id: string; _token: string }
         Returns: undefined
       }
+      delete_my_data: {
+        Args: { _company_id: string; _customer_id: string; _token: string }
+        Returns: undefined
+      }
       delete_order_item: { Args: { _item_id: string }; Returns: Json }
       ensure_super_admin: { Args: never; Returns: boolean }
       get_company_public: {
@@ -1128,6 +1186,9 @@ export type Database = {
       get_customer_self: {
         Args: { _customer_id: string; _token: string }
         Returns: {
+          accepted_checkin_privacy_at: string | null
+          accepted_privacy_at: string | null
+          accepted_terms_at: string | null
           age_range: string | null
           avatar_url: string | null
           company_id: string
@@ -1157,6 +1218,10 @@ export type Database = {
           label: string
           slug: string
         }[]
+      }
+      has_consent: {
+        Args: { _consent_type: string; _customer_id: string; _token: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -1205,6 +1270,16 @@ export type Database = {
           label: string
           slug: string
         }[]
+      }
+      log_consent: {
+        Args: {
+          _company_id: string
+          _consent_type: string
+          _customer_id: string
+          _ip_address?: string
+          _token: string
+        }
+        Returns: string
       }
       mark_payment_informed:
         | { Args: never; Returns: undefined }
