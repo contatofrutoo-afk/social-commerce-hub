@@ -10,8 +10,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
 import { optimizedImageUrl } from "@/lib/image-url";
 import { fileToBase64 } from "@/lib/file-utils";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mars, Venus, HelpCircle } from "lucide-react";
+import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
   component: ProfilePage,
@@ -34,6 +35,8 @@ function ProfilePage() {
   const [gender, setGender] = useState<string | null>(null);
   const [ageRange, setAgeRange] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showProfileNudge, setShowProfileNudge] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const uploadFile = useServerFn(uploadCustomerFile);
 
   const genderOptions = [
@@ -58,6 +61,9 @@ function ProfilePage() {
       setAvatarUrl(customer.avatarUrl ?? "");
       setGender(customer.gender ?? null);
       setAgeRange(customer.ageRange ?? null);
+      if (customer.visitCount >= 3 && !customer.gender && !customer.ageRange) {
+        setShowProfileNudge(true);
+      }
     }
   }, [customer]);
 
@@ -87,7 +93,6 @@ function ProfilePage() {
     }
   }
 
-
   const save = useMutation({
     mutationFn: () =>
       customerRepository.updateSelf(session!.customerId, session!.sessionToken, {
@@ -99,8 +104,26 @@ function ProfilePage() {
       }),
     onSuccess: () => {
       toast.success("Perfil atualizado");
+      setShowProfileNudge(false);
       qc.invalidateQueries({ queryKey: ["customer-self"] });
     },
+  });
+
+  const deleteData = useMutation({
+    mutationFn: async () => {
+      await supabase.rpc("delete_my_data", {
+        _customer_id: session!.customerId,
+        _token: session!.sessionToken,
+        _company_id: session!.companyId,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Seus dados foram anonimizados");
+      clearSession();
+      clearLastProfile();
+      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
+    },
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao excluir dados"),
   });
 
   useEffect(() => {
@@ -113,6 +136,16 @@ function ProfilePage() {
 
   return (
     <div className="space-y-6 p-4">
+      {showProfileNudge && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+          <p className="font-medium">Que tal completar seu perfil?</p>
+          <p className="mt-1 text-muted-foreground">
+            Informar seu gênero e faixa etária nos ajuda a oferecer uma experiência
+            mais personalizada. É rápido e opcional.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <label className="relative cursor-pointer">
           <div className="size-16 overflow-hidden rounded-full bg-accent">
@@ -160,10 +193,100 @@ function ProfilePage() {
           <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} maxLength={20} />
         </div>
 
+        <div>
+          <Label>Gênero <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+          <div className="mt-1.5 grid grid-cols-3 gap-2">
+            {genderOptions.map((g) => {
+              const active = gender === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => setGender(active ? null : g.id)}
+                  className={`flex items-center justify-center gap-1.5 rounded-xl border-2 p-2.5 text-sm transition ${
+                    active
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <g.icon className="size-4" />
+                  <span className="text-xs font-medium">{g.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-        <Button onClick={() => save.mutate()} disabled={save.isPending}>
+        <div>
+          <Label>Faixa etária <span className="text-muted-foreground text-xs">(opcional)</span></Label>
+          <div className="mt-1.5 grid grid-cols-2 gap-2">
+            {ageRangeOptions.map((a) => {
+              const active = ageRange === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAgeRange(active ? null : a.id)}
+                  className={`rounded-xl border-2 p-2.5 text-sm transition ${
+                    active
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <span className="text-xs font-medium">{a.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <Button onClick={() => save.mutate()} disabled={save.isPending} className="w-full">
           Salvar
         </Button>
+      </div>
+
+      <div className="rounded-xl border p-4 space-y-3">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Shield className="size-4 text-primary" /> Privacidade
+        </h3>
+        <button
+          onClick={() => window.open("/privacidade", "_blank")}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
+        >
+          <FileText className="size-4 text-muted-foreground" />
+          Política de Privacidade
+        </button>
+        <button
+          onClick={() => window.open("/termos", "_blank")}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
+        >
+          <FileText className="size-4 text-muted-foreground" />
+          Termos de Uso
+        </button>
+        <button
+          onClick={() => {
+            if (window.confirm("Baixar meus dados? Esta funcionalidade estará disponível em breve.")) {
+              toast.info("Funcionalidade em desenvolvimento");
+            }
+          }}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
+        >
+          <Download className="size-4 text-muted-foreground" />
+          Baixar meus dados
+        </button>
+        <button
+          onClick={() => {
+            if (window.confirm("Tem certeza? Seus dados serão anonimizados e não poderão ser recuperados.")) {
+              setDeleting(true);
+              deleteData.mutate();
+            }
+          }}
+          disabled={deleting}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <Trash2 className="size-4" />
+          {deleting ? "Excluindo..." : "Excluir meus dados"}
+        </button>
       </div>
 
       <Button

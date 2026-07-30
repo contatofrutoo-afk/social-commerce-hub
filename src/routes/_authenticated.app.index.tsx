@@ -516,21 +516,21 @@ function DashboardPage() {
     const list: { text: string; ts: string; type: string }[] = [];
     (allCheckins ?? []).slice(0, 10).forEach((c: any) =>
       list.push({
-        text: `Check-in de ${c.customer?.name ?? "cliente"}`,
+        text: "Novo check-in realizado",
         ts: c.created_at,
         type: "checkin",
       }),
     );
     (orders ?? []).slice(0, 10).forEach((o) =>
       list.push({
-        text: `Pedido ${formatBRL(o.total)} - ${o.customerName ?? "Cliente"}`,
+        text: `Pedido de ${formatBRL(o.total)} registrado`,
         ts: o.createdAt,
         type: "order",
       }),
     );
     (posts ?? []).slice(0, 10).forEach((p) =>
       list.push({
-        text: `Publicação de ${p.authorType === "business" ? "estabelecimento" : (p.customerName ?? "cliente")}`,
+        text: p.authorType === "business" ? "Nova publicação do estabelecimento" : "Nova publicação de cliente",
         ts: p.createdAt,
         type: "post",
       }),
@@ -733,24 +733,30 @@ function DashboardPage() {
                 color="red"
               />
             </div>
-            {/* Existing "Clientes mais engajados" kept */}
+            {/* Top engaged — aggregated only, no names */}
             {metrics && metrics.mostEngagedCustomers.length > 0 && (
               <div className="mt-4">
                 <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                  Clientes mais engajados
+                  Engajamento
                 </h4>
-                <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                  {metrics.mostEngagedCustomers.slice(0, 5).map((c) => (
-                    <li key={c.customerId} className="rounded-lg border px-3 py-2 text-sm">
-                      <div className="truncate font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {c.reactionCount > 0 && `${c.reactionCount} reações`}
-                        {c.orderCount > 0 &&
-                          (c.reactionCount > 0 ? " · " : "") + `${c.orderCount} pedidos`}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg border px-3 py-2">
+                    <div className="text-2xl font-bold">{metrics.mostEngagedCustomers.length}</div>
+                    <div className="text-xs text-muted-foreground">clientes engajados</div>
+                  </div>
+                  <div className="rounded-lg border px-3 py-2">
+                    <div className="text-2xl font-bold">
+                      {metrics.mostEngagedCustomers.reduce((s: number, c: any) => s + (c.reactionCount ?? 0), 0)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">reações totais</div>
+                  </div>
+                  <div className="rounded-lg border px-3 py-2">
+                    <div className="text-2xl font-bold">
+                      {metrics.mostEngagedCustomers.reduce((s: number, c: any) => s + (c.orderCount ?? 0), 0)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">pedidos</div>
+                  </div>
+                </div>
               </div>
             )}
           </>

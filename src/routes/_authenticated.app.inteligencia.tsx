@@ -891,12 +891,20 @@ function InteligenciaPage() {
             onChange={(e) => setCustomerFilter(e.target.value)}
             className="rounded-lg border bg-background px-3 py-1.5 text-xs"
           >
-            <option value="all">Todos os clientes</option>
-            {customerBehavior.buyers.slice(0, 20).map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            <option value="all">Todos os clientes (dados anonimizados)</option>
+            <option value="scanner">Clientes que escaneiam</option>
+            <option value="buyer">Clientes que compram</option>
+            <option value="recurring">Clientes recorrentes</option>
+            <option value="abandoner">Clientes que abandonam</option>
           </select>
         )}
+      </div>
+
+      <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-xs text-muted-foreground">
+        <p>
+          <strong className="text-foreground">Dados agregados — nenhum cliente é identificado individualmente.</strong>{" "}
+          Todas as análises desta página utilizam dados anonimizados e coletivos.
+        </p>
       </div>
 
       {/* Metrics overview */}
@@ -1000,15 +1008,39 @@ function InteligenciaPage() {
         </div>
       </Section>
 
-      {/* Customer behavior */}
+      {/* Customer behavior — aggregated only, no names */}
       <Section title="Comportamento dos clientes">
         <div className="grid gap-4 lg:grid-cols-3">
-          <MiniCard title="Clientes que mais escaneiam" items={customerBehavior.mostScanners} render={(c) => `${c.scans} scans`} />
-          <MiniCard title="Clientes que mais compram" items={customerBehavior.mostBuyers} render={(c) => `${c.orders} pedidos`} />
-          <MiniCard title="Clientes que apenas pesquisam" items={customerBehavior.scannersOnly} render={(c) => `${c.scans} scans`} />
-          <MiniCard title="Clientes que abandonam Sacola" items={customerBehavior.abandoners} render={(c) => `${c.cartAdds} adds`} />
-          <MiniCard title="Clientes curiosos" items={customerBehavior.curious} render={(c) => `${c.views} views`} />
-          <MiniCard title="Clientes recorrentes" items={customerBehavior.recurring} render={(c) => `${c.orders} pedidos`} />
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{customerBehavior.mostScanners.length}</div>
+            <div className="text-xs text-muted-foreground">clientes que escaneiam</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {customerBehavior.mostScanners.reduce((s: number, c: any) => s + c.scans, 0)} scans no total
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{customerBehavior.buyers.length}</div>
+            <div className="text-xs text-muted-foreground">clientes que compram</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {customerBehavior.buyers.reduce((s: number, c: any) => s + c.orders, 0)} pedidos no total
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{customerBehavior.scannersOnly.length}</div>
+            <div className="text-xs text-muted-foreground">clientes que só pesquisam</div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{customerBehavior.abandoners.length}</div>
+            <div className="text-xs text-muted-foreground">clientes que abandonam sacola</div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{customerBehavior.curious.length}</div>
+            <div className="text-xs text-muted-foreground">clientes curiosos</div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{customerBehavior.recurring.length}</div>
+            <div className="text-xs text-muted-foreground">clientes recorrentes</div>
+          </div>
         </div>
       </Section>
 
@@ -1240,43 +1272,29 @@ function InteligenciaPage() {
         )}
       </Section>
 
-      {/* CRM cross-reference */}
-      <Section title="Cruzamento com CRM">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b text-muted-foreground">
-                <th className="px-2 py-1 text-left font-medium">Cliente</th>
-                <th className="px-2 py-1 text-right font-medium">Scans</th>
-                <th className="px-2 py-1 text-right font-medium">Views</th>
-                <th className="px-2 py-1 text-right font-medium">Carrinho</th>
-                <th className="px-2 py-1 text-right font-medium">Pedidos</th>
-                <th className="px-2 py-1 text-right font-medium">Gasto</th>
-                <th className="px-2 py-1 text-left font-medium">Produtos favoritos</th>
-                <th className="px-2 py-1 text-left font-medium">Categorias</th>
-                <th className="px-2 py-1 text-left font-medium">Abandonados</th>
-              </tr>
-            </thead>
-            <tbody>
-              {crmCrossRef.slice(0, 20).map((c) => (
-                <tr key={c.id} className="border-b hover:bg-muted/30">
-                  <td className="px-2 py-1 font-medium">{c.name}</td>
-                  <td className="px-2 py-1 text-right">{c.scans}</td>
-                  <td className="px-2 py-1 text-right">{c.views}</td>
-                  <td className="px-2 py-1 text-right">{c.cartAdds}</td>
-                  <td className="px-2 py-1 text-right">{c.orders}</td>
-                  <td className="px-2 py-1 text-right">{formatBRL(c.totalSpent)}</td>
-                  <td className="max-w-[120px] truncate px-2 py-1">{c.favoriteProducts.map((p: any) => p?.name).filter(Boolean).join(", ")}</td>
-                  <td className="max-w-[100px] truncate px-2 py-1">{c.favoriteCategories.join(", ")}</td>
-                  <td className="max-w-[120px] truncate px-2 py-1">{c.abandonedProducts.map((p: any) => p?.name).filter(Boolean).join(", ") || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {crmCrossRef.length === 0 && (
-            <p className="py-4 text-center text-muted-foreground">Nenhum dado de CRM disponível.</p>
-          )}
+      {/* CRM cross-reference — aggregated only, no names */}
+      <Section title="Cruzamento com CRM (agregado)">
+        <div className="grid gap-4 lg:grid-cols-4">
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{crmCrossRef.length}</div>
+            <div className="text-xs text-muted-foreground">clientes com eventos</div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{crmCrossRef.reduce((s: number, c: any) => s + c.scans, 0)}</div>
+            <div className="text-xs text-muted-foreground">total de scans</div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{crmCrossRef.reduce((s: number, c: any) => s + c.orders, 0)}</div>
+            <div className="text-xs text-muted-foreground">total de pedidos</div>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="text-2xl font-bold">{formatBRL(crmCrossRef.reduce((s: number, c: any) => s + c.totalSpent, 0))}</div>
+            <div className="text-xs text-muted-foreground">gasto total</div>
+          </div>
         </div>
+        {crmCrossRef.length === 0 && (
+          <p className="py-4 text-center text-muted-foreground">Nenhum dado de CRM disponível.</p>
+        )}
       </Section>
 
       {/* Opportunities / Alerts */}

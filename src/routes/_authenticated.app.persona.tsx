@@ -1206,6 +1206,14 @@ function PersonaInteligentePage() {
         <PeriodSelector current={period} onChange={setPeriod} />
       </div>
 
+      <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 text-xs text-muted-foreground">
+        <p>
+          <strong className="text-foreground">Análise coletiva — sem identificação individual.</strong>{" "}
+          Todas as análises são baseadas em dados agregados e anonimizados. Nenhum cliente
+          é identificado individualmente nesta página.
+        </p>
+      </div>
+
       {noData && (
         <div className="rounded-xl border border-dashed bg-muted/20 p-8 text-center">
           <Users className="mx-auto mb-3 size-8 text-muted-foreground" />

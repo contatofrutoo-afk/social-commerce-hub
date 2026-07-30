@@ -7,9 +7,11 @@ import { setSession, getSessionForCompany, getLastProfile, setLastProfile } from
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { User, Heart, Users, Home, Mars, Venus, HelpCircle } from "lucide-react";
+import { User, Heart, Users, Home } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/c/$companySlug/")({
   component: CheckinPage,
@@ -22,20 +24,7 @@ const contexts: { id: VisitContext; label: string; icon: any }[] = [
   { id: "familia", label: "Família", icon: Home },
 ];
 
-const genderOptions = [
-  { id: "mulher", label: "Mulher", icon: Venus },
-  { id: "homem", label: "Homem", icon: Mars },
-  { id: "prefiro_nao_informar", label: "Prefiro não informar", icon: HelpCircle },
-];
 
-const ageRangeOptions = [
-  { id: "ate_17", label: "Até 17 anos" },
-  { id: "18-24", label: "18–24 anos" },
-  { id: "25-34", label: "25–34 anos" },
-  { id: "35-44", label: "35–44 anos" },
-  { id: "45-54", label: "45–54 anos" },
-  { id: "55_mais", label: "55 anos ou mais" },
-];
 
 function CheckinPage() {
   const { companySlug } = Route.useParams();
@@ -44,8 +33,8 @@ function CheckinPage() {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [context, setContext] = useState<VisitContext | null>(null);
-  const [gender, setGender] = useState<string | null>(null);
-  const [ageRange, setAgeRange] = useState<string | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
 
   const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
 
@@ -105,8 +94,6 @@ function CheckinPage() {
           companyId: company.id,
           name: profile.name,
           whatsapp: profile.whatsapp,
-          gender: profile.gender,
-          ageRange: profile.ageRange,
         });
         setSession({
           customerId: upserted.customerId,
@@ -142,15 +129,28 @@ function CheckinPage() {
     if (existingCustomer) {
       setName(existingCustomer.name);
       setWhatsapp(existingCustomer.whatsapp);
-      if (existingCustomer.gender) setGender(existingCustomer.gender);
-      if (existingCustomer.ageRange) setAgeRange(existingCustomer.ageRange);
     }
   }, [existingCustomer]);
+
+  async function logConsent(customerId: string, companyId: string, sessionToken: string, consentType: string) {
+    try {
+      await supabase.rpc("log_consent", {
+        _customer_id: customerId,
+        _token: sessionToken,
+        _company_id: companyId,
+        _consent_type: consentType,
+      });
+    } catch (err) {
+      console.warn("[consent]", consentType, err);
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!company) throw new Error("Empresa não encontrada");
       if (!context) throw new Error("Selecione como está sendo sua visita");
+      if (!acceptTerms) throw new Error("Você precisa aceitar os Termos de Uso");
+      if (!acceptPrivacy) throw new Error("Você precisa aceitar a Política de Privacidade");
       const nameValue = name.trim() || existingCustomer?.name || "";
       const whatsappValue = whatsapp.trim() || existingCustomer?.whatsapp || "";
       if (!nameValue) throw new Error("Preencha seu nome");
@@ -159,15 +159,6 @@ function CheckinPage() {
         companyId: company.id,
         name: nameValue,
         whatsapp: whatsappValue,
-        gender,
-        ageRange,
-      });
-      await checkinRepository.create({
-        customerId: upserted.customerId,
-        sessionToken: upserted.sessionToken,
-        companyId: company.id,
-        context,
-        source: "loja",
       });
       setSession({
         customerId: upserted.customerId,
@@ -176,7 +167,17 @@ function CheckinPage() {
         sessionToken: upserted.sessionToken,
         createdAt: Date.now(),
       });
-      setLastProfile({ name: nameValue, whatsapp: whatsappValue, gender, ageRange });
+      setLastProfile({ name: nameValue, whatsapp: whatsappValue });
+      await checkinRepository.create({
+        customerId: upserted.customerId,
+        sessionToken: upserted.sessionToken,
+        companyId: company.id,
+        context,
+        source: "loja",
+      });
+      await logConsent(upserted.customerId, company.id, upserted.sessionToken, "terms_of_use");
+      await logConsent(upserted.customerId, company.id, upserted.sessionToken, "privacy_policy");
+      await logConsent(upserted.customerId, company.id, upserted.sessionToken, "checkin_privacy");
     },
     onSuccess: async () => {
       await router.preloadRoute({ to: "/c/$companySlug/feed", params: { companySlug } });
@@ -259,51 +260,38 @@ function CheckinPage() {
             </div>
           </div>
 
-          <div>
-            <Label>Sexo <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {genderOptions.map((g) => {
-                const active = gender === g.id;
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => setGender(active ? null : g.id)}
-                    className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 text-left transition ${
-                      active
-                        ? "border-primary bg-accent text-accent-foreground"
-                        : "border-border hover:bg-muted"
-                    }`}
-                  >
-                    <g.icon className="size-4" />
-                    <span className="text-sm font-medium">{g.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <Label>Faixa etária <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {ageRangeOptions.map((a) => {
-                const active = ageRange === a.id;
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => setAgeRange(active ? null : a.id)}
-                    className={`flex items-center justify-center rounded-xl border-2 p-3 text-left transition ${
-                      active
-                        ? "border-primary bg-accent text-accent-foreground"
-                        : "border-border hover:bg-muted"
-                    }`}
-                  >
-                    <span className="text-sm font-medium">{a.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+          <div className="space-y-3 rounded-xl border border-primary/10 bg-primary/5 p-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Ao continuar, você confirma que leu e aceita os termos abaixo. Seus dados
+              serão usados apenas para melhorar sua experiência e gerar análises para
+              este estabelecimento.
+            </p>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={acceptTerms}
+                onCheckedChange={(v) => setAcceptTerms(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Li e aceito os{" "}
+                <a href="/termos" target="_blank" className="underline underline-offset-2 hover:text-primary">
+                  Termos de Uso
+                </a>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={acceptPrivacy}
+                onCheckedChange={(v) => setAcceptPrivacy(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Li e aceito a{" "}
+                <a href="/privacidade" target="_blank" className="underline underline-offset-2 hover:text-primary">
+                  Política de Privacidade
+                </a>
+              </span>
+            </label>
           </div>
 
           <Button
@@ -314,7 +302,9 @@ function CheckinPage() {
               mutation.isPending ||
               !context ||
               (!name.trim() && !existingCustomer?.name) ||
-              (!whatsapp.trim() && !existingCustomer?.whatsapp)
+              (!whatsapp.trim() && !existingCustomer?.whatsapp) ||
+              !acceptTerms ||
+              !acceptPrivacy
             }
           >
             {mutation.isPending ? "Entrando…" : "Entrar"}
