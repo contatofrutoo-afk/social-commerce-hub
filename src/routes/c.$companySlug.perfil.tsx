@@ -109,6 +109,21 @@ function ProfilePage() {
     },
   });
 
+  const updateConsents = useMutation({
+    mutationFn: async () => {
+      for (const type of ["terms", "privacy"]) {
+        await supabase.rpc("log_consent", {
+          _customer_id: session!.customerId,
+          _token: session!.sessionToken,
+          _company_id: session!.companyId,
+          _consent_type: type,
+        });
+      }
+    },
+    onSuccess: () => toast.success("Consentimentos atualizados"),
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao atualizar consentimentos"),
+  });
+
   const deleteData = useMutation({
     mutationFn: async () => {
       await supabase.rpc("delete_my_data", {
