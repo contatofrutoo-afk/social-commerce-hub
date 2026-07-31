@@ -404,9 +404,20 @@ export function CustomerPanel({
   onCheckout?: () => void;
 }) {
   const qc = useQueryClient();
+  const { data: session } = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      return data.session;
+    },
+    staleTime: 30_000,
+  });
+  const isAuthed = !!session;
+
   const { data: p, isError } = useQuery({
     queryKey: ["customer-service-profile", customerId],
     queryFn: () => crmRepository.getCustomerServiceProfile(customerId),
+    enabled: isAuthed,
   });
 
   const checkoutMut = useMutation({
@@ -421,6 +432,16 @@ export function CustomerPanel({
     },
   });
 
+  if (!isAuthed)
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Perfil do cliente restrito a funcionários.{" "}
+        <a href="/auth" className="text-primary underline">
+          Faça login
+        </a>{" "}
+        para ver o histórico completo.
+      </div>
+    );
   if (isError)
     return (
       <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">

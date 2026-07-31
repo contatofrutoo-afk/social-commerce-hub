@@ -816,70 +816,24 @@ export const crmRepository = {
   },
 
   async getCustomerServiceProfile(customerId: string): Promise<CustomerServiceProfile> {
-    const [customerResult, checkinsResult, ordersResult, likesResult, wishesResult, eventsResult] =
-      await Promise.all([
-        supabase
-          .from("customers")
-          .select(
-            "id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at",
-          )
-          .eq("id", customerId)
-          .single(),
-        supabase
-          .from("checkins")
-          .select("id, context, created_at, checked_out_at, source, table_id, table:tables(label)")
-          .eq("customer_id", customerId)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("orders")
-          .select(`*, table:tables(label), order_items(*, product:products(name, category))`)
-          .eq("customer_id", customerId)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("product_likes")
-          .select("product_id, created_at, product:products(name, category, image_url, price)")
-          .eq("customer_id", customerId)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("product_wishes")
-          .select("product_id, product:products(name, category, image_url, price)")
-          .eq("customer_id", customerId),
-        supabase
-          .from("product_events")
-          .select("id, event_type, product_id, created_at")
-          .eq("customer_id", customerId)
-          .in("event_type", ["cart_add", "purchase"])
-          .order("created_at", { ascending: false }),
-      ]);
+    const { data, error } = await supabase.rpc("get_customer_service_profile" as any, {
+      _customer_id: customerId,
+    });
+    if (error) throw error;
 
-    if (customerResult.error) throw customerResult.error;
-    if (checkinsResult.error) throw checkinsResult.error;
-    if (ordersResult.error) throw ordersResult.error;
-    if (likesResult.error) throw likesResult.error;
-    if (wishesResult.error) throw wishesResult.error;
-
-    const customer = customerResult.data;
+    const d = (data ?? {}) as any;
+    const customer = d.customer;
     if (!customer) throw new Error("Cliente não encontrado");
 
-    const checkins = checkinsResult.data ?? [];
-    const orders = ordersResult.data ?? [];
-    const likes = likesResult.data ?? [];
-    const wishes = wishesResult.data ?? [];
-    const productEvents = eventsResult.data ?? [];
+    const checkins = d.checkins ?? [];
+    const orders = d.orders ?? [];
+    const likes = d.likes ?? [];
+    const wishes = d.wishes ?? [];
+    const productEvents = d.events ?? [];
 
-    const eventProductIds = [
-      ...new Set(productEvents.map((e: any) => e.product_id).filter(Boolean)),
-    ];
-    let productNameMap = new Map<string, string>();
-    if (eventProductIds.length > 0) {
-      const { data: eventProducts } = await supabase
-        .from("products")
-        .select("id, name")
-        .in("id", eventProductIds);
-      if (eventProducts) {
-        productNameMap = new Map(eventProducts.map((p: any) => [p.id, p.name]));
-      }
-    }
+    const productNameMap = new Map<string, string>(
+      (d.eventProducts ?? []).map((p: any) => [p.id, p.name]),
+    );
 
     const sortedCheckins = [...checkins].sort(
       (a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
