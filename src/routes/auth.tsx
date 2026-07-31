@@ -194,7 +194,50 @@ function AuthPage() {
                 placeholder="Mínimo 6 caracteres"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full shadow-elegant" disabled={loading}>
+
+            {mode === "signup" && (
+              <div className="space-y-2.5 rounded-xl border border-border/60 bg-muted/30 p-3.5">
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="mt-0.5 size-4 accent-[hsl(var(--primary))]"
+                    required
+                  />
+                  <span className="text-muted-foreground">
+                    Li e concordo com os{" "}
+                    <Link to="/termos" target="_blank" className="font-semibold text-primary hover:underline">
+                      Termos de Uso
+                    </Link>
+                    .
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={acceptPrivacy}
+                    onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                    className="mt-0.5 size-4 accent-[hsl(var(--primary))]"
+                    required
+                  />
+                  <span className="text-muted-foreground">
+                    Li e concordo com a{" "}
+                    <Link to="/privacy" target="_blank" className="font-semibold text-primary hover:underline">
+                      Política de Privacidade
+                    </Link>
+                    .
+                  </span>
+                </label>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full shadow-elegant"
+              disabled={loading || (mode === "signup" && !(acceptTerms && acceptPrivacy))}
+            >
               {loading ? "Aguarde…" : mode === "signin" ? "Entrar no painel" : "Criar minha conta"}
             </Button>
           </form>
@@ -209,6 +252,13 @@ function AuthPage() {
               {mode === "signin" ? "Criar conta grátis" : "Entrar"}
             </button>
           </div>
+
+          <div className="mt-8 flex items-center justify-center gap-4 border-t border-border/60 pt-5 text-xs text-muted-foreground">
+            <Link to="/termos" className="hover:text-foreground">Termos de Uso</Link>
+            <span className="text-border">•</span>
+            <Link to="/privacy" className="hover:text-foreground">Política de Privacidade</Link>
+          </div>
+
         </div>
       </div>
     </div>
