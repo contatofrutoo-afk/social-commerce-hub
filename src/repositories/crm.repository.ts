@@ -815,9 +815,13 @@ export const crmRepository = {
     };
   },
 
-  async getCustomerServiceProfile(customerId: string): Promise<CustomerServiceProfile> {
+  async getCustomerServiceProfile(
+    customerId: string,
+    companyId: string,
+  ): Promise<CustomerServiceProfile> {
     const { data, error } = await supabase.rpc("get_customer_service_profile" as any, {
       _customer_id: customerId,
+      _company_id: companyId,
     });
     if (error) throw error;
 
