@@ -475,7 +475,30 @@ function SettingsPage() {
           })}
         </div>
       </div>
+
+      {/* Privacidade e documentos legais */}
+      <div className="dash-card p-5">
+        <h2 className="font-display text-lg font-bold">Privacidade</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Documentos jurídicos da weaze e direitos sobre os dados do seu negócio e dos seus clientes.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button asChild variant="secondary" size="sm">
+            <a href="/privacy" target="_blank" rel="noreferrer">Política de Privacidade</a>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <a href="/termos" target="_blank" rel="noreferrer">Termos de Uso</a>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <a href="/privacy#cookies" target="_blank" rel="noreferrer">Política de Cookies</a>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <a href="mailto:privacidade@weaze.com.br">Falar com o Encarregado (DPO)</a>
+          </Button>
+        </div>
+      </div>
     </div>
+
   );
 }
 
