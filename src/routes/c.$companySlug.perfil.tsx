@@ -250,7 +250,7 @@ function ProfilePage() {
           <Shield className="size-4 text-primary" /> Privacidade
         </h3>
         <button
-          onClick={() => window.open("/privacidade", "_blank")}
+          onClick={() => window.open("/privacy", "_blank")}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
         >
           <FileText className="size-4 text-muted-foreground" />
@@ -264,6 +264,14 @@ function ProfilePage() {
           Termos de Uso
         </button>
         <button
+          onClick={() => updateConsents.mutate()}
+          disabled={updateConsents.isPending}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
+        >
+          <RefreshCw className="size-4 text-muted-foreground" />
+          {updateConsents.isPending ? "Atualizando..." : "Atualizar consentimentos"}
+        </button>
+        <button
           onClick={() => {
             if (window.confirm("Baixar meus dados? Esta funcionalidade estará disponível em breve.")) {
               toast.info("Funcionalidade em desenvolvimento");
@@ -272,8 +280,9 @@ function ProfilePage() {
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
         >
           <Download className="size-4 text-muted-foreground" />
-          Baixar meus dados
+          Solicitar exportação dos meus dados
         </button>
+
         <button
           onClick={() => {
             if (window.confirm("Tem certeza? Seus dados serão anonimizados e não poderão ser recuperados.")) {
