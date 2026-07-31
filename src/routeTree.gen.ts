@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +45,11 @@ import { Route as AuthenticatedAdminAprovacoesRouteImport } from './routes/_auth
 import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
 import { Route as AuthenticatedAdminEmpresasIdRouteImport } from './routes/_authenticated.admin.empresas.$id'
 
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -230,6 +236,7 @@ const AuthenticatedAdminEmpresasIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/payment': typeof AuthenticatedPaymentRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
   '/payment': typeof AuthenticatedPaymentRoute
   '/p/$slug': typeof PSlugRoute
   '/admin/aprovacoes': typeof AuthenticatedAdminAprovacoesRoute
@@ -299,6 +307,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
+  '/privacy': typeof PrivacyRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/payment': typeof AuthenticatedPaymentRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/privacy'
     | '/admin'
     | '/app'
     | '/payment'
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/privacy'
     | '/payment'
     | '/p/$slug'
     | '/admin/aprovacoes'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/privacy'
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/payment'
@@ -441,12 +453,20 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  PrivacyRoute: typeof PrivacyRoute
   CCompanySlugRoute: typeof CCompanySlugRouteWithChildren
   PSlugRoute: typeof PSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -800,6 +820,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  PrivacyRoute: PrivacyRoute,
   CCompanySlugRoute: CCompanySlugRouteWithChildren,
   PSlugRoute: PSlugRoute,
 }
