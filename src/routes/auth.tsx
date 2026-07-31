@@ -43,6 +43,10 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "signup" && !(acceptTerms && acceptPrivacy)) {
+      toast.error("É necessário aceitar os Termos de Uso e a Política de Privacidade.");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
@@ -72,6 +76,10 @@ function AuthPage() {
           setLoading(false);
           return;
         }
+        // Registro dos aceites legais (data, hora, versão e usuário).
+        try {
+          if (data.user) await recordLegalConsents(data.user.id);
+        } catch { /* silencioso */ }
         // Novo cadastro B2B: garante empresa e vai direto para /payment,
         // evitando flicker do painel enquanto o status é verificado.
         try {
