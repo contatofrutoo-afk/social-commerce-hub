@@ -287,7 +287,7 @@ function CheckinPage() {
               />
               <span className="text-sm">
                 Li e aceito a{" "}
-                <a href="/privacidade" target="_blank" className="underline underline-offset-2 hover:text-primary">
+                <a href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-primary">
                   Política de Privacidade
                 </a>
               </span>

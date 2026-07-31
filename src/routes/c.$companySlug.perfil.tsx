@@ -12,7 +12,7 @@ import { optimizedImageUrl } from "@/lib/image-url";
 import { fileToBase64 } from "@/lib/file-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText } from "lucide-react";
+import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
   component: ProfilePage,
@@ -107,6 +107,21 @@ function ProfilePage() {
       setShowProfileNudge(false);
       qc.invalidateQueries({ queryKey: ["customer-self"] });
     },
+  });
+
+  const updateConsents = useMutation({
+    mutationFn: async () => {
+      for (const type of ["terms", "privacy"]) {
+        await supabase.rpc("log_consent", {
+          _customer_id: session!.customerId,
+          _token: session!.sessionToken,
+          _company_id: session!.companyId,
+          _consent_type: type,
+        });
+      }
+    },
+    onSuccess: () => toast.success("Consentimentos atualizados"),
+    onError: (err: any) => toast.error(err?.message ?? "Erro ao atualizar consentimentos"),
   });
 
   const deleteData = useMutation({
@@ -250,7 +265,7 @@ function ProfilePage() {
           <Shield className="size-4 text-primary" /> Privacidade
         </h3>
         <button
-          onClick={() => window.open("/privacidade", "_blank")}
+          onClick={() => window.open("/privacy", "_blank")}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
         >
           <FileText className="size-4 text-muted-foreground" />
@@ -264,6 +279,14 @@ function ProfilePage() {
           Termos de Uso
         </button>
         <button
+          onClick={() => updateConsents.mutate()}
+          disabled={updateConsents.isPending}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
+        >
+          <RefreshCw className="size-4 text-muted-foreground" />
+          {updateConsents.isPending ? "Atualizando..." : "Atualizar consentimentos"}
+        </button>
+        <button
           onClick={() => {
             if (window.confirm("Baixar meus dados? Esta funcionalidade estará disponível em breve.")) {
               toast.info("Funcionalidade em desenvolvimento");
@@ -272,8 +295,9 @@ function ProfilePage() {
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-muted transition-colors"
         >
           <Download className="size-4 text-muted-foreground" />
-          Baixar meus dados
+          Solicitar exportação dos meus dados
         </button>
+
         <button
           onClick={() => {
             if (window.confirm("Tem certeza? Seus dados serão anonimizados e não poderão ser recuperados.")) {

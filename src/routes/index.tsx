@@ -761,7 +761,15 @@ function Footer() {
             </p>
           </div>
           <FooterCol title="Produto" links={[["Recursos", "#recursos"], ["Planos", "#planos"], ["FAQ", "#faq"]]} />
-          <FooterCol title="Empresa" links={[["Contato", "#"], ["Política de Privacidade", "#"], ["Termos de Uso", "#"]]} />
+          <FooterCol
+            title="Empresa"
+            links={[
+              ["Contato", "mailto:contato@weaze.com.br"],
+              ["Termos de Uso", "/termos"],
+              ["Política de Privacidade", "/privacy"],
+              ["Cookies", "/privacy#cookies"],
+            ]}
+          />
           <div>
             <h4 className="font-display text-sm font-semibold">Social</h4>
             <div className="mt-4 flex gap-3">
