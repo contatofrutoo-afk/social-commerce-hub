@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
+import { recordLegalConsents } from "@/lib/consent";
 import { toast } from "sonner";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
