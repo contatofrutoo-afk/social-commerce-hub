@@ -12,7 +12,7 @@ import { optimizedImageUrl } from "@/lib/image-url";
 import { fileToBase64 } from "@/lib/file-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText } from "lucide-react";
+import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
   component: ProfilePage,
