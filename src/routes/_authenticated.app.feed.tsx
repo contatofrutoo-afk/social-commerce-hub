@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { POST_CATEGORIES, getPostCategoryBadge } from "@/lib/post-categories";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { optimizedImageUrl } from "@/lib/image-url";
 import {
@@ -68,6 +69,7 @@ function FeedAdminPage() {
   const [videoUrl, setVideoUrl] = useState<string | null>("");
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [category, setCategory] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
 
   const { data: products } = useQuery({
@@ -96,6 +98,7 @@ function FeedAdminPage() {
         imageUrl: mediaType === "image" ? imageUrl || null : null,
         videoUrl: mediaType === "video" ? videoUrl || null : null,
         productIds: selectedProducts,
+        category,
       }),
     onSuccess: () => {
       setText("");
@@ -103,6 +106,7 @@ function FeedAdminPage() {
       setVideoUrl("");
       setMediaType("image");
       setSelectedProducts([]);
+      setCategory(null);
       qc.invalidateQueries({ queryKey: ["feed-b2b"] });
       toast.success("Publicado");
     },
@@ -126,12 +130,14 @@ function FeedAdminPage() {
       text,
       imageUrl,
       videoUrl,
+      category,
     }: {
       id: string;
       text: string;
       imageUrl: string | null;
       videoUrl: string | null;
-    }) => postRepository.update(id, { text, imageUrl, videoUrl }),
+      category: string | null;
+    }) => postRepository.update(id, { text, imageUrl, videoUrl, category }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["feed-b2b"] });
       setEditingPost(null);
@@ -145,6 +151,7 @@ function FeedAdminPage() {
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editVideoUrl, setEditVideoUrl] = useState<string | null>(null);
   const [editMediaType, setEditMediaType] = useState<"image" | "video">("image");
+  const [editCategory, setEditCategory] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
 
   return (
@@ -202,6 +209,27 @@ function FeedAdminPage() {
                   }`}
                 >
                   {p.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div>
+          <div className="mb-2 text-sm font-medium">
+            Categoria <span className="text-muted-foreground">(opcional)</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {POST_CATEGORIES.map((c) => {
+              const active = category === c.key;
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setCategory(active ? null : c.key)}
+                  className={`rounded-full border px-3 py-1 text-xs ${
+                    active ? "border-primary bg-accent" : ""
+                  }`}
+                >
+                  {c.label}
                 </button>
               );
             })}
@@ -272,6 +300,7 @@ function FeedAdminPage() {
                 setEditImageUrl(selectedPost.post.imageUrl);
                 setEditVideoUrl(selectedPost.post.videoUrl);
                 setEditMediaType(selectedPost.post.videoUrl ? "video" : "image");
+                setEditCategory(selectedPost.post.category ?? null);
                 setEditingPost(selectedPost.post);
                 setSelectedPost(null);
               }}
@@ -328,6 +357,27 @@ function FeedAdminPage() {
                 onChange={(e) => setEditText(e.target.value)}
                 maxLength={500}
               />
+              <div>
+                <div className="mb-2 text-sm font-medium">
+                  Categoria <span className="text-muted-foreground">(opcional)</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {POST_CATEGORIES.map((c) => {
+                    const active = editCategory === c.key;
+                    return (
+                      <button
+                        key={c.key}
+                        onClick={() => setEditCategory(active ? null : c.key)}
+                        className={`rounded-full border px-3 py-1 text-xs ${
+                          active ? "border-primary bg-accent" : ""
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingPost(null)}>
                   Cancelar
@@ -339,6 +389,7 @@ function FeedAdminPage() {
                       text: editText.trim(),
                       imageUrl: editMediaType === "image" ? editImageUrl : null,
                       videoUrl: editMediaType === "video" ? editVideoUrl : null,
+                      category: editCategory,
                     })
                   }
                   disabled={
@@ -438,6 +489,13 @@ function PostDetail({
         </DialogTitle>
       </DialogHeader>
       <div className="mt-2 text-xs text-muted-foreground">{relativeTime(post.createdAt)}</div>
+      {getPostCategoryBadge(post.category) && (
+        <span
+          className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${getPostCategoryBadge(post.category)?.className}`}
+        >
+          {getPostCategoryBadge(post.category)?.label}
+        </span>
+      )}
       {post.videoUrl ? (
         <div className="mt-3 aspect-[9/16] w-full overflow-hidden rounded-lg">
           <video src={post.videoUrl} className="size-full object-cover" controls playsInline />

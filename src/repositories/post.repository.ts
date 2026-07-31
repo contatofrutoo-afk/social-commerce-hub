@@ -79,6 +79,7 @@ export const postRepository = {
     imageUrl?: string | null;
     videoUrl?: string | null;
     productIds?: string[];
+    category?: string | null;
   }): Promise<Post> {
     const { data, error } = await supabase
       .from("posts")
@@ -88,6 +89,7 @@ export const postRepository = {
         text: input.text,
         image_url: input.imageUrl ?? null,
         video_url: input.videoUrl ?? null,
+        category: input.category ?? null,
       })
       .select("*, company:company_id(*)")
       .single();
@@ -137,11 +139,21 @@ export const postRepository = {
 
   async update(
     postId: string,
-    patch: { text?: string; imageUrl?: string | null; videoUrl?: string | null },
+    patch: {
+      text?: string;
+      imageUrl?: string | null;
+      videoUrl?: string | null;
+      category?: string | null;
+    },
   ) {
     const { error } = await supabase
       .from("posts")
-      .update({ text: patch.text, image_url: patch.imageUrl, video_url: patch.videoUrl })
+      .update({
+        text: patch.text,
+        image_url: patch.imageUrl,
+        video_url: patch.videoUrl,
+        category: patch.category,
+      })
       .eq("id", postId);
     if (error) throw error;
   },

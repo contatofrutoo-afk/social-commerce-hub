@@ -30,7 +30,7 @@ function ClientLayout() {
   const path = location.pathname;
 
   const tabs = [
-    { to: "/c/$companySlug/feed", label: "Feed", icon: Newspaper },
+    { to: "/c/$companySlug/feed", label: "Catálogo", icon: Newspaper },
     { to: "/c/$companySlug/publicar", label: "Publicar", icon: Camera },
     { to: "/c/$companySlug/sacola", label: "Sacola", icon: ShoppingBag, badge: cart.count },
     { to: "/c/$companySlug/perfil", label: "Perfil", icon: User },

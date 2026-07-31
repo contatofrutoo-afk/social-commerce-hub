@@ -44,6 +44,7 @@ import {
   Send,
 } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
+import { getPostCategoryBadge } from "@/lib/post-categories";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -288,6 +289,16 @@ function PostCard({
           </DropdownMenu>
         )}
       </header>
+
+      {getPostCategoryBadge(post.category) && (
+        <div className="px-4 pb-2">
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getPostCategoryBadge(post.category)?.className}`}
+          >
+            {getPostCategoryBadge(post.category)?.label}
+          </span>
+        </div>
+      )}
 
       {post.text && <p className="px-4 pb-3 text-[15px] leading-relaxed">{post.text}</p>}
 

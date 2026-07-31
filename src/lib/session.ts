@@ -2,6 +2,23 @@
 // Dados vivem no Cloud; localStorage aqui é apenas a "chave" para reencontrar o customer.
 const KEY = "weaze.session.v1";
 const PROFILE_KEY = "weaze.profile.v1";
+const ANON_KEY = "weaze.anon.v1";
+
+export const ANONYMOUS_NAME = "Visitante";
+
+/** Identificador anônimo estável por aparelho, usado como chave silenciosa
+ *  (whatsapp placeholder) quando o cliente entra pelo QR sem cadastro. */
+export function getAnonymousId(): string {
+  if (typeof window === "undefined") {
+    return `anon-${Math.random().toString(36).slice(2, 10)}`;
+  }
+  let id = window.localStorage.getItem(ANON_KEY);
+  if (!id) {
+    id = `anon-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    window.localStorage.setItem(ANON_KEY, id);
+  }
+  return id;
+}
 
 export type WeazeProfile = { name: string; whatsapp: string; gender?: string | null; ageRange?: string | null };
 
