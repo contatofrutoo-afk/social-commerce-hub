@@ -15,10 +15,13 @@
 -- ficam ambíguos: `customer_id` pode ser a variável PL/pgSQL ou a
 -- coluna das tabelas (checkins, posts, comments, orders, etc.).
 --
--- Correção: todas as referências a colunas `customer_id` nas
--- condições são qualificadas com o nome da tabela, eliminando a
--- ambiguidade. Assinatura e retorno (customer_id, session_token)
--- são mantidos — o frontend continua recebendo o mesmo formato.
+-- Correção: a diretiva `#variable_conflict use_column` faz o PL/pgSQL
+-- resolver nomes que colidem (variável vs. coluna) em favor da COLUNA —
+-- resolve tanto os `SET` targets quanto os `WHERE`/`ON CONFLICT`. Além
+-- disso, todas as referências a colunas `customer_id` nas condições são
+-- qualificadas com o nome da tabela. Assinatura e retorno
+-- (customer_id, session_token) são mantidos — o frontend continua
+-- recebendo o mesmo formato.
 -- Idempotente: pode ser executado quantas vezes for necessário.
 -- ============================================================
 
@@ -40,6 +43,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+#variable_conflict use_column
 DECLARE
   v_company_id uuid;
   v_new_whatsapp text;

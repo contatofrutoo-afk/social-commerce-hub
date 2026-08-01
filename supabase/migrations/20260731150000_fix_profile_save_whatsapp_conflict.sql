@@ -37,6 +37,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+#variable_conflict use_column
 DECLARE
   v_company_id uuid;
   v_new_whatsapp text;
