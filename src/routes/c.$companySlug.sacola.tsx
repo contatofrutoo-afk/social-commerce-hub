@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyRepository, orderRepository } from "@/repositories";
 import { supabase } from "@/integrations/supabase/client";
-import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/session";
+import { getSessionForCompany, type WeazeSession } from "@/lib/session";
+import { onboardViaQr } from "@/lib/qr-onboard";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,10 @@ function BagPage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
+  const [session, setSession] = useState<WeazeSession | null>(() =>
+    typeof window !== "undefined" ? getSessionForCompany(companySlug) : null,
+  );
+  const [onboarding, setOnboarding] = useState(false);
   const [note, setNote] = useState("");
 
   const { data: company } = useQuery({
@@ -74,12 +78,36 @@ function BagPage() {
   });
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !session) {
-      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
-    }
-  }, [session, companySlug, navigate]);
+    if (session || !company) return;
+    let cancelled = false;
+    setOnboarding(true);
+    onboardViaQr({ companyId: company.id, companySlug, tableId: null, source: "link" })
+      .then((s) => {
+        if (!cancelled) setSession(s);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        toast.error(e instanceof Error ? e.message : "Não foi possível iniciar a sessão.");
+        navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
+      })
+      .finally(() => {
+        if (!cancelled) setOnboarding(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session, company, companySlug, navigate]);
 
-  if (!session) return null;
+  if (!session) {
+    if (onboarding) {
+      return (
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <p className="animate-pulse text-sm text-muted-foreground">Preparando sua sacola...</p>
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="p-4">
