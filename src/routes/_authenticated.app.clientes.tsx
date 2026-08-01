@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { customerRepository, crmRepository, checkinRepository } from "@/repositories";
 import type { CustomerInsights, TimelineEvent, ProductInteraction } from "@/repositories/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { optimizedImageUrl } from "@/lib/image-url";
 import { Input } from "@/components/ui/input";
@@ -162,6 +162,26 @@ function CustomersPage() {
     enabled: !!companyId,
     refetchInterval: 15000,
   });
+
+  // Realtime: quando o cliente edita o próprio perfil (nome/avatar) no app B2C,
+  // atualiza a lista de clientes e a presença automaticamente.
+  useEffect(() => {
+    if (!companyId) return;
+    const channel = supabase
+      .channel(`clientes-customers-${companyId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "customers", filter: `company_id=eq.${companyId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["customers", companyId] });
+          queryClient.invalidateQueries({ queryKey: ["present", companyId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId, queryClient]);
 
   const presentCustomerIds = new Set((present ?? []).map((p: any) => p.customer_id));
 

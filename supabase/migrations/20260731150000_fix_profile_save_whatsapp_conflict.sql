@@ -11,6 +11,11 @@
 -- Correção: update_customer_self detecta o conflito, mescla o
 -- perfil na linha canônica (a que já possui o whatsapp), transfere
 -- a sessão para ela e retorna o novo customer_id + token.
+-- Também migra os registros da linha duplicada (checkins, posts,
+-- reações, curtidas, desejos, pedidos, consentimentos e eventos)
+-- para a linha canônica e exclui o cadastro duplicado, para que o
+-- nome salvo apareça imediatamente em Clientes e em Atendimento
+-- (Loja/Mesas).
 -- Idempotente: pode ser executado quantas vezes for necessário.
 -- ============================================================
 
@@ -74,8 +79,37 @@ BEGIN
           session_token = _token
       WHERE id = v_other_id;
 
-    -- Invalida a linha duplicada (rotação do token)
-    UPDATE public.customers SET session_token = gen_random_uuid() WHERE id = _customer_id;
+    -- Transfere os registros da linha duplicada para a canônica, para que o
+    -- nome salvo apareça em Clientes e na presença de Atendimento (Loja/Mesas).
+    UPDATE public.checkins SET customer_id = v_other_id WHERE customer_id = _customer_id;
+    UPDATE public.posts SET customer_id = v_other_id WHERE customer_id = _customer_id;
+    UPDATE public.comments SET customer_id = v_other_id WHERE customer_id = _customer_id;
+    UPDATE public.orders SET customer_id = v_other_id WHERE customer_id = _customer_id;
+    UPDATE public.consent_log SET customer_id = v_other_id WHERE customer_id = _customer_id;
+    UPDATE public.product_events SET customer_id = v_other_id WHERE customer_id = _customer_id;
+
+    -- Tabelas com chave composta (post_id/product_id, customer_id): migra sem
+    -- conflito (ON CONFLICT DO NOTHING) e descarta os repetidos da duplicada.
+    INSERT INTO public.post_reactions (post_id, customer_id, type, created_at)
+      SELECT post_id, v_other_id, type, created_at
+      FROM public.post_reactions WHERE customer_id = _customer_id
+      ON CONFLICT (post_id, customer_id) DO NOTHING;
+    DELETE FROM public.post_reactions WHERE customer_id = _customer_id;
+
+    INSERT INTO public.product_likes (product_id, customer_id, created_at)
+      SELECT product_id, v_other_id, created_at
+      FROM public.product_likes WHERE customer_id = _customer_id
+      ON CONFLICT (product_id, customer_id) DO NOTHING;
+    DELETE FROM public.product_likes WHERE customer_id = _customer_id;
+
+    INSERT INTO public.product_wishes (product_id, customer_id, created_at)
+      SELECT product_id, v_other_id, created_at
+      FROM public.product_wishes WHERE customer_id = _customer_id
+      ON CONFLICT (product_id, customer_id) DO NOTHING;
+    DELETE FROM public.product_wishes WHERE customer_id = _customer_id;
+
+    -- Remove o cadastro duplicado (dados já migrados acima)
+    DELETE FROM public.customers WHERE id = _customer_id;
 
     RETURN QUERY SELECT v_other_id, _token;
     RETURN;
