@@ -10,6 +10,13 @@ function isUnsupportedParamError(error: unknown): boolean {
   return code === "PGRST202" || message.includes("Could not find the function");
 }
 
+/** Clientes anonimizados pelo "Excluir meus dados" (LGPD) ficam com
+ *  name = 'Usuário removido' e whatsapp = 'removido-<uuid>'. Eles não são
+ *  clientes ativos: não devem aparecer nas listas (Clientes/Atendimento). */
+export function isRemovedCustomer(name: string | null | undefined): boolean {
+  return name === "Usuário removido";
+}
+
 function map(r: any): Customer {
   return {
     id: r.id,
@@ -55,7 +62,7 @@ export const customerRepository = {
       .eq("company_id", companyId)
       .order("last_visit_at", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map(map);
+    return (data ?? []).map(map).filter((c) => !isRemovedCustomer(c.name));
   },
 
   /** Cria/atualiza o cliente e retorna id + token da sessão via RPC segura. */
@@ -210,7 +217,8 @@ export const checkinRepository = {
           }
         : null,
       table: r.table_id ? { label: r.table_label, slug: r.table_slug } : null,
-    }));
+    }))
+    .filter((r: any) => !r.customer || !isRemovedCustomer(r.customer.name));
   },
 
   /** Checkout: registra saída do cliente e invalida sessão (rotaciona token). */
