@@ -1,6 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Customer, VisitContext } from "./types";
 
+/** Detecta quando o banco rejeita a chamada por não conhecer algum argumento
+ *  (ex.: a migration que adiciona `_ip_address` ainda não foi aplicada no
+ *  Supabase). Nesse caso as RPCs são chamadas novamente sem o argumento novo. */
+function isUnsupportedParamError(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code;
+  const message = String((error as { message?: unknown } | null)?.message ?? "");
+  return code === "PGRST202" || message.includes("Could not find the function");
+}
+
 function map(r: any): Customer {
   return {
     id: r.id,
@@ -58,14 +67,20 @@ export const customerRepository = {
     ageRange?: string | null;
     ip?: string | null;
   }): Promise<{ customerId: string; sessionToken: string }> {
-    const { data, error } = await supabase.rpc("upsert_customer_visit", {
+    const args = {
       _company_id: input.companyId,
       _name: input.name,
       _whatsapp: input.whatsapp,
       _gender: input.gender ?? undefined,
       _age_range: input.ageRange ?? undefined,
+    };
+    let { data, error } = await supabase.rpc("upsert_customer_visit", {
+      ...args,
       _ip_address: input.ip ?? undefined,
     });
+    if (error && isUnsupportedParamError(error)) {
+      ({ data, error } = await supabase.rpc("upsert_customer_visit", args));
+    }
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) throw new Error("Falha ao registrar cliente");
@@ -81,7 +96,7 @@ export const customerRepository = {
     patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl" | "gender" | "ageRange">>,
     ip?: string | null,
   ): Promise<{ customerId: string; sessionToken: string }> {
-    const { data, error } = await supabase.rpc("update_customer_self", {
+    const args = {
       _customer_id: customerId,
       _token: token,
       _name: (patch.name ?? null) as string,
@@ -89,8 +104,14 @@ export const customerRepository = {
       _avatar_url: (patch.avatarUrl ?? null) as string,
       _gender: (patch.gender ?? null) as string,
       _age_range: (patch.ageRange ?? null) as string,
+    };
+    let { data, error } = await supabase.rpc("update_customer_self", {
+      ...args,
       _ip_address: ip ?? undefined,
     });
+    if (error && isUnsupportedParamError(error)) {
+      ({ data, error } = await supabase.rpc("update_customer_self", args));
+    }
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
     return {
