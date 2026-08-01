@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { customerRepository } from "@/repositories";
-import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/session";
+import { getSessionForCompany, setSession, clearSession, clearLastProfile } from "@/lib/session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,9 @@ function ProfilePage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const session = typeof window !== "undefined" ? getSessionForCompany(companySlug) : null;
+  const [session, setSessionState] = useState(() =>
+    typeof window !== "undefined" ? getSessionForCompany(companySlug) : null,
+  );
 
   const { data: customer } = useQuery({
     queryKey: ["customer-self", session?.customerId],
@@ -102,9 +104,14 @@ function ProfilePage() {
         gender,
         ageRange,
       }),
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success("Perfil atualizado");
       setShowProfileNudge(false);
+      if (res && session && res.customerId !== session.customerId) {
+        const next = { ...session, customerId: res.customerId, sessionToken: res.sessionToken };
+        setSession(next);
+        setSessionState(next);
+      }
       qc.invalidateQueries({ queryKey: ["customer-self"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar perfil"),

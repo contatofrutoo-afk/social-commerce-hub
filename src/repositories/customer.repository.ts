@@ -70,13 +70,15 @@ export const customerRepository = {
     return { customerId: row.customer_id, sessionToken: row.session_token };
   },
 
-  /** Atualização do próprio perfil, autorizada pelo token da sessão. */
+  /** Atualização do próprio perfil, autorizada pelo token da sessão.
+   *  Em caso de cadastro duplicado (whatsapp já usado por outro registro da
+   *  mesma empresa) a RPC mescla os perfis e devolve o customer_id canônico. */
   async updateSelf(
     customerId: string,
     token: string,
     patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl" | "gender" | "ageRange">>,
-  ) {
-    const { error } = await supabase.rpc("update_customer_self", {
+  ): Promise<{ customerId: string; sessionToken: string }> {
+    const { data, error } = await supabase.rpc("update_customer_self", {
       _customer_id: customerId,
       _token: token,
       _name: (patch.name ?? null) as string,
@@ -86,6 +88,11 @@ export const customerRepository = {
       _age_range: (patch.ageRange ?? null) as string,
     });
     if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return {
+      customerId: row?.customer_id ?? customerId,
+      sessionToken: row?.session_token ?? token,
+    };
   },
 };
 
