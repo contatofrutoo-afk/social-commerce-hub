@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { companyRepository, tableRepository, postRepository } from "@/repositories";
 import { onboardViaQr } from "@/lib/qr-onboard";
+import { hasConsent } from "@/lib/consent";
 import { PostCardSkeleton } from "@/components/post-card-skeleton";
+import { ConsentScreen } from "@/components/consent-screen";
 
 export const Route = createFileRoute("/c/$companySlug/m/$tableSlug")({
   component: TableCheckin,
@@ -15,6 +17,7 @@ function TableCheckin() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const onboardedRef = useRef(false);
+  const [consented, setConsented] = useState(() => hasConsent());
 
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
@@ -35,8 +38,9 @@ function TableCheckin() {
 
   // Jornada sem cadastro: cria a sessão em segundo plano (anônima ou reaproveitando
   // perfil salvo), pré-carrega o feed e leva direto ao Catálogo sem tela de loading.
+  // O onboarding só acontece DEPOIS do consentimento LGPD.
   useEffect(() => {
-    if (!company || !table) return;
+    if (!company || !table || !consented) return;
     if (onboardedRef.current) return;
     onboardedRef.current = true;
 
@@ -61,7 +65,7 @@ function TableCheckin() {
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       }
     })();
-  }, [company, table, companySlug, navigate, router, queryClient]);
+  }, [company, table, consented, companySlug, navigate, router, queryClient]);
 
   if (tableError) {
     console.warn("[mesa_checkin] table query error:", tableError.message);
@@ -94,6 +98,10 @@ function TableCheckin() {
         </div>
       </div>
     );
+  }
+
+  if (!consented) {
+    return <ConsentScreen onAccepted={() => setConsented(true)} />;
   }
 
   return (

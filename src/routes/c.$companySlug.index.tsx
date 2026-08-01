@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { companyRepository, postRepository } from "@/repositories";
 import { onboardViaQr } from "@/lib/qr-onboard";
+import { hasConsent } from "@/lib/consent";
 import { PostCardSkeleton } from "@/components/post-card-skeleton";
+import { ConsentScreen } from "@/components/consent-screen";
 import { Store } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/")({
@@ -16,6 +18,7 @@ function CheckinPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const onboardedRef = useRef(false);
+  const [consented, setConsented] = useState(() => hasConsent());
 
   const { data: company, isLoading } = useQuery({
     queryKey: ["company", companySlug],
@@ -25,8 +28,9 @@ function CheckinPage() {
 
   // Jornada sem cadastro: cria a sessão em segundo plano (anônima ou reaproveitando
   // perfil salvo), pré-carrega o feed e leva direto ao Catálogo sem tela de loading.
+  // O onboarding só acontece DEPOIS do consentimento LGPD.
   useEffect(() => {
-    if (!company) return;
+    if (!company || !consented) return;
     if (onboardedRef.current) return;
     onboardedRef.current = true;
 
@@ -54,7 +58,7 @@ function CheckinPage() {
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       }
     })();
-  }, [company, companySlug, navigate, router, queryClient]);
+  }, [company, consented, companySlug, navigate, router, queryClient]);
 
   if (!isLoading && !company) {
     return (
@@ -68,6 +72,10 @@ function CheckinPage() {
         </div>
       </div>
     );
+  }
+
+  if (!consented) {
+    return <ConsentScreen onAccepted={() => setConsented(true)} />;
   }
 
   return (
