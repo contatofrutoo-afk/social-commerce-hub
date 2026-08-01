@@ -9,13 +9,22 @@ import { acceptConsent } from "@/lib/consent";
  * Tela de consentimento LGPD exibida ANTES do acesso ao Feed/Catálogo quando
  * o cliente entra pelo QR Code Geral ou QR Code da Mesa.
  * Não coleta nenhum dado pessoal: apenas registra localmente a aceitação.
+ * Quando `busy`, permanece na tela (sem trocar de página) enquanto o
+ * onboarding roda em segundo plano — evita flicker antes do feed.
  */
-export function ConsentScreen({ onAccepted }: { onAccepted: () => void }) {
+export function ConsentScreen({
+  onAccepted,
+  busy = false,
+}: {
+  onAccepted: () => void;
+  busy?: boolean;
+}) {
   const [terms, setTerms] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const canAccess = terms && privacy;
 
   function handleAccept() {
+    if (busy) return;
     acceptConsent();
     onAccepted();
   }
@@ -94,10 +103,10 @@ export function ConsentScreen({ onAccepted }: { onAccepted: () => void }) {
           <Button
             className="mt-6 w-full"
             size="lg"
-            disabled={!canAccess}
+            disabled={!canAccess || busy}
             onClick={handleAccept}
           >
-            Acessar
+            {busy ? "Acessando..." : "Acessar"}
           </Button>
         </div>
       </div>

@@ -19,6 +19,7 @@ function CheckinPage() {
   const queryClient = useQueryClient();
   const onboardedRef = useRef(false);
   const [consented, setConsented] = useState(() => hasConsent());
+  const [entering, setEntering] = useState(false);
 
   const { data: company, isLoading } = useQuery({
     queryKey: ["company", companySlug],
@@ -75,7 +76,20 @@ function CheckinPage() {
   }
 
   if (!consented) {
-    return <ConsentScreen onAccepted={() => setConsented(true)} />;
+    return (
+      <ConsentScreen
+        onAccepted={() => {
+          setConsented(true);
+          setEntering(true);
+        }}
+      />
+    );
+  }
+
+  // Após aceitar, mantém a tela de consentimento estável enquanto o onboarding
+  // roda em segundo plano — evita o flicker de skeleton antes da navegação.
+  if (entering) {
+    return <ConsentScreen busy onAccepted={() => {}} />;
   }
 
   return (
