@@ -107,6 +107,7 @@ function ProfilePage() {
       setShowProfileNudge(false);
       qc.invalidateQueries({ queryKey: ["customer-self"] });
     },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar perfil"),
   });
 
   const updateConsents = useMutation({
