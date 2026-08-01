@@ -495,6 +495,7 @@ export type Database = {
           first_visit_at: string
           gender: string | null
           id: string
+          last_ip: string | null
           last_visit_at: string
           name: string
           session_token: string
@@ -512,6 +513,7 @@ export type Database = {
           first_visit_at?: string
           gender?: string | null
           id?: string
+          last_ip?: string | null
           last_visit_at?: string
           name: string
           session_token?: string
@@ -529,6 +531,7 @@ export type Database = {
           first_visit_at?: string
           gender?: string | null
           id?: string
+          last_ip?: string | null
           last_visit_at?: string
           name?: string
           session_token?: string
@@ -1354,6 +1357,7 @@ export type Database = {
           _avatar_url: string
           _customer_id: string
           _gender?: string
+          _ip_address?: string
           _name: string
           _token: string
           _whatsapp: string
@@ -1365,6 +1369,7 @@ export type Database = {
           _age_range?: string
           _company_id: string
           _gender?: string
+          _ip_address?: string
           _name: string
           _whatsapp: string
         }

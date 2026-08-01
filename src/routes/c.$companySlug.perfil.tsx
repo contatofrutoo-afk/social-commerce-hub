@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
+import { getClientIp } from "@/lib/client-ip";
 import { optimizedImageUrl } from "@/lib/image-url";
 import { fileToBase64 } from "@/lib/file-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,14 +97,21 @@ function ProfilePage() {
   }
 
   const save = useMutation({
-    mutationFn: () =>
-      customerRepository.updateSelf(session!.customerId, session!.sessionToken, {
-        name,
-        whatsapp,
-        avatarUrl: avatarUrl || null,
-        gender,
-        ageRange,
-      }),
+    mutationFn: async () => {
+      const ip = await getClientIp();
+      return customerRepository.updateSelf(
+        session!.customerId,
+        session!.sessionToken,
+        {
+          name,
+          whatsapp,
+          avatarUrl: avatarUrl || null,
+          gender,
+          ageRange,
+        },
+        ip,
+      );
+    },
     onSuccess: (res) => {
       toast.success("Perfil atualizado");
       setShowProfileNudge(false);

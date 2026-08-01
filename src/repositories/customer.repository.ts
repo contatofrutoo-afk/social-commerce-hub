@@ -56,6 +56,7 @@ export const customerRepository = {
     whatsapp: string;
     gender?: string | null;
     ageRange?: string | null;
+    ip?: string | null;
   }): Promise<{ customerId: string; sessionToken: string }> {
     const { data, error } = await supabase.rpc("upsert_customer_visit", {
       _company_id: input.companyId,
@@ -63,6 +64,7 @@ export const customerRepository = {
       _whatsapp: input.whatsapp,
       _gender: input.gender ?? undefined,
       _age_range: input.ageRange ?? undefined,
+      _ip_address: input.ip ?? undefined,
     });
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;
@@ -77,6 +79,7 @@ export const customerRepository = {
     customerId: string,
     token: string,
     patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl" | "gender" | "ageRange">>,
+    ip?: string | null,
   ): Promise<{ customerId: string; sessionToken: string }> {
     const { data, error } = await supabase.rpc("update_customer_self", {
       _customer_id: customerId,
@@ -86,6 +89,7 @@ export const customerRepository = {
       _avatar_url: (patch.avatarUrl ?? null) as string,
       _gender: (patch.gender ?? null) as string,
       _age_range: (patch.ageRange ?? null) as string,
+      _ip_address: ip ?? undefined,
     });
     if (error) throw error;
     const row = Array.isArray(data) ? data[0] : data;

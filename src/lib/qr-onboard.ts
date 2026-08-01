@@ -1,6 +1,7 @@
 // Onboarding silencioso da jornada do cliente via QR (QR Geral e QR da Mesa).
 // Elimina a barreira de cadastro: cria a sessão em segundo plano, sem formulário.
 import { customerRepository, checkinRepository } from "@/repositories";
+import { getClientIp } from "@/lib/client-ip";
 import {
   getSessionForCompany,
   setSession,
@@ -44,12 +45,17 @@ export async function onboardViaQr(opts: {
           ageRange: null,
         };
 
+  // IP público do aparelho: permite que o mesmo usuário (celular/PC) seja
+  // reconhecido ao acessar pelo mesmo IP e reutilize o perfil salvo.
+  const ip = await getClientIp();
+
   const upserted = await customerRepository.upsertVisit({
     companyId: opts.companyId,
     name: identity.name,
     whatsapp: identity.whatsapp,
     gender: identity.gender,
     ageRange: identity.ageRange,
+    ip,
   });
 
   const session: WeazeSession = {
