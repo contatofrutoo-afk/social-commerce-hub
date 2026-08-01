@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { getSessionForCompany, clearSession, clearLastProfile, getSessionRemainingMs } from "@/lib/session";
+import {
+  getSessionForCompany,
+  clearSession,
+  clearLastProfile,
+  getSessionRemainingMs,
+  type WeazeSession,
+} from "@/lib/session";
 import { customerRepository } from "@/repositories";
 import {
   AlertDialog,
@@ -55,6 +61,28 @@ export default function ClientSessionGuard() {
     navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
   }, [companySlug, navigate]);
 
+  // ── Verificação do token ──
+  // Um erro de rede/transição (restaurar aba, despertar o celular, servidor
+  // momentaneamente lento) NÃO deve encerrar a sessão. Somente o servidor
+  // rejeitando o token (RPC lança 'unauthorized') desloga o cliente.
+  function isUnauthorizedError(e: unknown): boolean {
+    const msg = (e instanceof Error ? e.message : String(e ?? "")).toLowerCase();
+    return (
+      msg.includes("unauthorized") ||
+      msg.includes("permission denied") ||
+      msg.includes("row-level security")
+    );
+  }
+
+  async function checkSession(session: WeazeSession): Promise<"ok" | "unauthorized" | "error"> {
+    try {
+      const data = await customerRepository.findSelf(session.customerId, session.sessionToken);
+      return data ? "ok" : "unauthorized";
+    } catch (e) {
+      return isUnauthorizedError(e) ? "unauthorized" : "error";
+    }
+  }
+
   // ── Verificação imediata do token ao montar ──
   useEffect(() => {
     const session = getSessionForCompany(companySlug);
@@ -62,19 +90,32 @@ export default function ClientSessionGuard() {
       setVerifying(false);
       return;
     }
+    let cancelled = false;
 
-    customerRepository
-      .findSelf(session.customerId, session.sessionToken)
-      .then((data) => {
-        if (!data) {
-          redirectToDesconexão();
-          return;
-        }
+    const attempt = async (retries: number) => {
+      const result = await checkSession(session);
+      if (cancelled) return;
+      if (result === "ok") {
         setVerifying(false);
-      })
-      .catch(() => {
+        return;
+      }
+      if (result === "unauthorized") {
         redirectToDesconexão();
-      });
+        return;
+      }
+      // Falha transitória: re-tenta com backoff (1s, 2s, 3s). Se persistir,
+      // libera a página mesmo assim — o polling/realtime seguem verificando.
+      if (retries > 0) {
+        window.setTimeout(() => attempt(retries - 1), 1000 * (4 - retries));
+        return;
+      }
+      setVerifying(false);
+    };
+
+    attempt(3);
+    return () => {
+      cancelled = true;
+    };
   }, [companySlug, redirectToDesconexão]);
 
   // ── Realtime: detecta rotação de session_token (checkout pelo staff) ──
@@ -93,12 +134,9 @@ export default function ClientSessionGuard() {
           filter: `id=eq.${session.customerId}`,
         },
         () => {
-          customerRepository
-            .findSelf(session.customerId, session.sessionToken)
-            .then((data) => {
-              if (!data) redirectToDesconexão();
-            })
-            .catch(() => redirectToDesconexão());
+          checkSession(session).then((result) => {
+            if (result === "unauthorized") redirectToDesconexão();
+          });
         },
       )
       .subscribe();
@@ -114,16 +152,29 @@ export default function ClientSessionGuard() {
     if (!session) return;
 
     const check = () => {
-      customerRepository
-        .findSelf(session.customerId, session.sessionToken)
-        .then((data) => {
-          if (!data) redirectToDesconexão();
-        })
-        .catch(() => redirectToDesconexão());
+      checkSession(session).then((result) => {
+        if (result === "unauthorized") redirectToDesconexão();
+      });
     };
 
     const interval = setInterval(check, TOKEN_CHECK_MS);
     return () => clearInterval(interval);
+  }, [companySlug, redirectToDesconexão]);
+
+  // ── Ao voltar para a aba, revalida a sessão sem deslogar em erro de rede ──
+  useEffect(() => {
+    const session = getSessionForCompany(companySlug);
+    if (!session) return;
+
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      checkSession(session).then((result) => {
+        if (result === "unauthorized") redirectToDesconexão();
+      });
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [companySlug, redirectToDesconexão]);
 
   // ── Timer: expiração de 7h ──
