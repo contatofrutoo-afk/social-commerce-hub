@@ -1,25 +1,28 @@
 -- ============================================================
--- FIX: salvar Perfil falha com
---   duplicate key value violates unique constraint
---   "customers_company_id_whatsapp_key"
+-- FIX: salvar Perfil do cliente com WhatsApp duplicado falha com
+--   column reference "customer_id" is ambiguous
+--   (SQLSTATE 42702, "It could refer to either a PL/pgSQL variable
+--    or a table column")
 --
--- Causa: onboarding anônimo cria linha com whatsapp = "anon-...".
--- Quando o cliente salva o número real no Perfil, a chave única
--- (company_id, whatsapp) colide com outra linha da mesma empresa
--- que já possui aquele número (cadastro duplicado).
+-- Causa: private.update_customer_self retorna
+--   RETURNS TABLE(customer_id uuid, session_token uuid)
+-- e em PL/pgSQL os nomes das colunas de RETURNS TABLE viram
+-- variáveis de saída. No ramo de merge (whatsapp já usado por
+-- outro registro da mesma empresa), os comandos
+--   UPDATE ... WHERE customer_id = _customer_id
+--   DELETE ... WHERE customer_id = _customer_id
+--   INSERT ... SELECT ... WHERE customer_id = _customer_id
+-- ficam ambíguos: `customer_id` pode ser a variável PL/pgSQL ou a
+-- coluna das tabelas (checkins, posts, comments, orders, etc.).
 --
--- Correção: update_customer_self detecta o conflito, mescla o
--- perfil na linha canônica (a que já possui o whatsapp), transfere
--- a sessão para ela e retorna o novo customer_id + token.
--- Também migra os registros da linha duplicada (checkins, posts,
--- reações, curtidas, desejos, pedidos, consentimentos e eventos)
--- para a linha canônica e exclui o cadastro duplicado, para que o
--- nome salvo apareça imediatamente em Clientes e em Atendimento
--- (Loja/Mesas).
+-- Correção: todas as referências a colunas `customer_id` nas
+-- condições são qualificadas com o nome da tabela, eliminando a
+-- ambiguidade. Assinatura e retorno (customer_id, session_token)
+-- são mantidos — o frontend continua recebendo o mesmo formato.
 -- Idempotente: pode ser executado quantas vezes for necessário.
 -- ============================================================
 
--- 1) Recriar private.update_customer_self (retorna novo id + token)
+-- 1) Recriar private.update_customer_self (remove overloads antigas)
 DROP FUNCTION IF EXISTS private.update_customer_self(uuid, uuid, text, text, text);
 DROP FUNCTION IF EXISTS private.update_customer_self(uuid, uuid, text, text, text, text, text);
 
@@ -131,7 +134,7 @@ BEGIN
 END;
 $$;
 
--- 2) Recriar wrapper público (retorna novo id + token)
+-- 2) Recriar wrapper público (mesma assinatura/retorno)
 DROP FUNCTION IF EXISTS public.update_customer_self(uuid, uuid, text, text, text);
 DROP FUNCTION IF EXISTS public.update_customer_self(uuid, uuid, text, text, text, text, text);
 
@@ -156,6 +159,62 @@ REVOKE ALL ON FUNCTION public.update_customer_self(uuid, uuid, text, text, text,
 GRANT EXECUTE ON FUNCTION public.update_customer_self(uuid, uuid, text, text, text, text, text) TO anon, authenticated;
 
 -- ============================================================
+-- 3) FIX relacionado: delete_my_data usava whatsapp fixo 'removido',
+--    que violava a constraint única (company_id, whatsapp) quando o
+--    segundo cliente da mesma empresa solicitava exclusão
+--    (erro: duplicate key value violates unique constraint).
+--    Agora o placeholder é único por exclusão.
+-- ============================================================
+DROP FUNCTION IF EXISTS private.delete_my_data(uuid, uuid, uuid);
+
+CREATE OR REPLACE FUNCTION private.delete_my_data(
+  _customer_id uuid,
+  _token uuid,
+  _company_id uuid
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT private.verify_customer(_customer_id, _token) THEN
+    RAISE EXCEPTION 'Unauthorized';
+  END IF;
+
+  -- Anonymize personal data instead of hard delete
+  UPDATE customers
+  SET name = 'Usuário removido',
+      whatsapp = 'removido-' || gen_random_uuid()::text,
+      avatar_url = NULL,
+      gender = NULL,
+      age_range = NULL,
+      session_token = gen_random_uuid()
+  WHERE id = _customer_id AND company_id = _company_id;
+
+  -- Log the deletion consent
+  INSERT INTO consent_log (customer_id, company_id, consent_type)
+  VALUES (_customer_id, _company_id, 'data_deletion');
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.delete_my_data(
+  _customer_id uuid,
+  _token uuid,
+  _company_id uuid
+)
+RETURNS void
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+  SELECT private.delete_my_data(_customer_id, _token, _company_id);
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_my_data(uuid, uuid, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.delete_my_data(uuid, uuid, uuid) TO anon, authenticated;
+
+-- ============================================================
 -- VERIFICAÇÃO (rodar depois de aplicar o script):
 --
 -- SELECT
@@ -163,7 +222,8 @@ GRANT EXECUTE ON FUNCTION public.update_customer_self(uuid, uuid, text, text, te
 --          WHERE n.nspname = 'public'
 --            AND p.proname = 'update_customer_self'
 --            AND p.pronargs = 7) AS update_self_ok,
---   exists(SELECT 1 FROM information_schema.columns
---          WHERE table_schema = 'public' AND table_name = 'customers'
---            AND column_name = 'whatsapp') AS whatsapp_ok;
+--   exists(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+--          WHERE n.nspname = 'private'
+--            AND p.proname = 'update_customer_self'
+--            AND p.pronargs = 7) AS private_update_self_ok;
 -- ============================================================
