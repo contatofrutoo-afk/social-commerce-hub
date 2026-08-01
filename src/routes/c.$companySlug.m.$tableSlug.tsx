@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { companyRepository, tableRepository } from "@/repositories";
+import { companyRepository, tableRepository, postRepository } from "@/repositories";
 import { onboardViaQr } from "@/lib/qr-onboard";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
+import { PostCardSkeleton } from "@/components/post-card-skeleton";
 
 export const Route = createFileRoute("/c/$companySlug/m/$tableSlug")({
   component: TableCheckin,
@@ -14,6 +13,7 @@ function TableCheckin() {
   const { companySlug, tableSlug } = Route.useParams();
   const navigate = useNavigate();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const onboardedRef = useRef(false);
 
   const { data: company } = useQuery({
@@ -34,7 +34,7 @@ function TableCheckin() {
   });
 
   // Jornada sem cadastro: cria a sessão em segundo plano (anônima ou reaproveitando
-  // perfil salvo) e leva direto ao Feed Catálogo. Nenhum formulário é exibido.
+  // perfil salvo), pré-carrega o feed e leva direto ao Catálogo sem tela de loading.
   useEffect(() => {
     if (!company || !table) return;
     if (onboardedRef.current) return;
@@ -42,11 +42,17 @@ function TableCheckin() {
 
     (async () => {
       try {
-        await onboardViaQr({
+        const session = await onboardViaQr({
           companyId: company.id,
           companySlug,
           tableId: table.id,
           source: `mesa-${table.slug}`,
+        });
+        queryClient.setQueryData(["company", companySlug], company);
+        await queryClient.prefetchQuery({
+          queryKey: ["feed", company.id, session.customerId],
+          queryFn: () => postRepository.listByCompany(company.id, session.customerId),
+          staleTime: 15_000,
         });
       } catch (err) {
         console.warn("[qr_onboard_mesa]", err instanceof Error ? err.message : err);
@@ -55,7 +61,7 @@ function TableCheckin() {
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       }
     })();
-  }, [company, table, companySlug, navigate, router]);
+  }, [company, table, companySlug, navigate, router, queryClient]);
 
   if (tableError) {
     console.warn("[mesa_checkin] table query error:", tableError.message);
@@ -80,32 +86,22 @@ function TableCheckin() {
   }
   if (!company || !table) {
     return (
-      <div className="px-6 py-8">
-        <div className="mb-6 text-center space-y-3">
-          <Skeleton className="mx-auto h-6 w-24 rounded-full" />
-          <Skeleton className="mx-auto h-8 w-64" />
-          <Skeleton className="mx-auto h-4 w-32" />
-        </div>
-        <div className="flex flex-col items-center justify-center pt-8">
-          <Loader2 className="size-6 animate-spin text-primary" />
-          <p className="mt-3 text-sm text-muted-foreground">Abrindo o catálogo…</p>
+      <div className="min-h-screen bg-background pb-20">
+        <div className="space-y-4 p-4">
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+          <PostCardSkeleton />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-6 py-8">
-      <div className="mb-6 text-center">
-        <div className="inline-block rounded-full bg-primary px-4 py-1 text-sm font-medium text-primary-foreground">
-          {table.label}
-        </div>
-        <h1 className="mt-4 text-2xl font-bold">{company.welcomeMessage}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{company.name}</p>
-      </div>
-      <div className="flex flex-col items-center justify-center pt-8">
-        <Loader2 className="size-6 animate-spin text-primary" />
-        <p className="mt-3 text-sm text-muted-foreground">Abrindo o catálogo…</p>
+    <div className="min-h-screen bg-background pb-20">
+      <div className="space-y-4 p-4">
+        <PostCardSkeleton />
+        <PostCardSkeleton />
+        <PostCardSkeleton />
       </div>
     </div>
   );

@@ -33,7 +33,19 @@ export default function ClientSessionGuard() {
   const [expired, setExpired] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [verifying, setVerifying] = useState(true);
+  const [showVerifyingOverlay, setShowVerifyingOverlay] = useState(false);
   const redirectedRef = useRef(false);
+
+  // Evita flash do overlay "Verificando sessao..." quando a verificação do token
+  // é rápida (caso típico do acesso via QR, que acaba de criar a sessão).
+  useEffect(() => {
+    if (!verifying) {
+      setShowVerifyingOverlay(false);
+      return;
+    }
+    const t = window.setTimeout(() => setShowVerifyingOverlay(true), 300);
+    return () => window.clearTimeout(t);
+  }, [verifying]);
 
   const redirectToDesconexão = useCallback(() => {
     if (redirectedRef.current) return;
@@ -175,8 +187,8 @@ export default function ClientSessionGuard() {
     return () => clearInterval(interval);
   }, [companySlug, expired, redirectToDesconexão]);
 
-  // ── Enquanto verifica o token, bloqueia o conteúdo ──
-  if (verifying) {
+  // ── Enquanto verifica o token, bloqueia o conteúdo (após curto atraso) ──
+  if (verifying && showVerifyingOverlay) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
         <div className="text-sm text-muted-foreground animate-pulse">Verificando sessao...</div>

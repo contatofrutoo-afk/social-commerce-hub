@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import { companyRepository } from "@/repositories";
+import { companyRepository, postRepository } from "@/repositories";
 import { onboardViaQr } from "@/lib/qr-onboard";
-import { Logo } from "@/components/logo";
-import { Loader2, Store } from "lucide-react";
+import { PostCardSkeleton } from "@/components/post-card-skeleton";
+import { Store } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/")({
   component: CheckinPage,
@@ -14,6 +14,7 @@ function CheckinPage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const onboardedRef = useRef(false);
 
   const { data: company, isLoading } = useQuery({
@@ -23,7 +24,7 @@ function CheckinPage() {
   });
 
   // Jornada sem cadastro: cria a sessão em segundo plano (anônima ou reaproveitando
-  // perfil salvo) e leva direto ao Feed Catálogo. Nenhum formulário é exibido.
+  // perfil salvo), pré-carrega o feed e leva direto ao Catálogo sem tela de loading.
   useEffect(() => {
     if (!company) return;
     if (onboardedRef.current) return;
@@ -34,11 +35,17 @@ function CheckinPage() {
 
     (async () => {
       try {
-        await onboardViaQr({
+        const session = await onboardViaQr({
           companyId: company.id,
           companySlug,
           tableId: tableId || null,
           source: tableId ? "mesa" : "link",
+        });
+        queryClient.setQueryData(["company", companySlug], company);
+        await queryClient.prefetchQuery({
+          queryKey: ["feed", company.id, session.customerId],
+          queryFn: () => postRepository.listByCompany(company.id, session.customerId),
+          staleTime: 15_000,
         });
       } catch (err) {
         console.warn("[qr_onboard]", err instanceof Error ? err.message : err);
@@ -47,11 +54,11 @@ function CheckinPage() {
         navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
       }
     })();
-  }, [company, companySlug, navigate, router]);
+  }, [company, companySlug, navigate, router, queryClient]);
 
   if (!isLoading && !company) {
     return (
-      <div className="weaze-hero-gradient min-h-screen px-6 py-10">
+      <div className="min-h-screen bg-background px-6 py-10">
         <div className="mx-auto max-w-md text-center">
           <Store className="mx-auto size-12 text-muted-foreground" />
           <p className="mt-4 font-display text-lg font-semibold">Estabelecimento não encontrado</p>
@@ -64,21 +71,11 @@ function CheckinPage() {
   }
 
   return (
-    <div className="weaze-hero-gradient min-h-screen px-6 py-10">
-      <div className="mx-auto flex max-w-md flex-col items-center justify-center pt-20 text-center">
-        {company?.logoUrl ? (
-          <img
-            src={company.logoUrl}
-            alt={company.name}
-            className="mx-auto size-20 rounded-2xl object-cover shadow-elegant ring-1 ring-border"
-          />
-        ) : (
-          <div className="mx-auto grid size-20 place-items-center rounded-2xl bg-card shadow-elegant ring-1 ring-border">
-            <Logo className="h-10" />
-          </div>
-        )}
-        <Loader2 className="mt-8 size-6 animate-spin text-primary" />
-        <p className="mt-3 text-sm text-muted-foreground">Abrindo o catálogo…</p>
+    <div className="min-h-screen bg-background pb-20">
+      <div className="space-y-4 p-4">
+        <PostCardSkeleton />
+        <PostCardSkeleton />
+        <PostCardSkeleton />
       </div>
     </div>
   );
