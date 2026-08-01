@@ -1095,28 +1095,16 @@ export type Database = {
         Args: { _company_id: string; _new_status: string; _reason?: string }
         Returns: undefined
       }
-      auto_checkin:
-        | {
-            Args: {
-              _company_id: string
-              _customer_id: string
-              _source?: string
-              _table_id?: string
-              _token: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_auth_user_id: string
-              p_company_id: string
-              p_customer_name: string
-              p_source?: string
-              p_table_id?: string
-              p_table_name?: string
-            }
-            Returns: boolean
-          }
+      auto_checkin: {
+        Args: {
+          _company_id: string
+          _customer_id: string
+          _source?: string
+          _table_id?: string
+          _token: string
+        }
+        Returns: boolean
+      }
       checkout_customer: {
         Args: {
           _company_id: string
