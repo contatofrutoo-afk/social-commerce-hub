@@ -13,6 +13,7 @@ import {
   getMercadoPagoSettings,
   saveMercadoPagoSettings,
   type MercadoPagoSettingKey,
+  type MercadoPagoSettingKind,
 } from "@/lib/mercadopago-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
@@ -21,6 +22,12 @@ export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
 });
 
 const SETTINGS_ID = "00000000-0000-0000-0000-000000000000";
+
+const KIND_LABEL: Record<MercadoPagoSettingKind, string> = {
+  production: "Produção",
+  test: "Teste",
+  custom: "Custom",
+};
 
 type FieldStatus = { configured: boolean; source: "db" | "env" };
 
@@ -83,6 +90,8 @@ function WeazeConfiguracoes() {
   const [mpLoading, setMpLoading] = useState(true);
   const [mpSaving, setMpSaving] = useState(false);
   const [mpStatus, setMpStatus] = useState<Record<string, FieldStatus> | null>(null);
+  const [mpKinds, setMpKinds] = useState<Partial<Record<MercadoPagoSettingKey, MercadoPagoSettingKind>>>({});
+  const [mpWebhookUrl, setMpWebhookUrl] = useState<string | null>(null);
   const [mpValues, setMpValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -132,7 +141,11 @@ function WeazeConfiguracoes() {
         const jwt = session?.session?.access_token;
         if (!jwt) return;
         const result = await getMercadoPagoSettings({ data: { jwt } });
-        if (result.status === "success") setMpStatus(result.fields);
+        if (result.status === "success") {
+          setMpStatus(result.fields);
+          setMpKinds(result.kinds ?? {});
+          setMpWebhookUrl(result.webhookUrl ?? null);
+        }
       } catch {
         toast.error("Não foi possível carregar o status das credenciais.");
       }
@@ -161,7 +174,11 @@ function WeazeConfiguracoes() {
       toast.success("Credenciais do Mercado Pago salvas!");
       setMpValues({});
       const status = await getMercadoPagoSettings({ data: { jwt } });
-      if (status.status === "success") setMpStatus(status.fields);
+      if (status.status === "success") {
+        setMpStatus(status.fields);
+        setMpKinds(status.kinds ?? {});
+        setMpWebhookUrl(status.webhookUrl ?? null);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao salvar credenciais.");
     } finally {
@@ -247,6 +264,37 @@ function WeazeConfiguracoes() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2 rounded-lg border bg-muted/40 p-3 text-sm">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium">Modo</span>
+              <div className="flex flex-wrap items-center gap-2">
+                {mpKinds.publicKey && (
+                  <Badge variant={mpKinds.publicKey === "production" ? "default" : "secondary"}>
+                    Public Key: {KIND_LABEL[mpKinds.publicKey]}
+                  </Badge>
+                )}
+                {mpKinds.accessToken && (
+                  <Badge variant={mpKinds.accessToken === "production" ? "default" : "secondary"}>
+                    Access Token: {KIND_LABEL[mpKinds.accessToken]}
+                  </Badge>
+                )}
+              </div>
+            </div>
+            {mpKinds.publicKey && mpKinds.accessToken && mpKinds.publicKey !== mpKinds.accessToken && (
+              <p className="text-xs font-medium text-destructive">
+                Public Key e Access Token estão em modos diferentes. Use as duas chaves do mesmo
+                ambiente, senão os pagamentos falham.
+              </p>
+            )}
+            {mpWebhookUrl && (
+              <div className="space-y-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  URL do webhook (para onde o Mercado Pago envia notificações):
+                </span>
+                <div className="break-all font-mono text-xs">{mpWebhookUrl}</div>
+              </div>
+            )}
+          </div>
           {mpLoading ? (
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> Carregando status...

@@ -19,10 +19,15 @@ const MP_FIELDS = [
 
 export type MercadoPagoSettingKey = (typeof MP_FIELDS)[number];
 
+/** Origem das credenciais: produção (APP_USR-), teste (TEST-) ou custom. */
+export type MercadoPagoSettingKind = "production" | "test" | "custom";
+
 export type MercadoPagoSettingsResult =
   | {
       status: "success";
       fields: Record<MercadoPagoSettingKey, { configured: boolean; source: "db" | "env" }>;
+      kinds: Partial<Record<MercadoPagoSettingKey, MercadoPagoSettingKind>>;
+      webhookUrl: string | null;
     }
   | { status: "unauthorized" };
 
@@ -75,18 +80,36 @@ export const getMercadoPagoSettings = createServerFn({ method: "POST" })
     };
 
     const fields = {} as Record<MercadoPagoSettingKey, { configured: boolean; source: "db" | "env" }>;
+    const kinds: Partial<Record<MercadoPagoSettingKey, MercadoPagoSettingKind>> = {};
     for (const key of MP_FIELDS) {
       const db = dbValues[key];
       const env = envValues[key];
+      const merged = db && db.trim() !== "" ? db : env;
       fields[key] =
-        db && db.trim() !== ""
-          ? { configured: true, source: "db" }
-          : env && env.trim() !== ""
-            ? { configured: true, source: "env" }
-            : { configured: false, source: "env" };
+        merged && merged.trim() !== ""
+          ? { configured: true, source: db && db.trim() !== "" ? "db" : "env" }
+          : { configured: false, source: "env" };
+      if (key === "publicKey" || key === "accessToken") {
+        const v = merged?.trim();
+        if (v) {
+          kinds[key] = v.startsWith("APP_USR-")
+            ? "production"
+            : v.startsWith("TEST-")
+              ? "test"
+              : "custom";
+        }
+      }
     }
 
-    return { status: "success", fields };
+    let webhookUrl: string | null = null;
+    try {
+      const { resolveWebhookUrl } = await import("@/lib/mercadopago.server");
+      webhookUrl = resolveWebhookUrl();
+    } catch {
+      webhookUrl = null;
+    }
+
+    return { status: "success", fields, kinds, webhookUrl };
   });
 
 const SaveInput = z.object({
