@@ -306,6 +306,131 @@ export const createPixPayment = createServerFn({ method: "POST" })
     };
   });
 
+const CardPaymentInput = z.object({
+  companyId: z.string().uuid(),
+  orderId: z.string().uuid(),
+  token: z.string().min(1),
+  installments: z.number().int().positive().optional(),
+  paymentMethodId: z.string().min(1),
+  payer: z
+    .object({
+      email: z.string().min(1).optional(),
+      identification: z
+        .object({
+          type: z.string().optional(),
+          number: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
+export interface CardPaymentResult {
+  status: string;
+  paymentId: string;
+}
+
+/**
+ * Processa o pagamento com cartão após o Payment Brick coletar os dados do
+ * cartão (token, parcelas, payer). O valor é lido do pedido no banco — o
+ * cliente nunca envia o valor.
+ */
+export const processCardPayment = createServerFn({ method: "POST" })
+  .inputValidator((raw) => CardPaymentInput.parse(raw))
+  .handler(async ({ data }): Promise<CardPaymentResult> => {
+    const { resolveWebhookUrl, logPaymentEvent } = await import("@/lib/mercadopago.server");
+    const supabaseAdmin = await loadAdmin();
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, company_id, status, payment_status, total, subtotal")
+      .eq("id", data.orderId)
+      .eq("company_id", data.companyId)
+      .maybeSingle();
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.payment_status === "paid") throw new Error("Este pedido já foi pago.");
+
+    const total = Number(order.total ?? order.subtotal ?? 0);
+    if (!(total > 0)) throw new Error("Pedido sem valor válido.");
+
+    const accessToken = await resolveTokenForCompany(data.companyId);
+
+    const body = {
+      transaction_amount: total,
+      token: data.token,
+      description: `Pedido WEAZE ${data.orderId.slice(0, 8).toUpperCase()}`,
+      installments: data.installments,
+      payment_method_id: data.paymentMethodId,
+      external_reference: data.orderId,
+      notification_url: resolveWebhookUrl(),
+      payer:
+        data.payer && (data.payer.email || data.payer.identification)
+          ? data.payer
+          : { email: `card-${data.orderId.slice(0, 12)}@weaze.app` },
+    };
+
+    let payment: { id?: number | string; status?: string } = {};
+    try {
+      const res = await fetch(MERCADO_PAGO_PAYMENTS_URL, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+          "x-idempotency-key": globalThis.crypto.randomUUID(),
+        },
+        body: JSON.stringify(body),
+      });
+      payment = (await res.json().catch(() => ({}))) as typeof payment;
+      if (!res.ok) {
+        await logPaymentEvent(data.companyId, "Erro ao processar cartão", {
+          orderId: data.orderId,
+          status: res.status,
+          body: JSON.stringify(payment).slice(0, 400),
+        });
+        throw new Error("Não foi possível processar o cartão. Tente novamente.");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Não foi possível")) throw error;
+      await logPaymentEvent(data.companyId, "Erro ao processar cartão", {
+        orderId: data.orderId,
+        reason: "network",
+      });
+      throw new Error("Não foi possível processar o cartão. Tente novamente.");
+    }
+
+    const paymentId = payment.id ? String(payment.id) : "";
+    if (!paymentId) {
+      await logPaymentEvent(data.companyId, "Erro ao processar cartão", {
+        orderId: data.orderId,
+        missing: "id",
+      });
+      throw new Error("Não foi possível processar o cartão. Tente novamente.");
+    }
+
+    const now = new Date().toISOString();
+    const approved = payment.status === "approved";
+    await supabaseAdmin
+      .from("orders")
+      .update({
+        payment_id: paymentId,
+        payment_provider: "mercadopago",
+        payment_status: approved ? "paid" : "pending",
+        status: approved ? "payment_approved" : order.status,
+        payment_approved_at: approved ? now : null,
+        updated_at: now,
+      })
+      .eq("id", data.orderId);
+
+    await logPaymentEvent(data.companyId, "Cartão processado", {
+      orderId: data.orderId,
+      paymentId,
+      status: payment.status,
+    });
+
+    return { status: String(payment.status ?? "unknown"), paymentId };
+  });
+
 const PaymentStatusInput = z.object({
   companyId: z.string().uuid(),
   orderId: z.string().uuid(),

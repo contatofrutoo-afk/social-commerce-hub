@@ -27,8 +27,11 @@ interface MercadoPagoPaymentResult {
   payment_id: string;
 }
 
-interface MercadoPagoBrickController {
-  submit: () => Promise<MercadoPagoPaymentResult>;
+interface CardPaymentFormData {
+  token: string;
+  installments?: number;
+  payment_method_id: string;
+  payer?: { email?: string; identification?: { type?: string; number?: string } };
 }
 
 declare global {
@@ -38,17 +41,21 @@ declare global {
       options?: { locale: string },
     ) => {
       bricks: () => {
-        builder: () => {
-          create: (
-            brick: "payment",
-            container: string,
-            options: unknown,
-          ) => Promise<MercadoPagoPaymentResult>;
-        };
+        create: (
+          brick: "payment",
+          container: string,
+          settings: {
+            initialization: { amount: number };
+            customization?: { paymentMethods?: Record<string, string> };
+            callbacks: {
+              onReady: () => void;
+              onSubmit: (input: { formData: CardPaymentFormData }) => Promise<void>;
+              onError: (error: { type: string; message: string }) => void;
+            };
+          },
+        ) => Promise<{ unmount: () => void }>;
       };
     };
-    __mpBricksPendingSubmit?: { resolve: () => void; reject: (e: unknown) => void };
-    __mpBricksController?: MercadoPagoBrickController;
   }
 }
 
@@ -91,6 +98,7 @@ function PaymentPage() {
   const [startingPayment, setStartingPayment] = useState(false);
   const [onlineUnavailable, setOnlineUnavailable] = useState(false);
   const bricksContainerRef = useRef<HTMLDivElement>(null);
+  const mpBrickControllerRef = useRef<{ unmount: () => void } | null>(null);
   const [pixPayment, setPixPayment] = useState<CreatePixPaymentResult | null>(null);
   const [pixOrderId, setPixOrderId] = useState<string | null>(null);
   const [pixError, setPixError] = useState<string | null>(null);
@@ -148,6 +156,13 @@ function PaymentPage() {
     },
     [companySlug, qc, clearCart, navigate],
   );
+
+  useEffect(() => {
+    return () => {
+      mpBrickControllerRef.current?.unmount();
+      mpBrickControllerRef.current = null;
+    };
+  }, []);
 
   // O token da sessão pode ter sido invalidado no servidor (ex.: checkout do
   // staff rotaciona o session_token). Antes de pagar, valida a sessão local e,
@@ -211,32 +226,40 @@ function PaymentPage() {
         }
 
         const mp = new window.MercadoPago(mpConfig.publicKey, { locale: "pt-BR" });
-        const builder = mp.bricks().builder();
 
-        const result = await builder.create("payment", "#weaze-mp-bricks", {
-          initialization: { preferenceId: pref.preferenceId },
+        mpBrickControllerRef.current?.unmount();
+        mpBrickControllerRef.current = null;
+
+        const controller = await mp.bricks().create("payment", "#weaze-mp-bricks", {
+          initialization: { amount: pref.total },
+          customization: {
+            paymentMethods: { creditCard: "all", debitCard: "all" },
+          },
           callbacks: {
             onReady: () => undefined,
-            onSubmit: () =>
-              new Promise<void>((resolve, reject) => {
-                window.__mpBricksPendingSubmit = { resolve, reject };
-              }),
-            onError: (error: unknown) => {
-              window.__mpBricksPendingSubmit?.reject(error);
-              window.__mpBricksPendingSubmit = undefined;
+            onSubmit: async ({ formData }) => {
+              const res = await paymentService.checkout.processCard(company.id, order.id, {
+                token: formData.token,
+                installments: formData.installments,
+                paymentMethodId: formData.payment_method_id,
+                payer: formData.payer,
+              });
+              if (res.status !== "approved" && res.status !== "pending") {
+                throw new Error("Pagamento não aprovado. Tente novamente.");
+              }
+              await finishOnlinePayment(company.id, order.id, {
+                status: res.status,
+                payment_id: res.paymentId,
+              });
+            },
+            onError: (error) => {
+              console.error("Erro no Payment Brick", error);
             },
           },
         });
+        mpBrickControllerRef.current = controller;
 
-        window.__mpBricksPendingSubmit?.resolve();
-        window.__mpBricksPendingSubmit = undefined;
-
-        if (result.status === "approved" || result.status === "pending") {
-          await finishOnlinePayment(company.id, order.id, result);
-        } else {
-          throw new Error("Pagamento não concluído. Tente novamente ou pague no caixa.");
-        }
-        return;
+        return { orderId: order.id, cardReady: true as const };
       }
 
       const res = await orderRepository.create({
@@ -254,6 +277,7 @@ function PaymentPage() {
     },
     onSuccess: (res) => {
       if (!res) return;
+      if ("cardReady" in res && res.cardReady) return;
       if ("pix" in res && res.pix) {
         setPixOrderId(res.orderId);
         setPixPayment(res.pix);

@@ -12,6 +12,7 @@ import {
   createPixPayment,
   getMercadoPagoConfig,
   getOnlinePaymentStatus,
+  processCardPayment,
 } from "@/lib/mercadopago.checkout.functions";
 import type {
   CreatePaymentInput,
@@ -35,6 +36,7 @@ export type {
   MercadoPagoPreferenceResult,
 } from "@/lib/mercadopago.checkout.functions";
 export type {
+  CardPaymentResult,
   CreatePixPaymentResult,
 } from "@/lib/mercadopago.checkout.functions";
 
@@ -137,6 +139,18 @@ export const paymentService = {
     },
     async createPix(companyId: string, orderId: string) {
       return createPixPayment({ data: { companyId, orderId } });
+    },
+    async processCard(
+      companyId: string,
+      orderId: string,
+      card: {
+        token: string;
+        installments?: number;
+        paymentMethodId: string;
+        payer?: { email?: string; identification?: { type?: string; number?: string } };
+      },
+    ) {
+      return processCardPayment({ data: { companyId, orderId, ...card } });
     },
     async confirmOrder(companyId: string, orderId: string, paymentId: string) {
       return confirmOnlineOrder({ data: { companyId, orderId, paymentId } });
