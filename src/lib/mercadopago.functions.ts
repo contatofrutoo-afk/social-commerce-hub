@@ -196,13 +196,22 @@ export const exchangeMercadoPagoCode = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: stateRow } = await supabaseAdmin
+    const { data: stateRow, error: stateErr } = await supabaseAdmin
       .from("payment_oauth_states")
       .select("business_id, code_verifier, redirect_uri")
       .eq("state", data.state)
       .maybeSingle();
+    if (stateErr) {
+      await logPaymentEvent(businessId, "Erro OAuth", {
+        stage: "state_lookup",
+        message: stateErr.message,
+      });
+    }
     if (!stateRow || stateRow.business_id !== businessId) {
-      return { status: "invalid_state" };
+      return {
+        status: "invalid_state",
+        reason: stateErr?.message ?? "state não encontrado (link pode ter expirado).",
+      };
     }
     await supabaseAdmin.from("payment_oauth_states").delete().eq("state", data.state);
 
