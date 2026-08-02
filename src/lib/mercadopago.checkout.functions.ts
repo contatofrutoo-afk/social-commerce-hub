@@ -108,7 +108,6 @@ export const createPaymentPreference = createServerFn({ method: "POST" })
       items,
       external_reference: data.orderId,
       notification_url: resolveWebhookUrl(),
-      auto_return: "approved",
       binary_mode: false,
       metadata: {
         order_id: data.orderId,
