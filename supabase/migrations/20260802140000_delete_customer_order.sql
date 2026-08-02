@@ -21,12 +21,16 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.delete_customer_order(
+-- O wrapper é VOLATILE (padrão): funções que escrevem NÃO podem ser STABLE,
+-- senão o DELETE roda em transação somente-leitura e falha. Usa DROP + CREATE
+-- porque CREATE OR REPLACE não permite trocar a volatilidade.
+DROP FUNCTION IF EXISTS public.delete_customer_order(uuid, uuid, uuid);
+CREATE FUNCTION public.delete_customer_order(
   _order_id uuid,
   _customer_id uuid,
   _token uuid)
 RETURNS void
-LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$
+LANGUAGE sql SECURITY INVOKER SET search_path=public AS $$
   SELECT private.delete_customer_order(_order_id, _customer_id, _token);
 $$;
 
