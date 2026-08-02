@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save } from "lucide-react";
+import { Save, KeyRound, Loader2 } from "lucide-react";
+import {
+  getMercadoPagoSettings,
+  saveMercadoPagoSettings,
+  type MercadoPagoSettingKey,
+} from "@/lib/mercadopago-settings.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   component: WeazeConfiguracoes,
@@ -15,6 +21,55 @@ export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
 });
 
 const SETTINGS_ID = "00000000-0000-0000-0000-000000000000";
+
+type FieldStatus = { configured: boolean; source: "db" | "env" };
+
+const MP_CREDENTIAL_FIELDS: {
+  key: MercadoPagoSettingKey;
+  label: string;
+  hint: string;
+  secret?: boolean;
+}[] = [
+  {
+    key: "clientId",
+    label: "Client ID",
+    hint: "Identificador público da aplicação (painel do Mercado Pago → Suas integrações).",
+  },
+  {
+    key: "clientSecret",
+    label: "Client Secret",
+    secret: true,
+    hint: "Segredo da aplicação — nunca compartilhe ou exiba publicamente.",
+  },
+  {
+    key: "publicKey",
+    label: "Public Key",
+    hint: "Chave pública (formato TEST-... ou APP_USR-...) usada pelo Checkout Bricks.",
+  },
+  {
+    key: "accessToken",
+    label: "Access Token",
+    secret: true,
+    hint: "Access Token da conta Mercado Pago (fallback e consulta de pagamentos).",
+  },
+  {
+    key: "webhookSecret",
+    label: "Webhook Secret",
+    secret: true,
+    hint: "Chave usada para validar a assinatura HMAC dos webhooks.",
+  },
+  {
+    key: "redirectUri",
+    label: "Redirect URI",
+    hint: "URL de callback do OAuth. Em produção: https://<seu-dominio>/oauth/mercadopago/callback",
+  },
+  {
+    key: "encryptionKey",
+    label: "Encryption Key",
+    secret: true,
+    hint: "Chave AES-GCM para criptografar tokens em repouso (qualquer valor secreto).",
+  },
+];
 
 function WeazeConfiguracoes() {
   const [loading, setLoading] = useState(true);
@@ -25,6 +80,10 @@ function WeazeConfiguracoes() {
     blockedMessage: "",
     adminContact: "",
   });
+  const [mpLoading, setMpLoading] = useState(true);
+  const [mpSaving, setMpSaving] = useState(false);
+  const [mpStatus, setMpStatus] = useState<Record<string, FieldStatus> | null>(null);
+  const [mpValues, setMpValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     (async () => {
@@ -62,6 +121,51 @@ function WeazeConfiguracoes() {
       toast.error(err.message ?? "Erro ao salvar");
     } finally {
       setSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      setMpLoading(true);
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const jwt = session?.session?.access_token;
+        if (!jwt) return;
+        const result = await getMercadoPagoSettings({ data: { jwt } });
+        if (result.status === "success") setMpStatus(result.fields);
+      } catch {
+        toast.error("Não foi possível carregar o status das credenciais.");
+      }
+      setMpLoading(false);
+    })();
+  }, []);
+
+  async function handleSaveMercadoPago() {
+    const values = Object.fromEntries(
+      Object.entries(mpValues).filter(([, value]) => value && value.trim() !== ""),
+    );
+    if (Object.keys(values).length === 0) {
+      toast.info("Preencha pelo menos uma credencial para salvar.");
+      return;
+    }
+    setMpSaving(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const jwt = session?.session?.access_token;
+      if (!jwt) throw new Error("Sessão expirada. Faça login novamente.");
+      const result = await saveMercadoPagoSettings({ data: { jwt, values } });
+      if (result.status === "unauthorized") {
+        toast.error("Você não tem permissão para alterar estas credenciais.");
+        return;
+      }
+      toast.success("Credenciais do Mercado Pago salvas!");
+      setMpValues({});
+      const status = await getMercadoPagoSettings({ data: { jwt } });
+      if (status.status === "success") setMpStatus(status.fields);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar credenciais.");
+    } finally {
+      setMpSaving(false);
     }
   }
 
@@ -128,6 +232,63 @@ function WeazeConfiguracoes() {
               Exibido no botão "Entrar em contato" da página de bloqueio.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-base flex items-center gap-2">
+            <KeyRound className="size-4" /> Mercado Pago — Credenciais
+          </CardTitle>
+          <CardDescription>
+            Adicione cada credencial da aplicação do Mercado Pago. Campos vazios
+            mantêm o valor atual. Elas valem para todas as empresas (OAuth, webhook
+            e checkout).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {mpLoading ? (
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> Carregando status...
+            </div>
+          ) : (
+            MP_CREDENTIAL_FIELDS.map(({ key, label, hint, secret }) => {
+              const status = mpStatus?.[key];
+              const configured = status?.configured ?? false;
+              return (
+                <div key={key} className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor={`mp-${key}`} className="text-sm font-medium">
+                      {label}
+                    </Label>
+                    {configured ? (
+                      <Badge variant={status?.source === "db" ? "default" : "secondary"}>
+                        Configurado
+                        {status?.source === "db" ? " (painel)" : " (env)"}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Não configurado</Badge>
+                    )}
+                  </div>
+                  <Input
+                    id={`mp-${key}`}
+                    type={secret ? "password" : "text"}
+                    value={mpValues[key] ?? ""}
+                    onChange={(e) =>
+                      setMpValues((p) => ({ ...p, [key]: e.target.value }))
+                    }
+                    placeholder={configured ? "•••••••••• (deixe vazio para manter)" : `Adicionar ${label}`}
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-muted-foreground">{hint}</p>
+                </div>
+              );
+            })
+          )}
+          <Button onClick={handleSaveMercadoPago} disabled={mpSaving || mpLoading}>
+            <Save className="h-4 w-4 mr-1" />
+            {mpSaving ? "Salvando..." : "Salvar Credenciais do Mercado Pago"}
+          </Button>
         </CardContent>
       </Card>
 

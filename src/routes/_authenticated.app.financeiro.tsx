@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { orderRepository } from "@/repositories";
+import { paymentStatusLabel } from "@/lib/order-status";
+import { formatBRL } from "@/lib/format";
 import { CreditCard, Landmark, Loader2, QrCode, Store } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,14 +48,37 @@ const METHODS = [
   { key: "counter", label: "Receber no Caixa", icon: Store },
 ];
 
+function useCompanyId(): string | undefined {
+  const { data } = useQuery({
+    queryKey: ["my-role"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("company_id")
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  return data?.company_id as string | undefined;
+}
+
 function FinanceiroPage() {
   const queryClient = useQueryClient();
+  const companyId = useCompanyId();
   const [connecting, setConnecting] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["payment-account"],
     queryFn: () => paymentService.getAccount(),
+  });
+
+  const { data: recentOrders } = useQuery({
+    queryKey: ["payment-history", companyId],
+    queryFn: () => orderRepository.listByCompany(companyId!),
+    enabled: !!companyId,
+    refetchInterval: 30_000,
   });
 
   const account: PaymentAccountPublic | null = data?.status === "success" ? data.account : null;
@@ -182,32 +209,44 @@ function FinanceiroPage() {
         <CardHeader>
           <CardTitle>Configurações</CardTitle>
           <CardDescription>
-            Formas de pagamento aceitas nos pedidos. Disponíveis em breve.
+            Formas de pagamento aceitas nos pedidos online.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {METHODS.map(({ key, label, icon: Icon }) => (
-            <div key={key} className="flex items-center justify-between rounded-lg border p-4">
-              <div className="flex items-center gap-3">
-                <Icon className="size-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">{label}</p>
-                  <p className="text-sm text-muted-foreground">Disponível em breve</p>
+          {METHODS.map(({ key, label, icon: Icon }) => {
+            const online = key === "pix" || key === "card";
+            const available = online ? isConnected : key === "counter";
+            return (
+              <div key={key} className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center gap-3">
+                  <Icon className="size-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">{label}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {available
+                        ? "Ativo nos pedidos online"
+                        : online
+                          ? "Conecte o Mercado Pago para ativar"
+                          : "Disponível no caixa"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={available ? "default" : "secondary"}>
+                    {available ? "Ativo" : "Inativo"}
+                  </Badge>
+                  <Switch checked={available} disabled />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Em breve</Badge>
-                <Switch disabled />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Histórico Financeiro</CardTitle>
-          <CardDescription>Registros de pagamentos e movimentações.</CardDescription>
+          <CardDescription>Últimos pedidos e status dos pagamentos.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -221,11 +260,29 @@ function FinanceiroPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                  Nenhum registro encontrado.
-                </TableCell>
-              </TableRow>
+              {recentOrders && recentOrders.length > 0 ? (
+                recentOrders.slice(0, 10).map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="text-muted-foreground">{formatDateTime(order.createdAt)}</TableCell>
+                    <TableCell className="font-medium">
+                      #{order.id.slice(0, 6).toUpperCase()}
+                    </TableCell>
+                    <TableCell>{order.paymentMethod ? (order.paymentMethod === "counter" ? "No Caixa" : order.paymentMethod === "pix" ? "Pix" : "Cartão") : "—"}</TableCell>
+                    <TableCell className="font-medium">{formatBRL(order.total)}</TableCell>
+                    <TableCell>
+                      <Badge variant={order.paymentStatus === "paid" ? "default" : order.paymentStatus === "pending" ? "outline" : "secondary"}>
+                        {paymentStatusLabel(order.paymentStatus)}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    Nenhum registro encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

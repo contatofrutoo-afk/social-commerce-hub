@@ -4,11 +4,16 @@ export type ReactionType = "love" | "dislike";
 export type OrderStatus =
   | "received"
   | "payment_at_counter"
+  | "awaiting_payment"
+  | "payment_approved"
   | "preparing"
   | "ready"
+  | "delivered"
   | "completed"
   | "cancelled";
 export type PaymentMethod = "pix" | "card" | "counter";
+export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled" | "refunded";
+export type PaymentProvider = "mercadopago" | "counter";
 export type PostAuthorType = "business" | "customer";
 
 export interface Company {
@@ -133,6 +138,11 @@ export interface Order {
   tableLabel?: string | null;
   status: OrderStatus;
   paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus | null;
+  paymentProvider: PaymentProvider | null;
+  paymentId: string | null;
+  subtotal: number | null;
+  discount: number | null;
   total: number;
   note: string | null;
   createdAt: string;

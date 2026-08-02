@@ -6,6 +6,12 @@ import {
   refreshMercadoPagoToken,
   startMercadoPagoOAuth,
 } from "@/lib/mercadopago.functions";
+import {
+  confirmOnlineOrder,
+  createPaymentPreference,
+  getMercadoPagoConfig,
+  getOnlinePaymentStatus,
+} from "@/lib/mercadopago.checkout.functions";
 import type {
   CreatePaymentInput,
   PaymentAccountPublic,
@@ -13,6 +19,7 @@ import type {
   PaymentProvider,
   PaymentResult,
 } from "./types";
+import { registerCheckoutPaymentProvider, type CheckoutPaymentProvider } from "./provider";
 
 export type { PaymentAccountPublic } from "./types";
 export type {
@@ -22,6 +29,10 @@ export type {
   MercadoPagoRefreshResult,
   MercadoPagoStartResult,
 } from "@/lib/mercadopago.functions";
+export type {
+  MercadoPagoConfigResult,
+  MercadoPagoPreferenceResult,
+} from "@/lib/mercadopago.checkout.functions";
 
 async function getPanelJwt(): Promise<string> {
   const { data } = await supabase.auth.getSession();
@@ -30,22 +41,46 @@ async function getPanelJwt(): Promise<string> {
   return token;
 }
 
-// Checkout/cobranças/pagamentos ainda não fazem parte desta etapa.
-const unavailableGateway = {
-  provider: null,
+// Gateway real de checkout via Mercado Pago (Etapa 4).
+const mercadopagoGateway: PaymentGateway = {
+  provider: "mercadopago",
   async createPayment(input: CreatePaymentInput): Promise<PaymentResult> {
-    void input;
-    return { id: null, status: "failed", gatewayTransactionId: null };
+    if (!input.orderId) {
+      return { id: null, status: "failed", gatewayTransactionId: null };
+    }
+    const pref = await createPaymentPreference({
+      data: { companyId: input.businessId, orderId: input.orderId },
+    });
+    return {
+      id: pref.orderId,
+      status: "pending",
+      gatewayTransactionId: pref.preferenceId,
+    };
   },
   async getPayment(gatewayTransactionId: string): Promise<PaymentResult | null> {
-    void gatewayTransactionId;
-    return null;
+    // Consulta isolada por paymentId não sabe o comerciante; usar via checkout.
+    return { id: null, status: "pending", gatewayTransactionId };
   },
   async cancelPayment(gatewayTransactionId: string): Promise<PaymentResult | null> {
     void gatewayTransactionId;
     return null;
   },
-} satisfies PaymentGateway;
+};
+
+const mercadopagoCheckoutProvider: CheckoutPaymentProvider = {
+  name: "mercadopago",
+  async createCharge(input: CreatePaymentInput): Promise<PaymentResult> {
+    return mercadopagoGateway.createPayment(input);
+  },
+  async getPayment(gatewayTransactionId: string): Promise<PaymentResult | null> {
+    return mercadopagoGateway.getPayment(gatewayTransactionId);
+  },
+  async cancelPayment(gatewayTransactionId: string): Promise<PaymentResult | null> {
+    return mercadopagoGateway.cancelPayment(gatewayTransactionId);
+  },
+};
+
+registerCheckoutPaymentProvider(mercadopagoCheckoutProvider);
 
 export const paymentService = {
   /**
@@ -85,6 +120,25 @@ export const paymentService = {
   },
 
   gateway(): PaymentGateway {
-    return unavailableGateway;
+    return mercadopagoGateway;
+  },
+
+  /** Checkout online (rota pública /c/:companySlug/pagamento). */
+  checkout: {
+    async config() {
+      return getMercadoPagoConfig();
+    },
+    async createPreference(companyId: string, orderId: string) {
+      return createPaymentPreference({ data: { companyId, orderId } });
+    },
+    async confirmOrder(companyId: string, orderId: string, paymentId: string) {
+      return confirmOnlineOrder({ data: { companyId, orderId, paymentId } });
+    },
+    async getStatus(companyId: string, orderId: string, paymentId: string) {
+      return getOnlinePaymentStatus({ data: { companyId, orderId, paymentId } });
+    },
   },
 };
+
+export { getCheckoutPaymentProvider as getMercadoPagoCheckoutProvider } from "./provider";
+export type { CheckoutPaymentProvider } from "./provider";

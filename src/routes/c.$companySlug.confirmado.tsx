@@ -5,15 +5,22 @@ import { getSessionForCompany, type WeazeSession } from "@/lib/session";
 import { onboardViaQr } from "@/lib/qr-onboard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ORDER_STATUS_META, orderStatusLabel, paymentMethodLabel } from "@/lib/order-status";
+import {
+  ORDER_STATUS_META,
+  orderStatusLabel,
+  paymentMethodLabel,
+  paymentStatusLabel,
+} from "@/lib/order-status";
 import { formatBRL } from "@/lib/format";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/c/$companySlug/confirmado")({
   validateSearch: (search: Record<string, unknown>) => ({
     orderId: typeof search.orderId === "string" ? search.orderId : undefined,
+    paymentId: typeof search.paymentId === "string" ? search.paymentId : undefined,
+    status: typeof search.status === "string" ? search.status : undefined,
   }),
   component: OrderConfirmedPage,
   head: () => ({ meta: [{ title: "Pedido enviado" }] }),
@@ -21,7 +28,7 @@ export const Route = createFileRoute("/c/$companySlug/confirmado")({
 
 function OrderConfirmedPage() {
   const { companySlug } = Route.useParams();
-  const { orderId } = Route.useSearch();
+  const { orderId, paymentId, status } = Route.useSearch();
   const navigate = useNavigate();
   const [session, setSession] = useState<WeazeSession | null>(() =>
     typeof window !== "undefined" ? getSessionForCompany(companySlug) : null,
@@ -76,14 +83,29 @@ function OrderConfirmedPage() {
 
   const shortId = order ? order.id.slice(0, 6).toUpperCase() : (orderId?.slice(0, 6).toUpperCase() ?? "----");
   const waitingCounter = order?.status === "payment_at_counter";
+  const awaitingPayment = order?.status === "awaiting_payment" || (!!paymentId && order?.paymentStatus === "pending");
+  const approved = status === "approved" || order?.status === "payment_approved";
+  const statusLabel = order ? orderStatusLabel(order.status) : "Enviado";
 
   return (
     <div className="p-4">
       <div className="flex flex-col items-center py-10 text-center">
-        <CheckCircle2 className="size-16 text-emerald-500" />
-        <h1 className="mt-4 text-xl font-bold">Pedido enviado!</h1>
+        {approved ? (
+          <CheckCircle2 className="size-16 text-emerald-500" />
+        ) : awaitingPayment ? (
+          <Clock3 className="size-16 text-amber-500" />
+        ) : (
+          <CheckCircle2 className="size-16 text-emerald-500" />
+        )}
+        <h1 className="mt-4 text-xl font-bold">
+          {approved ? "Pagamento aprovado!" : awaitingPayment ? "Aguardando confirmação" : "Pedido enviado!"}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          O estabelecimento foi notificado. Acompanhe o status em tempo real.
+          {approved
+            ? "O estabelecimento foi notificado. Acompanhe o status em tempo real."
+            : awaitingPayment
+              ? "Assim que o pagamento for confirmado, o estabelecimento começará o preparo."
+              : "O estabelecimento foi notificado. Acompanhe o status em tempo real."}
         </p>
       </div>
 
@@ -99,6 +121,12 @@ function OrderConfirmedPage() {
                 <dt className="text-sm text-muted-foreground">Forma de pagamento</dt>
                 <dd className="text-sm font-medium">{paymentMethodLabel(order.paymentMethod)}</dd>
               </div>
+              {order.paymentProvider === "mercadopago" && (
+                <div className="flex items-center justify-between py-3">
+                  <dt className="text-sm text-muted-foreground">Pagamento</dt>
+                  <dd className="text-sm font-medium">{paymentStatusLabel(order.paymentStatus)}</dd>
+                </div>
+              )}
               <div className="flex items-center justify-between py-3">
                 <dt className="text-sm text-muted-foreground">Total</dt>
                 <dd className="text-sm font-bold">{formatBRL(order.total)}</dd>
@@ -109,14 +137,18 @@ function OrderConfirmedPage() {
             <dt className="text-sm text-muted-foreground">Status</dt>
             <dd>
               <Badge variant={order ? ORDER_STATUS_META[order.status]?.variant ?? "secondary" : "secondary"}>
-                {order ? orderStatusLabel(order.status) : "Enviado"}
+                {statusLabel}
               </Badge>
             </dd>
           </div>
           <div className="flex items-center justify-between py-3">
             <dt className="text-sm text-muted-foreground">Tempo estimado</dt>
             <dd className="text-sm font-medium">
-              {waitingCounter ? "Pague no caixa para iniciar o preparo" : "30–40 min"}
+              {waitingCounter
+                ? "Pague no caixa para iniciar o preparo"
+                : awaitingPayment
+                  ? "Após a confirmação do pagamento"
+                  : "30–40 min"}
             </dd>
           </div>
         </dl>

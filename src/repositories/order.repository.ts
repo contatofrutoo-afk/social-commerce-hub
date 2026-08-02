@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { CartItem, Order, OrderStatus, PaymentMethod } from "./types";
+import type {
+  CartItem,
+  Order,
+  OrderStatus,
+  PaymentMethod,
+  PaymentProvider,
+} from "./types";
 import { productRepository } from "./product.repository";
 
 function mapOrder(r: any): Order {
@@ -12,6 +18,11 @@ function mapOrder(r: any): Order {
     tableLabel: r.table?.label ?? null,
     status: r.status,
     paymentMethod: (r.payment_method as PaymentMethod) ?? null,
+    paymentStatus: (r.payment_status as Order["paymentStatus"]) ?? null,
+    paymentProvider: (r.payment_provider as PaymentProvider) ?? null,
+    paymentId: r.payment_id ?? null,
+    subtotal: r.subtotal != null ? Number(r.subtotal) : null,
+    discount: r.discount != null ? Number(r.discount) : null,
     total: Number(r.total),
     note: r.note,
     createdAt: r.created_at,
@@ -57,6 +68,8 @@ export const orderRepository = {
     tableId?: string | null;
     note?: string;
     paymentMethod?: PaymentMethod;
+    paymentProvider?: PaymentProvider;
+    sessionId?: string;
     items: CartItem[];
   }): Promise<{ id: string }> {
     const { data, error } = await supabase.rpc("create_customer_order" as any, {
@@ -72,6 +85,8 @@ export const orderRepository = {
       })) as any,
       _table_id: input.tableId ?? null,
       _payment_method: input.paymentMethod ?? null,
+      _payment_provider: input.paymentProvider ?? null,
+      _session_id: input.sessionId ?? null,
     });
     if (error) throw error;
     // Métricas: registra `purchase` para cada item do pedido — alimenta funil

@@ -15,6 +15,18 @@ export interface DashboardMetrics {
   };
 }
 
+export interface PaymentMetrics {
+  awaitingPayment: { count: number; total: number };
+  paidCount: number;
+  paidTotal: number;
+  revenueToday: number;
+  avgTicket: number;
+  conversionRate: number;
+  byProvider: { provider: string; count: number; total: number }[];
+  byTable: { tableLabel: string | null; count: number; total: number }[];
+  byHour: { hour: number; count: number }[];
+}
+
 function getHourFromISO(iso: string): number {
   return new Date(iso).getHours();
 }
@@ -182,6 +194,70 @@ export const dashboardRepository = {
         reactionToOrderRate: totalReactors > 0 ? (reactedThenOrdered / totalReactors) * 100 : 0,
         orderCompletionRate: totalOrders > 0 ? (completedCount / totalOrders) * 100 : 0,
       },
+    };
+  },
+
+  // ---- Payment KPIs (Etapa 4) ----
+  async getPaymentMetrics(companyId: string): Promise<PaymentMetrics> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id, status, payment_status, payment_provider, total, created_at, table_id, table:tables(label), customer_id")
+      .eq("company_id", companyId);
+    if (error) throw error;
+
+    const orders = (data ?? []) as any[];
+
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const awaiting = orders.filter((o) => o.payment_status === "pending");
+    const paid = orders.filter((o) => o.payment_status === "paid");
+
+    const sum = (list: any[]) => list.reduce((s, o) => s + Number(o.total ?? 0), 0);
+
+    const revenueToday = paid
+      .filter((o) => new Date(o.created_at).getTime() >= startOfToday.getTime())
+      .reduce((s, o) => s + Number(o.total ?? 0), 0);
+
+    const providerMap: Record<string, { count: number; total: number }> = {};
+    orders.forEach((o) => {
+      const p = o.payment_provider ?? (o.payment_method === "counter" ? "counter" : "mercadopago");
+      if (!providerMap[p]) providerMap[p] = { count: 0, total: 0 };
+      providerMap[p].count += 1;
+      providerMap[p].total += Number(o.total ?? 0);
+    });
+
+    const tableMap: Record<string, { label: string | null; count: number; total: number }> = {};
+    paid.forEach((o) => {
+      const key = o.table?.label ?? "Sem mesa";
+      if (!tableMap[key]) tableMap[key] = { label: o.table?.label ?? null, count: 0, total: 0 };
+      tableMap[key].count += 1;
+      tableMap[key].total += Number(o.total ?? 0);
+    });
+
+    const hourMap: Record<number, number> = {};
+    orders.forEach((o) => {
+      const h = getHourFromISO(o.created_at);
+      hourMap[h] = (hourMap[h] ?? 0) + 1;
+    });
+
+    const paidCount = paid.length;
+    const paidTotal = sum(paid);
+
+    return {
+      awaitingPayment: { count: awaiting.length, total: sum(awaiting) },
+      paidCount,
+      paidTotal,
+      revenueToday,
+      avgTicket: paidCount > 0 ? paidTotal / paidCount : 0,
+      conversionRate: orders.length > 0 ? (paidCount / orders.length) * 100 : 0,
+      byProvider: Object.entries(providerMap).map(([provider, v]) => ({ provider, ...v }))
+        .sort((a, b) => b.total - a.total),
+      byTable: Object.entries(tableMap).map(([label, v]) => ({ tableLabel: v.label, count: v.count, total: v.total }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10),
+      byHour: Object.entries(hourMap).map(([hour, count]) => ({ hour: Number(hour), count }))
+        .sort((a, b) => a.hour - b.hour),
     };
   },
 

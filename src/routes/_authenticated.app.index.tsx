@@ -45,6 +45,7 @@ import {
   Activity,
   ChevronDown,
   BrainCircuit,
+  Wallet,
 } from "lucide-react";
 import type { VisitContext } from "@/repositories";
 import { useState, useMemo } from "react";
@@ -210,6 +211,12 @@ function DashboardPage() {
     queryKey: ["product-metrics", companyId],
     queryFn: () => dashboardRepository.getProductMetrics(companyId!),
     enabled: !!companyId,
+  });
+  const { data: paymentMetrics } = useQuery({
+    queryKey: ["payment-metrics", companyId],
+    queryFn: () => dashboardRepository.getPaymentMetrics(companyId!),
+    enabled: !!companyId,
+    refetchInterval: 30_000,
   });
 
   // ── New enrichment queries (for period filtering) ──
@@ -625,6 +632,108 @@ function DashboardPage() {
               format="min"
               subtitle={avgDuration != null ? "min por visita" : "Sem dados de checkout"}
             />
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        )}
+      </HideableSection>
+
+      {/* Pagamentos online (Etapa 4) */}
+      <HideableSection
+        id="payments"
+        hidden={hiddenSections.has("payments")}
+        onToggle={toggleSection}
+        title="Pagamentos"
+      >
+        {paymentMetrics ? (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <KpiCard
+                icon={Wallet}
+                label="Aguardando pagamento"
+                value={paymentMetrics.awaitingPayment.count}
+                subtitle={`${formatBRL(paymentMetrics.awaitingPayment.total)} em aberto`}
+              />
+              <KpiCard
+                icon={CheckCircle2}
+                label="Pagamentos aprovados"
+                value={paymentMetrics.paidCount}
+                subtitle={`${formatBRL(paymentMetrics.paidTotal)} no total`}
+              />
+              <KpiCard
+                icon={TrendingUp}
+                label="Receita do dia"
+                value={paymentMetrics.revenueToday}
+                format="brl"
+              />
+              <KpiCard
+                icon={BarChart3}
+                label="Ticket médio"
+                value={paymentMetrics.avgTicket}
+                format="brl"
+              />
+              <KpiCard
+                icon={Activity}
+                label="Conversão"
+                value={paymentMetrics.conversionRate}
+                subtitle="pagos / total de pedidos"
+              />
+            </div>
+            {paymentMetrics.byTable.length > 0 && (
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="dash-card p-4">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    Vendas por mesa
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {paymentMetrics.byTable.slice(0, 6).map((t) => (
+                      <li key={t.tableLabel ?? "sem-mesa"} className="flex items-center justify-between">
+                        <span className="text-muted-foreground">{t.tableLabel ?? "Sem mesa"}</span>
+                        <span className="font-medium">
+                          {t.count} pedido{t.count > 1 ? "s" : ""} · {formatBRL(t.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="dash-card p-4">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    Pedidos por horário
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {paymentMetrics.byHour.map((h) => (
+                      <li key={h.hour} className="flex items-center justify-between">
+                        <span className="text-muted-foreground">{String(h.hour).padStart(2, "0")}h</span>
+                        <span className="font-medium">{h.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="dash-card p-4">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                    Por canal
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {paymentMetrics.byProvider.map((p) => (
+                      <li key={p.provider} className="flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          {p.provider === "mercadopago" ? "Mercado Pago" : "No caixa"}
+                        </span>
+                        <span className="font-medium">
+                          {p.count} pedido{p.count > 1 ? "s" : ""} · {formatBRL(p.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
