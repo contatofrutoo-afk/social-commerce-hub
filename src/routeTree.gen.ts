@@ -23,6 +23,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as CCompanySlugIndexRouteImport } from './routes/c.$companySlug.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
+import { Route as OauthMercadopagoCallbackRouteImport } from './routes/oauth.mercadopago.callback'
 import { Route as CCompanySlugVendasRouteImport } from './routes/c.$companySlug.vendas'
 import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.sacola'
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
@@ -120,6 +121,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const OauthMercadopagoCallbackRoute =
+  OauthMercadopagoCallbackRouteImport.update({
+    id: '/oauth/mercadopago/callback',
+    path: '/oauth/mercadopago/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CCompanySlugVendasRoute = CCompanySlugVendasRouteImport.update({
   id: '/vendas',
   path: '/vendas',
@@ -306,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
   '/c/$companySlug/vendas': typeof CCompanySlugVendasRoute
+  '/oauth/mercadopago/callback': typeof OauthMercadopagoCallbackRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
@@ -345,6 +353,7 @@ export interface FileRoutesByTo {
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
   '/c/$companySlug/vendas': typeof CCompanySlugVendasRoute
+  '/oauth/mercadopago/callback': typeof OauthMercadopagoCallbackRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug': typeof CCompanySlugIndexRoute
@@ -389,6 +398,7 @@ export interface FileRoutesById {
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
   '/c/$companySlug/vendas': typeof CCompanySlugVendasRoute
+  '/oauth/mercadopago/callback': typeof OauthMercadopagoCallbackRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
@@ -433,6 +443,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
     | '/c/$companySlug/vendas'
+    | '/oauth/mercadopago/callback'
     | '/admin/'
     | '/app/'
     | '/c/$companySlug/'
@@ -472,6 +483,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
     | '/c/$companySlug/vendas'
+    | '/oauth/mercadopago/callback'
     | '/admin'
     | '/app'
     | '/c/$companySlug'
@@ -515,6 +527,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
     | '/c/$companySlug/vendas'
+    | '/oauth/mercadopago/callback'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/c/$companySlug/'
@@ -531,6 +544,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   CCompanySlugRoute: typeof CCompanySlugRouteWithChildren
   PSlugRoute: typeof PSlugRoute
+  OauthMercadopagoCallbackRoute: typeof OauthMercadopagoCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -632,6 +646,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/oauth/mercadopago/callback': {
+      id: '/oauth/mercadopago/callback'
+      path: '/oauth/mercadopago/callback'
+      fullPath: '/oauth/mercadopago/callback'
+      preLoaderRoute: typeof OauthMercadopagoCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/c/$companySlug/vendas': {
       id: '/c/$companySlug/vendas'
@@ -950,6 +971,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   CCompanySlugRoute: CCompanySlugRouteWithChildren,
   PSlugRoute: PSlugRoute,
+  OauthMercadopagoCallbackRoute: OauthMercadopagoCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -647,47 +647,94 @@ export type Database = {
       }
       payment_accounts: {
         Row: {
+          access_token: string | null
           account_id: string | null
           account_name: string | null
           business_id: string
           connected_at: string | null
           created_at: string
           credentials: Json | null
+          expires_at: string | null
           id: string
           last_sync_at: string | null
           provider: string
+          provider_user_id: string | null
+          refresh_token: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          access_token?: string | null
           account_id?: string | null
           account_name?: string | null
           business_id: string
           connected_at?: string | null
           created_at?: string
           credentials?: Json | null
+          expires_at?: string | null
           id?: string
           last_sync_at?: string | null
           provider: string
+          provider_user_id?: string | null
+          refresh_token?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          access_token?: string | null
           account_id?: string | null
           account_name?: string | null
           business_id?: string
           connected_at?: string | null
           created_at?: string
           credentials?: Json | null
+          expires_at?: string | null
           id?: string
           last_sync_at?: string | null
           provider?: string
+          provider_user_id?: string | null
+          refresh_token?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "payment_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_oauth_states: {
+        Row: {
+          business_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          redirect_uri: string
+          state: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          redirect_uri: string
+          state: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redirect_uri?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_oauth_states_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "companies"

@@ -18,6 +18,22 @@ export interface PaymentResult {
   gatewayTransactionId: string | null;
 }
 
+/**
+ * Dados públicos de uma conta de pagamento (nunca inclui
+ * access_token/refresh_token/client_secret — só o backend os vê).
+ */
+export interface PaymentAccountPublic {
+  provider: string;
+  status: string;
+  accountName: string | null;
+  accountId: string | null;
+  providerUserId: string | null;
+  connectedAt: string | null;
+  lastSyncAt: string | null;
+  updatedAt: string | null;
+  expiresAt: string | null;
+}
+
 export interface PaymentGateway {
   readonly provider: PaymentProvider | null;
   createPayment(input: CreatePaymentInput): Promise<PaymentResult>;
