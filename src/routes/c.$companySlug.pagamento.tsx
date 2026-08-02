@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { companyRepository, orderRepository } from "@/repositories";
-import { getSessionForCompany, getAnonymousId, type WeazeSession } from "@/lib/session";
+import { companyRepository, customerRepository, orderRepository } from "@/repositories";
+import { getSessionForCompany, getAnonymousId, clearSession, type WeazeSession } from "@/lib/session";
 import { onboardViaQr } from "@/lib/qr-onboard";
 import { useCart } from "@/hooks/use-cart";
 import { CheckoutStepper } from "@/components/checkout-stepper";
@@ -149,18 +149,44 @@ function PaymentPage() {
     [companySlug, qc, clearCart, navigate],
   );
 
+  // O token da sessão pode ter sido invalidado no servidor (ex.: checkout do
+  // staff rotaciona o session_token). Antes de pagar, valida a sessão local e,
+  // se o banco a rejeitou, recria a sessão silenciosamente para o pedido não
+  // falhar com 'unauthorized'.
+  const ensureFreshSession = async (): Promise<WeazeSession> => {
+    if (session) {
+      try {
+        const self = await customerRepository.findSelf(session.customerId, session.sessionToken);
+        if (self) return session;
+      } catch (e) {
+        const msg = String((e as Error)?.message ?? e).toLowerCase();
+        if (!msg.includes("unauthorized")) throw e;
+      }
+      clearSession();
+    }
+    const fresh = await onboardViaQr({
+      companyId: company!.id,
+      companySlug,
+      tableId: null,
+      source: "link",
+    });
+    setSession(fresh);
+    return fresh;
+  };
+
   const startPayment = useMutation({
     mutationFn: async () => {
-      if (!company || !session) throw new Error("Sessão inválida");
+      if (!company) throw new Error("Sessão inválida");
       if (cart.items.length === 0) throw new Error("Sacola vazia");
+      const active = await ensureFreshSession();
       const draft = readCheckoutDraft(company.id);
 
       if (isOnline) {
         if (!onlineAvailable) throw new Error("Pagamento online indisponível neste momento.");
         const order = await orderRepository.create({
           companyId: company.id,
-          customerId: session.customerId,
-          sessionToken: session.sessionToken,
+          customerId: active.customerId,
+          sessionToken: active.sessionToken,
           tableId: null,
           note: draft.note,
           paymentMethod: selected,
@@ -215,8 +241,8 @@ function PaymentPage() {
 
       const res = await orderRepository.create({
         companyId: company.id,
-        customerId: session.customerId,
-        sessionToken: session.sessionToken,
+        customerId: active.customerId,
+        sessionToken: active.sessionToken,
         tableId: null,
         note: draft.note,
         paymentMethod: "counter",
