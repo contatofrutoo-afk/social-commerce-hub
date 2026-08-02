@@ -145,6 +145,10 @@ function WeazeConfiguracoes() {
           setMpStatus(result.fields);
           setMpKinds(result.kinds ?? {});
           setMpWebhookUrl(result.webhookUrl ?? null);
+        } else if (result.status === "unauthorized") {
+          toast.error(
+            "Sua conta não tem a permissão de administrador necessária para o Mercado Pago.",
+          );
         }
       } catch {
         toast.error("Não foi possível carregar o status das credenciais.");

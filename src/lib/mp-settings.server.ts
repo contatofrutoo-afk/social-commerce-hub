@@ -106,10 +106,12 @@ export async function saveMpConfig(values: Record<string, string | undefined>): 
     if (trimmed) patch[column] = trimmed;
   }
   if (Object.keys(patch).length > 0) {
-    await supabaseAdmin
+    // UPSERT: se a linha id=1 ainda não existe (migração aplicada pela metade),
+    // um simples UPDATE afetaria 0 linhas em silêncio e nada seria salvo.
+    const { error } = await supabaseAdmin
       .from("platform_settings")
-      .update({ ...patch, updated_at: new Date().toISOString() })
-      .eq("id", 1);
+      .upsert({ id: 1, ...patch, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    if (error) throw error;
   }
   invalidateMpConfigCache();
 }
