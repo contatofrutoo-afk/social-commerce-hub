@@ -1179,6 +1179,10 @@ export type Database = {
             }
             Returns: string
           }
+      customer_logout: {
+        Args: { _company_id: string; _customer_id: string; _token: string }
+        Returns: undefined
+      }
       delete_company: { Args: { _company_id: string }; Returns: undefined }
       delete_customer_post: {
         Args: { _customer_id: string; _post_id: string; _token: string }
@@ -1214,6 +1218,7 @@ export type Database = {
           first_visit_at: string
           gender: string | null
           id: string
+          last_ip: string | null
           last_visit_at: string
           name: string
           session_token: string
@@ -1227,6 +1232,9 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_customer_service_profile:
+        | { Args: { _customer_id: string }; Returns: Json }
+        | { Args: { _company_id: string; _customer_id: string }; Returns: Json }
       get_product_public: { Args: { _slug: string }; Returns: Json }
       get_table_public: {
         Args: { _company_id: string; _slug: string }
@@ -1362,7 +1370,10 @@ export type Database = {
           _token: string
           _whatsapp: string
         }
-        Returns: undefined
+        Returns: {
+          customer_id: string
+          session_token: string
+        }[]
       }
       upsert_customer_visit: {
         Args: {
