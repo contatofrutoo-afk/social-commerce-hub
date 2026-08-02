@@ -115,6 +115,16 @@ export const orderRepository = {
     if (error) throw error;
   },
 
+  /** Exclusão pelo próprio cliente (valida session_token + posse do pedido). */
+  async deleteByCustomer(orderId: string, customerId: string, token: string): Promise<void> {
+    const { error } = await supabase.rpc("delete_customer_order" as any, {
+      _order_id: orderId,
+      _customer_id: customerId,
+      _token: token,
+    });
+    if (error) throw error;
+  },
+
   async deleteOrderItem(
     _orderId: string,
     itemId: string,

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { companyRepository, orderRepository } from "@/repositories";
 import { getSessionForCompany, type WeazeSession } from "@/lib/session";
 import { onboardViaQr } from "@/lib/qr-onboard";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ORDER_STATUS_META, orderStatusLabel, paymentMethodLabel } from "@/lib/order-status";
 import { formatBRL, formatDateTime, relativeTime } from "@/lib/format";
-import { PackageOpen, RefreshCw } from "lucide-react";
+import { PackageOpen, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 
@@ -19,6 +19,7 @@ export const Route = createFileRoute("/c/$companySlug/meus-pedidos")({
 function MyOrdersPage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [session, setSession] = useState<WeazeSession | null>(() =>
     typeof window !== "undefined" ? getSessionForCompany(companySlug) : null,
   );
@@ -55,6 +56,18 @@ function MyOrdersPage() {
     queryFn: () => orderRepository.listByCustomer(session!.customerId, session!.sessionToken),
     enabled: !!session,
     refetchInterval: 15000,
+  });
+
+  const remove = useMutation({
+    mutationFn: (orderId: string) =>
+      orderRepository.deleteByCustomer(orderId, session!.customerId, session!.sessionToken),
+    onSuccess: () => {
+      toast.success("Pedido removido.");
+      qc.invalidateQueries({ queryKey: ["customer-orders"] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Não foi possível remover o pedido.");
+    },
   });
 
   if (!session) {
@@ -101,9 +114,23 @@ function MyOrdersPage() {
                     {relativeTime(o.createdAt)} · {formatDateTime(o.createdAt)}
                   </div>
                 </div>
-                <Badge variant={ORDER_STATUS_META[o.status]?.variant ?? "secondary"}>
-                  {orderStatusLabel(o.status)}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={ORDER_STATUS_META[o.status]?.variant ?? "secondary"}>
+                    {orderStatusLabel(o.status)}
+                  </Badge>
+                  <button
+                    type="button"
+                    aria-label="Remover pedido"
+                    className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-50"
+                    disabled={remove.isPending}
+                    onClick={() => {
+                      if (!window.confirm("Remover este pedido do histórico?")) return;
+                      remove.mutate(o.id);
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
               </div>
 
               <div className="mt-3 space-y-1">
