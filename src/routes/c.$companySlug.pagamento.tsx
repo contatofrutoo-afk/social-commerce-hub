@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { readCheckoutDraft, clearCheckoutDraft } from "@/lib/checkout-draft";
 import type { PaymentMethod } from "@/repositories/types";
-import { paymentService } from "@/services/payment";
-import { CreditCard, QrCode, Store } from "lucide-react";
+import { paymentService, type CreatePixPaymentResult } from "@/services/payment";
+import { Check, Copy, CreditCard, Loader2, QrCode, RefreshCcw, Store } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/c/$companySlug/pagamento")({
   component: PaymentPage,
@@ -91,12 +91,18 @@ function PaymentPage() {
   const [startingPayment, setStartingPayment] = useState(false);
   const [onlineUnavailable, setOnlineUnavailable] = useState(false);
   const bricksContainerRef = useRef<HTMLDivElement>(null);
+  const [pixPayment, setPixPayment] = useState<CreatePixPaymentResult | null>(null);
+  const [pixOrderId, setPixOrderId] = useState<string | null>(null);
+  const [pixError, setPixError] = useState<string | null>(null);
+  const [pixRemaining, setPixRemaining] = useState(0);
+  const [copiedPixCode, setCopiedPixCode] = useState(false);
 
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
   });
   const cart = useCart(company?.id);
+  const clearCart = cart.clear;
 
   const { data: mpConfig } = useQuery({
     queryKey: ["mp-config"],
@@ -128,21 +134,20 @@ function PaymentPage() {
   const isOnline = selected === "pix" || selected === "card";
   const onlineAvailable = mpConfig?.configured === true && !onlineUnavailable;
 
-  const finishOnlinePayment = async (
-    companyId: string,
-    orderId: string,
-    result: MercadoPagoPaymentResult,
-  ) => {
-    await paymentService.checkout.confirmOrder(companyId, orderId, result.payment_id);
-    clearCheckoutDraft(companyId);
-    cart.clear();
-    qc.invalidateQueries({ queryKey: ["orders"] });
-    navigate({
-      to: "/c/$companySlug/confirmado",
-      params: { companySlug },
-      search: { orderId, paymentId: result.payment_id, status: result.status },
-    });
-  };
+  const finishOnlinePayment = useCallback(
+    async (companyId: string, orderId: string, result: MercadoPagoPaymentResult) => {
+      await paymentService.checkout.confirmOrder(companyId, orderId, result.payment_id);
+      clearCheckoutDraft(companyId);
+      clearCart();
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      navigate({
+        to: "/c/$companySlug/confirmado",
+        params: { companySlug },
+        search: { orderId, paymentId: result.payment_id, status: result.status },
+      });
+    },
+    [companySlug, qc, clearCart, navigate],
+  );
 
   const startPayment = useMutation({
     mutationFn: async () => {
@@ -163,6 +168,12 @@ function PaymentPage() {
           sessionId: getAnonymousId(),
           items: cart.items,
         });
+
+        if (selected === "pix") {
+          const pix = await paymentService.checkout.createPix(company.id, order.id);
+          return { orderId: order.id, pix };
+        }
+
         const pref = await paymentService.checkout.createPreference(company.id, order.id);
 
         await loadMercadoPagoSdk();
@@ -217,6 +228,12 @@ function PaymentPage() {
     },
     onSuccess: (res) => {
       if (!res) return;
+      if ("pix" in res && res.pix) {
+        setPixOrderId(res.orderId);
+        setPixPayment(res.pix);
+        setPixError(null);
+        return;
+      }
       toast.success("Pedido enviado! O estabelecimento foi notificado.");
       if (company) clearCheckoutDraft(company.id);
       cart.clear();
@@ -233,6 +250,71 @@ function PaymentPage() {
     },
   });
 
+  // Polling do Pix: enquanto o QR estiver na tela, consulta o status do
+  // pagamento a cada 4s até aprovar/cancelar.
+  useEffect(() => {
+    if (!company || !pixOrderId || !pixPayment || pixError) return;
+    let stopped = false;
+    const interval = setInterval(async () => {
+      if (stopped) return;
+      try {
+        const res = await paymentService.checkout.getStatus(
+          company.id,
+          pixOrderId,
+          pixPayment.paymentId,
+        );
+        if (res.status === "approved") {
+          stopped = true;
+          await finishOnlinePayment(company.id, pixOrderId, {
+            status: res.status,
+            payment_id: pixPayment.paymentId,
+          });
+        } else if (res.status === "cancelled" || res.status === "refunded") {
+          stopped = true;
+          setPixError("O pagamento não foi concluído. Tente novamente ou escolha outra forma.");
+        }
+      } catch {
+        // mantém a verificação — o webhook também atualiza o pedido em paralelo
+      }
+    }, 4000);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [company, pixOrderId, pixPayment, pixError, finishOnlinePayment]);
+
+  // Cronômetro de expiração do Pix.
+  useEffect(() => {
+    if (!pixPayment) return;
+    const expireAt = new Date(pixPayment.expiration).getTime();
+    const tick = () => setPixRemaining(Math.max(0, Math.round((expireAt - Date.now()) / 1000)));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [pixPayment]);
+
+  const copyPixCode = async () => {
+    if (!pixPayment) return;
+    try {
+      await navigator.clipboard.writeText(pixPayment.qrCode);
+      setCopiedPixCode(true);
+      setTimeout(() => setCopiedPixCode(false), 2000);
+    } catch {
+      toast.error("Não foi possível copiar o código Pix.");
+    }
+  };
+
+  const regeneratePix = async () => {
+    if (!company || !pixOrderId) return;
+    setPixError(null);
+    try {
+      const pix = await paymentService.checkout.createPix(company.id, pixOrderId);
+      setPixPayment(pix);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível gerar um novo Pix.");
+    }
+  };
+
   if (!session) {
     if (onboarding) {
       return (
@@ -242,6 +324,90 @@ function PaymentPage() {
       );
     }
     return null;
+  }
+
+  const pixTimedOut = pixRemaining <= 0;
+
+  if (pixPayment && selected === "pix") {
+    const minutes = Math.floor(pixRemaining / 60);
+    const seconds = String(pixRemaining % 60).padStart(2, "0");
+    return (
+      <div className="p-4">
+        <h1 className="mb-4 text-xl font-bold">Pagamento Pix</h1>
+
+        <CheckoutStepper steps={STEPS} current={1} />
+
+        <div className="rounded-xl border bg-card p-5 text-center">
+          {!pixError && (
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Loader2 className="size-3.5 animate-spin" />
+              Aguardando pagamento...
+            </div>
+          )}
+
+          <div className="mx-auto size-52 overflow-hidden rounded-xl border bg-white p-2">
+            <img
+              src={pixPayment.qrCodeBase64}
+              alt="QR Code Pix"
+              className="size-full object-contain"
+            />
+          </div>
+
+          <p className="mt-4 text-sm text-muted-foreground">
+            Escaneie o QR Code com o app do seu banco ou copie o código abaixo.
+          </p>
+
+          <div className="mt-3 rounded-lg border bg-muted/40 p-3 text-left">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Pix copia e cola</p>
+            <p className="break-all font-mono text-xs">{pixPayment.qrCode}</p>
+          </div>
+
+          <Button variant="outline" className="mt-3 w-full" onClick={copyPixCode}>
+            {copiedPixCode ? <Check className="size-4" /> : <Copy className="size-4" />}
+            {copiedPixCode ? "Código copiado!" : "Copiar código"}
+          </Button>
+
+          {pixTimedOut ? (
+            <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+              <p className="font-medium">O tempo do Pix expirou.</p>
+              <p className="text-xs">Gere um novo código para tentar novamente.</p>
+            </div>
+          ) : (
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
+              Válido por{" "}
+              <span className="font-semibold tabular-nums text-foreground">
+                {minutes}:{seconds}
+              </span>
+            </p>
+          )}
+
+          {(pixTimedOut || pixError) && (
+            <Button className="mt-3 w-full" onClick={regeneratePix}>
+              <RefreshCcw className="size-4" />
+              Gerar novo Pix
+            </Button>
+          )}
+
+          {pixError && (
+            <p className="mt-3 rounded-lg bg-destructive/10 p-2 text-xs text-destructive">
+              {pixError}
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="mt-4 text-xs text-muted-foreground underline"
+            onClick={() => {
+              setPixPayment(null);
+              setPixOrderId(null);
+              setPixError(null);
+            }}
+          >
+            Voltar e escolher outra forma de pagamento
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -301,7 +467,7 @@ function PaymentPage() {
         </div>
       </div>
 
-      {isOnline && onlineAvailable && (
+      {selected === "card" && onlineAvailable && (
         <div
           ref={bricksContainerRef}
           id="weaze-mp-bricks"

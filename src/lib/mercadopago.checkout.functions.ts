@@ -175,6 +175,138 @@ export const createPaymentPreference = createServerFn({ method: "POST" })
     };
   });
 
+export interface CreatePixPaymentResult {
+  paymentId: string;
+  qrCode: string;
+  qrCodeBase64: string;
+  expiration: string;
+  total: number;
+}
+
+const PixPaymentInput = z.object({
+  companyId: z.string().uuid(),
+  orderId: z.string().uuid(),
+});
+
+/**
+ * Cria um pagamento Pix direto na API do Mercado Pago (v1/payments) para um
+ * pedido já criado (awaiting_payment). Retorna QR Code (base64), Pix
+ * copia-e-cola e a data de expiração, sem nunca expor o access_token.
+ *
+ * LGPD: o cliente é anônimo — não coletamos e-mail/CPF/telefone. O MP exige
+ * `payer.email` para Pix, então usamos um e-mail sintético gerado a partir do
+ * id do pedido (não é dado pessoal do cliente).
+ */
+export const createPixPayment = createServerFn({ method: "POST" })
+  .inputValidator((raw) => PixPaymentInput.parse(raw))
+  .handler(async ({ data }): Promise<CreatePixPaymentResult> => {
+    const { resolveWebhookUrl, logPaymentEvent } = await import("@/lib/mercadopago.server");
+    const supabaseAdmin = await loadAdmin();
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, company_id, status, payment_status, total, subtotal")
+      .eq("id", data.orderId)
+      .eq("company_id", data.companyId)
+      .maybeSingle();
+    if (!order) throw new Error("Pedido não encontrado.");
+    if (order.payment_status === "paid") throw new Error("Este pedido já foi pago.");
+    if (order.status !== "awaiting_payment") {
+      throw new Error("Este pedido não está mais aguardando pagamento.");
+    }
+
+    const total = Number(order.total ?? order.subtotal ?? 0);
+    if (!(total > 0)) throw new Error("Pedido sem valor válido.");
+
+    const accessToken = await resolveTokenForCompany(data.companyId);
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    const body = {
+      transaction_amount: total,
+      description: `Pedido WEAZE ${data.orderId.slice(0, 8).toUpperCase()}`,
+      payment_method_id: "pix",
+      external_reference: data.orderId,
+      notification_url: resolveWebhookUrl(),
+      date_of_expiration: expiresAt.toISOString(),
+      payer: {
+        entity_type: "individual",
+        email: `pix-${data.orderId.slice(0, 12)}@weaze.app`,
+      },
+    };
+
+    let payment: {
+      id?: number | string;
+      status?: string;
+      point_of_interaction?: {
+        transaction_data?: { qr_code?: string; qr_code_base64?: string };
+      };
+    } = {};
+    try {
+      const res = await fetch(MERCADO_PAGO_PAYMENTS_URL, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+          "x-idempotency-key": globalThis.crypto.randomUUID(),
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        await logPaymentEvent(data.companyId, "Erro ao criar Pix", {
+          orderId: data.orderId,
+          status: res.status,
+          body: errBody.slice(0, 400),
+        });
+        throw new Error("Não foi possível gerar o Pix. Tente novamente.");
+      }
+      payment = (await res.json()) as typeof payment;
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("Não foi possível")) throw error;
+      await logPaymentEvent(data.companyId, "Erro ao criar Pix", {
+        orderId: data.orderId,
+        reason: "network",
+      });
+      throw new Error("Não foi possível gerar o Pix. Tente novamente.");
+    }
+
+    const paymentId = payment.id ? String(payment.id) : "";
+    const transactionData = payment.point_of_interaction?.transaction_data;
+    const qrCode = transactionData?.qr_code ?? "";
+    const qrCodeBase64 = transactionData?.qr_code_base64 ?? "";
+    if (!paymentId || !qrCode || !qrCodeBase64) {
+      await logPaymentEvent(data.companyId, "Erro ao criar Pix", {
+        orderId: data.orderId,
+        missing: "qr_data",
+      });
+      throw new Error("Não foi possível gerar o Pix. Tente novamente.");
+    }
+
+    await supabaseAdmin
+      .from("orders")
+      .update({
+        payment_id: paymentId,
+        payment_provider: "mercadopago",
+        payment_status: "pending",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.orderId);
+
+    await logPaymentEvent(data.companyId, "Pix criado", {
+      orderId: data.orderId,
+      paymentId,
+    });
+
+    return {
+      paymentId,
+      qrCode,
+      qrCodeBase64: `data:image/gif;base64,${qrCodeBase64}`,
+      expiration: expiresAt.toISOString(),
+      total,
+    };
+  });
+
 const PaymentStatusInput = z.object({
   companyId: z.string().uuid(),
   orderId: z.string().uuid(),

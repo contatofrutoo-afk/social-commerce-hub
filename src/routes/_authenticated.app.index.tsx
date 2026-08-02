@@ -46,6 +46,8 @@ import {
   ChevronDown,
   BrainCircuit,
   Wallet,
+  Timer,
+  Truck,
 } from "lucide-react";
 import type { VisitContext } from "@/repositories";
 import { useState, useMemo } from "react";
@@ -684,13 +686,34 @@ function DashboardPage() {
                 value={paymentMetrics.conversionRate}
                 subtitle="pagos / total de pedidos"
               />
+              <KpiCard
+                icon={PackageCheck}
+                label="Pedidos em andamento"
+                value={paymentMetrics.activeCount}
+                subtitle="pagos e em preparação"
+              />
+              <KpiCard
+                icon={Truck}
+                label="Pedidos entregues"
+                value={paymentMetrics.deliveredCount}
+                subtitle="marcados como entregues"
+              />
+              <KpiCard
+                icon={Timer}
+                label="Tempo até pagamento"
+                value={Math.round(paymentMetrics.avgTimeToPaymentMinutes)}
+                format="min"
+                subtitle="média entre pedido e aprovação"
+              />
             </div>
-            {paymentMetrics.byTable.length > 0 && (
-              <div className="grid gap-4 lg:grid-cols-3">
-                <div className="dash-card p-4">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                    Vendas por mesa
-                  </p>
+            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+              <div className="dash-card p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  Vendas por mesa
+                </p>
+                {paymentMetrics.byTable.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+                ) : (
                   <ul className="space-y-1 text-sm">
                     {paymentMetrics.byTable.slice(0, 6).map((t) => (
                       <li key={t.tableLabel ?? "sem-mesa"} className="flex items-center justify-between">
@@ -701,11 +724,15 @@ function DashboardPage() {
                       </li>
                     ))}
                   </ul>
-                </div>
-                <div className="dash-card p-4">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                    Pedidos por horário
-                  </p>
+                )}
+              </div>
+              <div className="dash-card p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  Pedidos por horário
+                </p>
+                {paymentMetrics.byHour.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+                ) : (
                   <ul className="space-y-1 text-sm">
                     {paymentMetrics.byHour.map((h) => (
                       <li key={h.hour} className="flex items-center justify-between">
@@ -714,11 +741,15 @@ function DashboardPage() {
                       </li>
                     ))}
                   </ul>
-                </div>
-                <div className="dash-card p-4">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                    Por canal
-                  </p>
+                )}
+              </div>
+              <div className="dash-card p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  Por canal
+                </p>
+                {paymentMetrics.byProvider.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+                ) : (
                   <ul className="space-y-1 text-sm">
                     {paymentMetrics.byProvider.map((p) => (
                       <li key={p.provider} className="flex items-center justify-between">
@@ -731,9 +762,31 @@ function DashboardPage() {
                       </li>
                     ))}
                   </ul>
-                </div>
+                )}
               </div>
-            )}
+              <div className="dash-card p-4">
+                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                  Produtos mais vendidos
+                </p>
+                {paymentMetrics.topProducts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sem vendas pagas ainda.</p>
+                ) : (
+                  <ul className="space-y-1 text-sm">
+                    {paymentMetrics.topProducts.slice(0, 6).map((p, i) => (
+                      <li key={p.name} className="flex items-center justify-between gap-2">
+                        <span className="truncate text-muted-foreground">
+                          <span className="mr-1 font-semibold text-foreground">{i + 1}º</span>
+                          {p.name}
+                        </span>
+                        <span className="shrink-0 font-medium">
+                          {p.quantity} un · {formatBRL(p.total)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

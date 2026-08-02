@@ -22,6 +22,10 @@ export interface PaymentMetrics {
   revenueToday: number;
   avgTicket: number;
   conversionRate: number;
+  activeCount: number;
+  deliveredCount: number;
+  avgTimeToPaymentMinutes: number;
+  topProducts: { name: string; quantity: number; total: number }[];
   byProvider: { provider: string; count: number; total: number }[];
   byTable: { tableLabel: string | null; count: number; total: number }[];
   byHour: { hour: number; count: number }[];
@@ -201,7 +205,7 @@ export const dashboardRepository = {
   async getPaymentMetrics(companyId: string): Promise<PaymentMetrics> {
     const { data, error } = await supabase
       .from("orders")
-      .select("id, status, payment_status, payment_provider, total, created_at, table_id, table:tables(label), customer_id")
+      .select("id, status, payment_status, payment_provider, total, created_at, payment_approved_at, table_id, table:tables(label), customer_id")
       .eq("company_id", companyId);
     if (error) throw error;
 
@@ -244,6 +248,56 @@ export const dashboardRepository = {
     const paidCount = paid.length;
     const paidTotal = sum(paid);
 
+    // Pedidos em andamento (pagos e em preparação/produção, sem os que ainda
+    // aguardam pagamento e sem os finalizados/cancelados).
+    const activeStatuses = new Set(["payment_approved", "preparing", "ready", "delivered"]);
+    const activeCount = orders.filter((o) => activeStatuses.has(o.status)).length;
+    const deliveredCount = orders.filter((o) => o.status === "delivered").length;
+
+    // Tempo médio entre criação do pedido e aprovação do pagamento.
+    const timeToPaymentList = paid
+      .map((o) => {
+        if (!o.payment_approved_at) return null;
+        const created = new Date(o.created_at).getTime();
+        const approved = new Date(o.payment_approved_at).getTime();
+        if (!Number.isFinite(created) || !Number.isFinite(approved) || approved < created) {
+          return null;
+        }
+        return (approved - created) / 60000;
+      })
+      .filter((m): m is number => m !== null);
+    const avgTimeToPaymentMinutes =
+      timeToPaymentList.length > 0
+        ? timeToPaymentList.reduce((s, m) => s + m, 0) / timeToPaymentList.length
+        : 0;
+
+    // Produtos mais vendidos (itens de pedidos pagos).
+    const paidIds = paid.map((o) => o.id);
+    let topProducts: PaymentMetrics["topProducts"] = [];
+    if (paidIds.length > 0) {
+      const { data: items } = await supabase
+        .from("order_items")
+        .select("quantity, unit_price, product:products(name)")
+        .in("order_id", paidIds);
+      type PaidItemRow = {
+        quantity: number | null;
+        unit_price: number | null;
+        product: { name: string | null } | null;
+      };
+      const productMap: Record<string, { name: string; quantity: number; total: number }> = {};
+      ((items ?? []) as PaidItemRow[]).forEach((item) => {
+        const name = String(item.product?.name ?? "Item");
+        const qty = Number(item.quantity ?? 0);
+        const unit = Number(item.unit_price ?? 0);
+        if (!productMap[name]) productMap[name] = { name, quantity: 0, total: 0 };
+        productMap[name].quantity += qty;
+        productMap[name].total += qty * unit;
+      });
+      topProducts = Object.values(productMap)
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10);
+    }
+
     return {
       awaitingPayment: { count: awaiting.length, total: sum(awaiting) },
       paidCount,
@@ -251,6 +305,10 @@ export const dashboardRepository = {
       revenueToday,
       avgTicket: paidCount > 0 ? paidTotal / paidCount : 0,
       conversionRate: orders.length > 0 ? (paidCount / orders.length) * 100 : 0,
+      activeCount,
+      deliveredCount,
+      avgTimeToPaymentMinutes,
+      topProducts,
       byProvider: Object.entries(providerMap).map(([provider, v]) => ({ provider, ...v }))
         .sort((a, b) => b.total - a.total),
       byTable: Object.entries(tableMap).map(([label, v]) => ({ tableLabel: v.label, count: v.count, total: v.total }))

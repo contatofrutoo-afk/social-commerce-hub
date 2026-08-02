@@ -9,6 +9,7 @@ import {
 import {
   confirmOnlineOrder,
   createPaymentPreference,
+  createPixPayment,
   getMercadoPagoConfig,
   getOnlinePaymentStatus,
 } from "@/lib/mercadopago.checkout.functions";
@@ -32,6 +33,9 @@ export type {
 export type {
   MercadoPagoConfigResult,
   MercadoPagoPreferenceResult,
+} from "@/lib/mercadopago.checkout.functions";
+export type {
+  CreatePixPaymentResult,
 } from "@/lib/mercadopago.checkout.functions";
 
 async function getPanelJwt(): Promise<string> {
@@ -130,6 +134,9 @@ export const paymentService = {
     },
     async createPreference(companyId: string, orderId: string) {
       return createPaymentPreference({ data: { companyId, orderId } });
+    },
+    async createPix(companyId: string, orderId: string) {
+      return createPixPayment({ data: { companyId, orderId } });
     },
     async confirmOrder(companyId: string, orderId: string, paymentId: string) {
       return confirmOnlineOrder({ data: { companyId, orderId, paymentId } });
