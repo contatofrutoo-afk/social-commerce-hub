@@ -230,7 +230,7 @@ function PaymentPage() {
         mpBrickControllerRef.current?.unmount();
         mpBrickControllerRef.current = null;
 
-        const controller = await mp.bricks().create("payment", "#weaze-mp-bricks", {
+        const controller = await mp.bricks().create("payment", "weaze-mp-bricks", {
           initialization: { amount: pref.total },
           customization: {
             paymentMethods: { creditCard: "all", debitCard: "all" },
