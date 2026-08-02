@@ -959,7 +959,7 @@ export const crmRepository = {
     if (likedButNotOrdered.length > 0) {
       const names = likedButNotOrdered
         .slice(0, 3)
-        .map((l) => l.name)
+        .map((l: any) => l.name)
         .filter(Boolean)
         .join(", ");
       opportunities.push(`Ainda não experimentou: ${names}.`);
@@ -1000,7 +1000,7 @@ export const crmRepository = {
     if (likedButNotOrdered.length > 0) {
       const names = likedButNotOrdered
         .slice(0, 2)
-        .map((l) => l.name)
+        .map((l: any) => l.name)
         .filter(Boolean)
         .join(" ou ");
       weazeSuggestions.push(
@@ -1018,7 +1018,7 @@ export const crmRepository = {
     if (recentlyLikedProducts.length > 0) {
       const names = recentlyLikedProducts
         .slice(0, 2)
-        .map((l) => l.name)
+        .map((l: any) => l.name)
         .filter(Boolean)
         .join(" e ");
       weazeSuggestions.push(`Cliente curtiu recentemente ${names}. Aproveite o interesse!`);
@@ -1047,7 +1047,7 @@ export const crmRepository = {
     if (likedButNotOrdered.length > 0) {
       const names = likedButNotOrdered
         .slice(0, 3)
-        .map((l) => l.name)
+        .map((l: any) => l.name)
         .filter(Boolean)
         .join(", ");
       suggestions.push(`Ainda não pediu: ${names} — ofereça uma amostra.`);
