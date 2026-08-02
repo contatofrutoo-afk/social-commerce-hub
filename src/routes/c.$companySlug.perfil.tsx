@@ -40,6 +40,7 @@ function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [showProfileNudge, setShowProfileNudge] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const uploadFile = useServerFn(uploadCustomerFile);
 
   const genderOptions = [
@@ -162,6 +163,22 @@ function ProfilePage() {
       navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
     }
   }, [session, companySlug, navigate]);
+
+  // Encerra a sessão no servidor (check-in ativo + rotação de token) para a
+  // saída refletir em tempo real, e só então limpa a sessão local. Se a rede
+  // falhar, ainda desloga localmente (best-effort).
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await customerRepository.logout(session!.customerId, session!.sessionToken, session!.companyId);
+    } catch (e) {
+      console.warn("[logout] falha ao notificar servidor", e);
+    } finally {
+      clearSession();
+      clearLastProfile();
+      navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
+    }
+  }
 
   if (!session) return null;
 
@@ -332,13 +349,10 @@ function ProfilePage() {
       <Button
         variant="ghost"
         className="w-full text-destructive"
-        onClick={() => {
-          clearSession();
-          clearLastProfile();
-          navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });
-        }}
+        disabled={loggingOut}
+        onClick={handleLogout}
       >
-        Sair
+        {loggingOut ? "Saindo..." : "Sair"}
       </Button>
     </div>
   );

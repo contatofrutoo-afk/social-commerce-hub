@@ -56,6 +56,15 @@ export default function ClientSessionGuard() {
   const redirectToDesconexão = useCallback(() => {
     if (redirectedRef.current) return;
     redirectedRef.current = true;
+    // Best-effort: notifica o servidor (encerra check-in ativo + rotaciona
+    // token) para a saída refletir em tempo real na plataforma. Se o token já
+    // foi invalidado (ex.: checkout pelo staff), a chamada falha em silêncio.
+    const session = getSessionForCompany(companySlug);
+    if (session) {
+      customerRepository
+        .logout(session.customerId, session.sessionToken, session.companyId)
+        .catch(() => {});
+    }
     clearSession();
     clearLastProfile();
     navigate({ to: "/c/$companySlug/desconexao", params: { companySlug } });

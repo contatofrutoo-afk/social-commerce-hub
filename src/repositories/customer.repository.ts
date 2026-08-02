@@ -94,6 +94,18 @@ export const customerRepository = {
     return { customerId: row.customer_id, sessionToken: row.session_token };
   },
 
+  /** Logout do próprio cliente: encerra o check-in ativo e rotaciona o
+   *  session_token no servidor. A saída reflete em tempo real na plataforma
+   *  (Atendimento, Dashboard e aba Clientes). */
+  async logout(customerId: string, token: string, companyId: string): Promise<void> {
+    const { error } = await supabase.rpc("customer_logout" as any, {
+      _customer_id: customerId,
+      _token: token,
+      _company_id: companyId,
+    });
+    if (error) throw error;
+  },
+
   /** Atualização do próprio perfil, autorizada pelo token da sessão.
    *  Em caso de cadastro duplicado (whatsapp já usado por outro registro da
    *  mesma empresa) a RPC mescla os perfis e devolve o customer_id canônico. */
