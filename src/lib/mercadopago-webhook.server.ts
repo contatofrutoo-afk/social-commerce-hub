@@ -4,12 +4,7 @@
 // é chamada direto no fetch handler de src/server.ts quando o path bate
 // com /api/webhooks/mercadopago.
 import { createHmac, timingSafeEqual } from "node:crypto";
-import {
-  loadSupabaseAdmin,
-  logPaymentEvent,
-  mpConfig,
-  resolveWebhookUrl,
-} from "@/lib/mercadopago.server";
+import { loadSupabaseAdmin, logPaymentEvent, mpConfig } from "@/lib/mercadopago.server";
 import { decryptToken } from "@/lib/token-crypto.server";
 
 const MERCADO_PAGO_PAYMENTS_URL = "https://api.mercadopago.com/v1/payments";
@@ -43,7 +38,6 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Respon
   }
 
   const rawBody = await request.text();
-  const webhookUrl = resolveWebhookUrl();
   const { webhookSecret } = await mpConfig();
 
   const { data, id, type } = parseWebhookPayload(rawBody, request.url);
