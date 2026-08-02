@@ -565,7 +565,7 @@ function DashboardPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Visão geral do seu negócio em tempo real.
           </p>
@@ -1294,7 +1294,7 @@ function PeriodSelector({
   onChange: (k: PeriodKey) => void;
 }) {
   return (
-    <div className="inline-flex gap-1 rounded-full border bg-card/70 p-1 backdrop-blur">
+    <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-full border bg-card/70 p-1 backdrop-blur">
       {(Object.entries(PERIOD_LABELS) as [PeriodKey, string][]).map(([key, label]) => (
         <button
           key={key}

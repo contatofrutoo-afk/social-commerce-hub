@@ -210,23 +210,27 @@ function AppLayout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-10 grid grid-cols-6 border-t bg-card/95 backdrop-blur-xl md:hidden">
-        {nav.slice(0, 6).map((n) => {
-          const active = n.exact ? location.pathname === n.to : location.pathname.startsWith(n.to);
-          return (
-            <Link
-              key={n.to}
-              to={n.to}
-              className={cn(
-                "flex flex-col items-center gap-0.5 py-2 text-[10px] transition-colors",
-                active ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <n.icon className="size-4" />
-              {n.label}
-            </Link>
-          );
-        })}
+      <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card/95 backdrop-blur-xl md:hidden">
+        <div className="flex overflow-x-auto px-1">
+          {nav.map((n) => {
+            const active = n.exact
+              ? location.pathname === n.to
+              : location.pathname.startsWith(n.to);
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                className={cn(
+                  "flex min-w-[72px] shrink-0 flex-col items-center gap-0.5 px-2 py-2 text-[10px] transition-colors",
+                  active ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                <n.icon className="size-4" />
+                {n.label}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );
