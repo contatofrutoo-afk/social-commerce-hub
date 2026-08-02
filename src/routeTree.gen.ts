@@ -27,12 +27,16 @@ import { Route as CCompanySlugVendasRouteImport } from './routes/c.$companySlug.
 import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.sacola'
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
 import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.perfil'
+import { Route as CCompanySlugPagamentoRouteImport } from './routes/c.$companySlug.pagamento'
 import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
 import { Route as CCompanySlugDesconexaoRouteImport } from './routes/c.$companySlug.desconexao'
+import { Route as CCompanySlugConfirmadoRouteImport } from './routes/c.$companySlug.confirmado'
+import { Route as CCompanySlugCheckoutRouteImport } from './routes/c.$companySlug.checkout'
 import { Route as AuthenticatedAppProdutosRouteImport } from './routes/_authenticated.app.produtos'
 import { Route as AuthenticatedAppPersonaRouteImport } from './routes/_authenticated.app.persona'
 import { Route as AuthenticatedAppPedidosRouteImport } from './routes/_authenticated.app.pedidos'
 import { Route as AuthenticatedAppInteligenciaRouteImport } from './routes/_authenticated.app.inteligencia'
+import { Route as AuthenticatedAppFinanceiroRouteImport } from './routes/_authenticated.app.financeiro'
 import { Route as AuthenticatedAppFeedRouteImport } from './routes/_authenticated.app.feed'
 import { Route as AuthenticatedAppConfiguracoesRouteImport } from './routes/_authenticated.app.configuracoes'
 import { Route as AuthenticatedAppClientesRouteImport } from './routes/_authenticated.app.clientes'
@@ -136,6 +140,11 @@ const CCompanySlugPerfilRoute = CCompanySlugPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
+const CCompanySlugPagamentoRoute = CCompanySlugPagamentoRouteImport.update({
+  id: '/pagamento',
+  path: '/pagamento',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
 const CCompanySlugFeedRoute = CCompanySlugFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -144,6 +153,16 @@ const CCompanySlugFeedRoute = CCompanySlugFeedRouteImport.update({
 const CCompanySlugDesconexaoRoute = CCompanySlugDesconexaoRouteImport.update({
   id: '/desconexao',
   path: '/desconexao',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugConfirmadoRoute = CCompanySlugConfirmadoRouteImport.update({
+  id: '/confirmado',
+  path: '/confirmado',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugCheckoutRoute = CCompanySlugCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
 const AuthenticatedAppProdutosRoute =
@@ -166,6 +185,12 @@ const AuthenticatedAppInteligenciaRoute =
   AuthenticatedAppInteligenciaRouteImport.update({
     id: '/inteligencia',
     path: '/inteligencia',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppFinanceiroRoute =
+  AuthenticatedAppFinanceiroRouteImport.update({
+    id: '/financeiro',
+    path: '/financeiro',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppFeedRoute = AuthenticatedAppFeedRouteImport.update({
@@ -267,12 +292,16 @@ export interface FileRoutesByFullPath {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
+  '/app/financeiro': typeof AuthenticatedAppFinanceiroRoute
   '/app/inteligencia': typeof AuthenticatedAppInteligenciaRoute
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/persona': typeof AuthenticatedAppPersonaRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/c/$companySlug/checkout': typeof CCompanySlugCheckoutRoute
+  '/c/$companySlug/confirmado': typeof CCompanySlugConfirmadoRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/pagamento': typeof CCompanySlugPagamentoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -302,12 +331,16 @@ export interface FileRoutesByTo {
   '/app/clientes': typeof AuthenticatedAppClientesRoute
   '/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/app/feed': typeof AuthenticatedAppFeedRoute
+  '/app/financeiro': typeof AuthenticatedAppFinanceiroRoute
   '/app/inteligencia': typeof AuthenticatedAppInteligenciaRoute
   '/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/app/persona': typeof AuthenticatedAppPersonaRoute
   '/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/c/$companySlug/checkout': typeof CCompanySlugCheckoutRoute
+  '/c/$companySlug/confirmado': typeof CCompanySlugConfirmadoRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/pagamento': typeof CCompanySlugPagamentoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -342,12 +375,16 @@ export interface FileRoutesById {
   '/_authenticated/app/clientes': typeof AuthenticatedAppClientesRoute
   '/_authenticated/app/configuracoes': typeof AuthenticatedAppConfiguracoesRoute
   '/_authenticated/app/feed': typeof AuthenticatedAppFeedRoute
+  '/_authenticated/app/financeiro': typeof AuthenticatedAppFinanceiroRoute
   '/_authenticated/app/inteligencia': typeof AuthenticatedAppInteligenciaRoute
   '/_authenticated/app/pedidos': typeof AuthenticatedAppPedidosRoute
   '/_authenticated/app/persona': typeof AuthenticatedAppPersonaRoute
   '/_authenticated/app/produtos': typeof AuthenticatedAppProdutosRoute
+  '/c/$companySlug/checkout': typeof CCompanySlugCheckoutRoute
+  '/c/$companySlug/confirmado': typeof CCompanySlugConfirmadoRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/pagamento': typeof CCompanySlugPagamentoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
   '/c/$companySlug/sacola': typeof CCompanySlugSacolaRoute
@@ -382,12 +419,16 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
+    | '/app/financeiro'
     | '/app/inteligencia'
     | '/app/pedidos'
     | '/app/persona'
     | '/app/produtos'
+    | '/c/$companySlug/checkout'
+    | '/c/$companySlug/confirmado'
     | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/pagamento'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -417,12 +458,16 @@ export interface FileRouteTypes {
     | '/app/clientes'
     | '/app/configuracoes'
     | '/app/feed'
+    | '/app/financeiro'
     | '/app/inteligencia'
     | '/app/pedidos'
     | '/app/persona'
     | '/app/produtos'
+    | '/c/$companySlug/checkout'
+    | '/c/$companySlug/confirmado'
     | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/pagamento'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -456,12 +501,16 @@ export interface FileRouteTypes {
     | '/_authenticated/app/clientes'
     | '/_authenticated/app/configuracoes'
     | '/_authenticated/app/feed'
+    | '/_authenticated/app/financeiro'
     | '/_authenticated/app/inteligencia'
     | '/_authenticated/app/pedidos'
     | '/_authenticated/app/persona'
     | '/_authenticated/app/produtos'
+    | '/c/$companySlug/checkout'
+    | '/c/$companySlug/confirmado'
     | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/pagamento'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
     | '/c/$companySlug/sacola'
@@ -612,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCompanySlugPerfilRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
+    '/c/$companySlug/pagamento': {
+      id: '/c/$companySlug/pagamento'
+      path: '/pagamento'
+      fullPath: '/c/$companySlug/pagamento'
+      preLoaderRoute: typeof CCompanySlugPagamentoRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
     '/c/$companySlug/feed': {
       id: '/c/$companySlug/feed'
       path: '/feed'
@@ -624,6 +680,20 @@ declare module '@tanstack/react-router' {
       path: '/desconexao'
       fullPath: '/c/$companySlug/desconexao'
       preLoaderRoute: typeof CCompanySlugDesconexaoRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/confirmado': {
+      id: '/c/$companySlug/confirmado'
+      path: '/confirmado'
+      fullPath: '/c/$companySlug/confirmado'
+      preLoaderRoute: typeof CCompanySlugConfirmadoRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/checkout': {
+      id: '/c/$companySlug/checkout'
+      path: '/checkout'
+      fullPath: '/c/$companySlug/checkout'
+      preLoaderRoute: typeof CCompanySlugCheckoutRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
     '/_authenticated/app/produtos': {
@@ -652,6 +722,13 @@ declare module '@tanstack/react-router' {
       path: '/inteligencia'
       fullPath: '/app/inteligencia'
       preLoaderRoute: typeof AuthenticatedAppInteligenciaRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/financeiro': {
+      id: '/_authenticated/app/financeiro'
+      path: '/financeiro'
+      fullPath: '/app/financeiro'
+      preLoaderRoute: typeof AuthenticatedAppFinanceiroRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/feed': {
@@ -791,6 +868,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppClientesRoute: typeof AuthenticatedAppClientesRoute
   AuthenticatedAppConfiguracoesRoute: typeof AuthenticatedAppConfiguracoesRoute
   AuthenticatedAppFeedRoute: typeof AuthenticatedAppFeedRoute
+  AuthenticatedAppFinanceiroRoute: typeof AuthenticatedAppFinanceiroRoute
   AuthenticatedAppInteligenciaRoute: typeof AuthenticatedAppInteligenciaRoute
   AuthenticatedAppPedidosRoute: typeof AuthenticatedAppPedidosRoute
   AuthenticatedAppPersonaRoute: typeof AuthenticatedAppPersonaRoute
@@ -804,6 +882,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppClientesRoute: AuthenticatedAppClientesRoute,
   AuthenticatedAppConfiguracoesRoute: AuthenticatedAppConfiguracoesRoute,
   AuthenticatedAppFeedRoute: AuthenticatedAppFeedRoute,
+  AuthenticatedAppFinanceiroRoute: AuthenticatedAppFinanceiroRoute,
   AuthenticatedAppInteligenciaRoute: AuthenticatedAppInteligenciaRoute,
   AuthenticatedAppPedidosRoute: AuthenticatedAppPedidosRoute,
   AuthenticatedAppPersonaRoute: AuthenticatedAppPersonaRoute,
@@ -831,8 +910,11 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface CCompanySlugRouteChildren {
+  CCompanySlugCheckoutRoute: typeof CCompanySlugCheckoutRoute
+  CCompanySlugConfirmadoRoute: typeof CCompanySlugConfirmadoRoute
   CCompanySlugDesconexaoRoute: typeof CCompanySlugDesconexaoRoute
   CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
+  CCompanySlugPagamentoRoute: typeof CCompanySlugPagamentoRoute
   CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
   CCompanySlugPublicarRoute: typeof CCompanySlugPublicarRoute
   CCompanySlugSacolaRoute: typeof CCompanySlugSacolaRoute
@@ -842,8 +924,11 @@ interface CCompanySlugRouteChildren {
 }
 
 const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
+  CCompanySlugCheckoutRoute: CCompanySlugCheckoutRoute,
+  CCompanySlugConfirmadoRoute: CCompanySlugConfirmadoRoute,
   CCompanySlugDesconexaoRoute: CCompanySlugDesconexaoRoute,
   CCompanySlugFeedRoute: CCompanySlugFeedRoute,
+  CCompanySlugPagamentoRoute: CCompanySlugPagamentoRoute,
   CCompanySlugPerfilRoute: CCompanySlugPerfilRoute,
   CCompanySlugPublicarRoute: CCompanySlugPublicarRoute,
   CCompanySlugSacolaRoute: CCompanySlugSacolaRoute,
@@ -869,3 +954,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

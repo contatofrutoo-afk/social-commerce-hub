@@ -14,6 +14,7 @@ import {
   QrCode,
   ChartColumn,
   BrainCircuit,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -139,6 +140,7 @@ function AppLayout() {
     { to: "/app/catalogo", label: "Catálogo Inteligente", icon: QrCode },
     { to: "/app/inteligencia", label: "Inteligência do Catálogo", icon: ChartColumn },
     { to: "/app/pedidos", label: "Pedidos", icon: ShoppingCart },
+    { to: "/app/financeiro", label: "Financeiro", icon: Wallet },
     { to: "/app/atendimento", label: "Atendimento", icon: Store },
     { to: "/app/configuracoes", label: "Configurações", icon: Settings },
   ];

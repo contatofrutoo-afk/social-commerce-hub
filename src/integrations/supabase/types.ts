@@ -645,6 +645,206 @@ export type Database = {
           },
         ]
       }
+      payment_accounts: {
+        Row: {
+          account_id: string | null
+          account_name: string | null
+          business_id: string
+          connected_at: string | null
+          created_at: string
+          credentials: Json | null
+          id: string
+          last_sync_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          account_name?: string | null
+          business_id: string
+          connected_at?: string | null
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          last_sync_at?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          account_name?: string | null
+          business_id?: string
+          connected_at?: string | null
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          last_sync_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_accounts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_logs: {
+        Row: {
+          business_id: string
+          created_at: string
+          event: string
+          id: string
+          payload: Json | null
+          payment_id: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          event: string
+          id?: string
+          payload?: Json | null
+          payment_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          event?: string
+          id?: string
+          payload?: Json | null
+          payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_logs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          available_at: string | null
+          business_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          label: string
+          method: string
+          updated_at: string
+        }
+        Insert: {
+          available_at?: string | null
+          business_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          label: string
+          method: string
+          updated_at?: string
+        }
+        Update: {
+          available_at?: string | null
+          business_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          label?: string
+          method?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          business_id: string
+          created_at: string
+          customer_id: string | null
+          gateway: string | null
+          gateway_transaction_id: string | null
+          id: string
+          method: string
+          order_id: string | null
+          paid_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_id: string
+          created_at?: string
+          customer_id?: string | null
+          gateway?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          method: string
+          order_id?: string | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          created_at?: string
+          customer_id?: string | null
+          gateway?: string | null
+          gateway_transaction_id?: string | null
+          id?: string
+          method?: string
+          order_id?: string | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_products: {
         Row: {
           post_id: string
@@ -1026,6 +1226,67 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          balance_after: number | null
+          business_id: string
+          created_at: string
+          description: string | null
+          id: string
+          method: string | null
+          order_id: string | null
+          payment_id: string | null
+          type: string
+        }
+        Insert: {
+          amount?: number
+          balance_after?: number | null
+          business_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          method?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number | null
+          business_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          method?: string | null
+          order_id?: string | null
+          payment_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
         ]
