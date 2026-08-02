@@ -2,9 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { orderRepository, customerRepository } from "@/repositories";
-import type { Order, OrderItem } from "@/repositories/types";
+import type { Order, OrderItem, OrderStatus, PaymentMethod } from "@/repositories/types";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { formatBRL, relativeTime, formatDateTime } from "@/lib/format";
+import {
+  ORDER_STATUS_META,
+  orderStatusLabel,
+  paymentMethodLabel,
+  nextOrderStatus,
+  ORDER_ACTION_LABEL,
+} from "@/lib/order-status";
 import {
   User,
   Clock,
@@ -25,8 +33,16 @@ export const Route = createFileRoute("/_authenticated/app/pedidos")({
   head: () => ({ meta: [{ title: "Pedidos — WEAZE" }] }),
 });
 
+const PAYMENT_FILTERS: { key: "all" | PaymentMethod; label: string }[] = [
+  { key: "all", label: "Todos" },
+  { key: "counter", label: "Pagamento no Caixa" },
+  { key: "pix", label: "Pix" },
+  { key: "card", label: "Cartão" },
+];
+
 function OrdersPage() {
   const qc = useQueryClient();
+  const [paymentFilter, setPaymentFilter] = useState<"all" | PaymentMethod>("all");
   const { data: companyId } = useQuery({
     queryKey: ["my-company-id"],
     queryFn: async () => {
@@ -64,15 +80,21 @@ function OrdersPage() {
 
   const advance = useMutation({
     mutationFn: async (order: Order) => {
-      await orderRepository.completeOrder(
-        order.id,
-        order.items.map((i) => ({
-          productId: i.productId,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-        })),
-        order.customerId,
-      );
+      const next = nextOrderStatus(order.status);
+      if (!next) return;
+      if (next === "completed") {
+        await orderRepository.completeOrder(
+          order.id,
+          order.items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+          })),
+          order.customerId,
+        );
+      } else {
+        await orderRepository.updateStatus(order.id, next);
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
@@ -125,22 +147,54 @@ function OrdersPage() {
     };
   });
 
-  const received = enrichedOrders.filter((o) => o.status === "received") ?? [];
-  const completed = enrichedOrders.filter((o) => o.status === "completed") ?? [];
+  const filteredOrders = useMemo(
+    () =>
+      paymentFilter === "all"
+        ? enrichedOrders
+        : enrichedOrders.filter((o) => o.paymentMethod === paymentFilter),
+    [enrichedOrders, paymentFilter],
+  );
+
+  const active = filteredOrders.filter((o) => o.status !== "completed" && o.status !== "cancelled") ?? [];
+  const finished = filteredOrders.filter((o) => o.status === "completed" || o.status === "cancelled") ?? [];
+
+  const counts = useMemo(() => {
+    const map = new Map<"all" | PaymentMethod, number>([["all", enrichedOrders.length]]);
+    for (const key of ["counter", "pix", "card"] as PaymentMethod[]) {
+      map.set(key, enrichedOrders.filter((o) => o.paymentMethod === key).length);
+    }
+    return map;
+  }, [enrichedOrders]);
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Pedidos</h1>
+
+      <div className="flex flex-wrap gap-2">
+        {PAYMENT_FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setPaymentFilter(f.key)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              paymentFilter === f.key
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card hover:bg-muted"
+            }`}
+          >
+            {f.label} <span className="opacity-60">({counts.get(f.key) ?? 0})</span>
+          </button>
+        ))}
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Column
-          title="Recebidos"
-          orders={received}
+          title="Em andamento"
+          orders={active}
           action={advance}
-          actionLabel="Concluir"
           onDelete={remove}
           onRemoveItem={removeItem}
         />
-        <Column title="Concluídos" orders={completed} onDelete={remove} />
+        <Column title="Finalizados / Cancelados" orders={finished} onDelete={remove} />
       </div>
     </div>
   );
@@ -157,14 +211,12 @@ function Column({
   title,
   orders,
   action,
-  actionLabel,
   onDelete,
   onRemoveItem,
 }: {
   title: string;
   orders: any[];
   action?: { mutate: (order: Order) => void; isPending: boolean };
-  actionLabel?: string;
   onDelete?: { mutate: (id: string) => void };
   onRemoveItem?: {
     mutate: (vars: { orderId: string; itemId: string }) => void;
@@ -185,7 +237,6 @@ function Column({
             key={o.id}
             order={o}
             action={action}
-            actionLabel={actionLabel}
             onDelete={onDelete}
             onRemoveItem={onRemoveItem}
           />
@@ -198,13 +249,11 @@ function Column({
 function OrderCard({
   order,
   action,
-  actionLabel,
   onDelete,
   onRemoveItem,
 }: {
   order: any;
   action?: { mutate: (order: Order) => void; isPending: boolean };
-  actionLabel?: string;
   onDelete?: { mutate: (id: string) => void };
   onRemoveItem?: {
     mutate: (vars: { orderId: string; itemId: string }) => void;
@@ -224,13 +273,15 @@ function OrderCard({
   );
 
   const ContextIcon = order.context ? contextIcons[order.context] : null;
+  const orderStatus = order.status as OrderStatus;
+  const actionLabel = ORDER_ACTION_LABEL[orderStatus] ?? null;
 
   const handleRemoveItem = (itemId: string) => {
     setRemovedItemIds((prev) => new Set(prev).add(itemId));
     onRemoveItem?.mutate({ orderId: order.id, itemId });
   };
 
-  const handleConcluir = () => {
+  const handleAdvance = () => {
     if (visibleItems.length === 0) {
       toast.error("Remova o pedido — não há itens restantes");
       return;
@@ -251,6 +302,14 @@ function OrderCard({
           )}
         </span>
         <span className="font-bold">{formatBRL(currentTotal)}</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={ORDER_STATUS_META[orderStatus]?.variant ?? "secondary"}>
+          {orderStatusLabel(orderStatus)}
+        </Badge>
+        <Badge variant="outline">{paymentMethodLabel(order.paymentMethod)}</Badge>
+        <span className="text-[10px] text-muted-foreground">#{order.id.slice(0, 6).toUpperCase()}</span>
       </div>
 
       <div className="space-y-1">
@@ -323,10 +382,10 @@ function OrderCard({
       </div>
 
       <div className="flex items-center gap-1 pt-1 border-t">
-        {action && (
+        {action && actionLabel && (
           <Button
             size="sm"
-            onClick={handleConcluir}
+            onClick={handleAdvance}
             disabled={action.isPending || visibleItems.length === 0}
             className="gap-1"
           >

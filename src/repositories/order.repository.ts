@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { CartItem, Order, OrderStatus } from "./types";
+import type { CartItem, Order, OrderStatus, PaymentMethod } from "./types";
 import { productRepository } from "./product.repository";
 
 function mapOrder(r: any): Order {
@@ -11,6 +11,7 @@ function mapOrder(r: any): Order {
     tableId: r.table_id,
     tableLabel: r.table?.label ?? null,
     status: r.status,
+    paymentMethod: (r.payment_method as PaymentMethod) ?? null,
     total: Number(r.total),
     note: r.note,
     createdAt: r.created_at,
@@ -55,6 +56,7 @@ export const orderRepository = {
     sessionToken: string;
     tableId?: string | null;
     note?: string;
+    paymentMethod?: PaymentMethod;
     items: CartItem[];
   }): Promise<{ id: string }> {
     const { data, error } = await supabase.rpc("create_customer_order" as any, {
@@ -69,6 +71,7 @@ export const orderRepository = {
         note: i.note ?? null,
       })) as any,
       _table_id: input.tableId ?? null,
+      _payment_method: input.paymentMethod ?? null,
     });
     if (error) throw error;
     // Métricas: registra `purchase` para cada item do pedido — alimenta funil

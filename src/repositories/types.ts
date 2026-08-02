@@ -1,7 +1,14 @@
 // Tipos de domínio da WEAZE. Repositórios devolvem estes tipos, não linhas cruas do Cloud.
 export type VisitContext = "sozinho" | "casal" | "amigos" | "familia";
 export type ReactionType = "love" | "dislike";
-export type OrderStatus = "received" | "completed";
+export type OrderStatus =
+  | "received"
+  | "payment_at_counter"
+  | "preparing"
+  | "ready"
+  | "completed"
+  | "cancelled";
+export type PaymentMethod = "pix" | "card" | "counter";
 export type PostAuthorType = "business" | "customer";
 
 export interface Company {
@@ -125,6 +132,7 @@ export interface Order {
   tableId: string | null;
   tableLabel?: string | null;
   status: OrderStatus;
+  paymentMethod: PaymentMethod | null;
   total: number;
   note: string | null;
   createdAt: string;

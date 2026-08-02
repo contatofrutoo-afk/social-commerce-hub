@@ -597,6 +597,7 @@ export type Database = {
           customer_id: string
           id: string
           note: string | null
+          payment_method: string | null
           status: Database["public"]["Enums"]["order_status"]
           table_id: string | null
           total: number
@@ -607,6 +608,7 @@ export type Database = {
           customer_id: string
           id?: string
           note?: string | null
+          payment_method?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           table_id?: string | null
           total?: number
@@ -617,6 +619,7 @@ export type Database = {
           customer_id?: string
           id?: string
           note?: string | null
+          payment_method?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           table_id?: string | null
           total?: number
@@ -1456,6 +1459,7 @@ export type Database = {
           _customer_id: string
           _items: Json
           _note: string
+          _payment_method?: string
           _table_id?: string
           _token: string
         }
@@ -1700,7 +1704,7 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "staff" | "admin"
-      order_status: "received" | "completed"
+      order_status: "received" | "payment_at_counter" | "preparing" | "ready" | "completed" | "cancelled"
       post_author_type: "business" | "customer"
       reaction_type: "love" | "dislike"
       visit_context: "sozinho" | "casal" | "amigos" | "familia"
@@ -1832,7 +1836,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "staff", "admin"],
-      order_status: ["received", "completed"],
+      order_status: ["received", "payment_at_counter", "preparing", "ready", "completed", "cancelled"],
       post_author_type: ["business", "customer"],
       reaction_type: ["love", "dislike"],
       visit_context: ["sozinho", "casal", "amigos", "familia"],

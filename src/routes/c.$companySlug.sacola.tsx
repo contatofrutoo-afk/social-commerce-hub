@@ -1,13 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { companyRepository, orderRepository } from "@/repositories";
+import { useQuery } from "@tanstack/react-query";
+import { companyRepository } from "@/repositories";
 import { supabase } from "@/integrations/supabase/client";
 import { getSessionForCompany, type WeazeSession } from "@/lib/session";
 import { onboardViaQr } from "@/lib/qr-onboard";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ProductMediaGallery } from "@/components/product-media-gallery";
 import { formatBRL } from "@/lib/format";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -21,12 +20,10 @@ export const Route = createFileRoute("/c/$companySlug/sacola")({
 function BagPage() {
   const { companySlug } = Route.useParams();
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const [session, setSession] = useState<WeazeSession | null>(() =>
     typeof window !== "undefined" ? getSessionForCompany(companySlug) : null,
   );
   const [onboarding, setOnboarding] = useState(false);
-  const [note, setNote] = useState("");
 
   const { data: company } = useQuery({
     queryKey: ["company", companySlug],
@@ -53,28 +50,6 @@ function BagPage() {
       return map;
     },
     enabled: productIds.length > 0,
-  });
-
-  const submit = useMutation({
-    mutationFn: async () => {
-      if (!company || !session) throw new Error("Sessão inválida");
-      if (cart.items.length === 0) throw new Error("Sacola vazia");
-      return orderRepository.create({
-        companyId: company.id,
-        customerId: session.customerId,
-        sessionToken: session.sessionToken,
-        tableId: null,
-        note,
-        items: cart.items,
-      });
-    },
-    onSuccess: () => {
-      toast.success("Pedido enviado! O estabelecimento foi notificado.");
-      cart.clear();
-      qc.invalidateQueries({ queryKey: ["orders"] });
-      navigate({ to: "/c/$companySlug/feed", params: { companySlug } });
-    },
-    onError: (e: any) => toast.error(e.message),
   });
 
   useEffect(() => {
@@ -113,7 +88,12 @@ function BagPage() {
     <div className="p-4">
       <h1 className="mb-4 text-xl font-bold">Sua sacola</h1>
       {cart.items.length === 0 ? (
-        <p className="py-12 text-center text-muted-foreground">Nenhum item ainda.</p>
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Nenhum item ainda.</p>
+          <Button className="mt-4" variant="outline" onClick={() => navigate({ to: "/c/$companySlug/feed", params: { companySlug } })}>
+            Ver catálogo
+          </Button>
+        </div>
       ) : (
         <div className="space-y-3">
           {cart.items.map((i) => {
@@ -166,13 +146,6 @@ function BagPage() {
             );
           })}
 
-          <Textarea
-            placeholder="Observação do pedido (opcional)"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={300}
-          />
-
           <div className="sticky bottom-20 rounded-xl border bg-card p-4 shadow-lg">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total</span>
@@ -181,10 +154,9 @@ function BagPage() {
             <Button
               className="mt-3 w-full"
               size="lg"
-              onClick={() => submit.mutate()}
-              disabled={submit.isPending}
+              onClick={() => navigate({ to: "/c/$companySlug/checkout", params: { companySlug } })}
             >
-              {submit.isPending ? "Enviando…" : "Enviar pedido"}
+              Continuar para o checkout
             </Button>
           </div>
         </div>

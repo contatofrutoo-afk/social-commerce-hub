@@ -29,6 +29,7 @@ import { Route as CCompanySlugSacolaRouteImport } from './routes/c.$companySlug.
 import { Route as CCompanySlugPublicarRouteImport } from './routes/c.$companySlug.publicar'
 import { Route as CCompanySlugPerfilRouteImport } from './routes/c.$companySlug.perfil'
 import { Route as CCompanySlugPagamentoRouteImport } from './routes/c.$companySlug.pagamento'
+import { Route as CCompanySlugMeusPedidosRouteImport } from './routes/c.$companySlug.meus-pedidos'
 import { Route as CCompanySlugFeedRouteImport } from './routes/c.$companySlug.feed'
 import { Route as CCompanySlugDesconexaoRouteImport } from './routes/c.$companySlug.desconexao'
 import { Route as CCompanySlugConfirmadoRouteImport } from './routes/c.$companySlug.confirmado'
@@ -150,6 +151,11 @@ const CCompanySlugPerfilRoute = CCompanySlugPerfilRouteImport.update({
 const CCompanySlugPagamentoRoute = CCompanySlugPagamentoRouteImport.update({
   id: '/pagamento',
   path: '/pagamento',
+  getParentRoute: () => CCompanySlugRoute,
+} as any)
+const CCompanySlugMeusPedidosRoute = CCompanySlugMeusPedidosRouteImport.update({
+  id: '/meus-pedidos',
+  path: '/meus-pedidos',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
 const CCompanySlugFeedRoute = CCompanySlugFeedRouteImport.update({
@@ -308,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/c/$companySlug/confirmado': typeof CCompanySlugConfirmadoRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/meus-pedidos': typeof CCompanySlugMeusPedidosRoute
   '/c/$companySlug/pagamento': typeof CCompanySlugPagamentoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
@@ -348,6 +355,7 @@ export interface FileRoutesByTo {
   '/c/$companySlug/confirmado': typeof CCompanySlugConfirmadoRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/meus-pedidos': typeof CCompanySlugMeusPedidosRoute
   '/c/$companySlug/pagamento': typeof CCompanySlugPagamentoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
@@ -393,6 +401,7 @@ export interface FileRoutesById {
   '/c/$companySlug/confirmado': typeof CCompanySlugConfirmadoRoute
   '/c/$companySlug/desconexao': typeof CCompanySlugDesconexaoRoute
   '/c/$companySlug/feed': typeof CCompanySlugFeedRoute
+  '/c/$companySlug/meus-pedidos': typeof CCompanySlugMeusPedidosRoute
   '/c/$companySlug/pagamento': typeof CCompanySlugPagamentoRoute
   '/c/$companySlug/perfil': typeof CCompanySlugPerfilRoute
   '/c/$companySlug/publicar': typeof CCompanySlugPublicarRoute
@@ -438,6 +447,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/confirmado'
     | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/meus-pedidos'
     | '/c/$companySlug/pagamento'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
@@ -478,6 +488,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/confirmado'
     | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/meus-pedidos'
     | '/c/$companySlug/pagamento'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
@@ -522,6 +533,7 @@ export interface FileRouteTypes {
     | '/c/$companySlug/confirmado'
     | '/c/$companySlug/desconexao'
     | '/c/$companySlug/feed'
+    | '/c/$companySlug/meus-pedidos'
     | '/c/$companySlug/pagamento'
     | '/c/$companySlug/perfil'
     | '/c/$companySlug/publicar'
@@ -687,6 +699,13 @@ declare module '@tanstack/react-router' {
       path: '/pagamento'
       fullPath: '/c/$companySlug/pagamento'
       preLoaderRoute: typeof CCompanySlugPagamentoRouteImport
+      parentRoute: typeof CCompanySlugRoute
+    }
+    '/c/$companySlug/meus-pedidos': {
+      id: '/c/$companySlug/meus-pedidos'
+      path: '/meus-pedidos'
+      fullPath: '/c/$companySlug/meus-pedidos'
+      preLoaderRoute: typeof CCompanySlugMeusPedidosRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
     '/c/$companySlug/feed': {
@@ -935,6 +954,7 @@ interface CCompanySlugRouteChildren {
   CCompanySlugConfirmadoRoute: typeof CCompanySlugConfirmadoRoute
   CCompanySlugDesconexaoRoute: typeof CCompanySlugDesconexaoRoute
   CCompanySlugFeedRoute: typeof CCompanySlugFeedRoute
+  CCompanySlugMeusPedidosRoute: typeof CCompanySlugMeusPedidosRoute
   CCompanySlugPagamentoRoute: typeof CCompanySlugPagamentoRoute
   CCompanySlugPerfilRoute: typeof CCompanySlugPerfilRoute
   CCompanySlugPublicarRoute: typeof CCompanySlugPublicarRoute
@@ -949,6 +969,7 @@ const CCompanySlugRouteChildren: CCompanySlugRouteChildren = {
   CCompanySlugConfirmadoRoute: CCompanySlugConfirmadoRoute,
   CCompanySlugDesconexaoRoute: CCompanySlugDesconexaoRoute,
   CCompanySlugFeedRoute: CCompanySlugFeedRoute,
+  CCompanySlugMeusPedidosRoute: CCompanySlugMeusPedidosRoute,
   CCompanySlugPagamentoRoute: CCompanySlugPagamentoRoute,
   CCompanySlugPerfilRoute: CCompanySlugPerfilRoute,
   CCompanySlugPublicarRoute: CCompanySlugPublicarRoute,

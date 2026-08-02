@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { customerRepository } from "@/repositories";
@@ -13,7 +13,7 @@ import { optimizedImageUrl } from "@/lib/image-url";
 import { fileToBase64 } from "@/lib/file-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText, RefreshCw } from "lucide-react";
+import { Mars, Venus, HelpCircle, Shield, Download, Trash2, FileText, RefreshCw, Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/perfil")({
   component: ProfilePage,
@@ -292,6 +292,18 @@ function ProfilePage() {
           Salvar
         </Button>
       </div>
+
+      <Link
+        to="/c/$companySlug/meus-pedidos"
+        params={{ companySlug }}
+        className="flex items-center gap-3 rounded-xl border bg-card p-4 transition-colors hover:bg-muted"
+      >
+        <Receipt className="size-5 text-primary" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">Meus Pedidos</p>
+          <p className="text-xs text-muted-foreground">Acompanhe seus pedidos em tempo real</p>
+        </div>
+      </Link>
 
       <div className="rounded-xl border p-4 space-y-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
