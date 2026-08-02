@@ -25,7 +25,10 @@ export type MercadoPagoStartResult =
 
 export type MercadoPagoExchangeResult =
   | { status: "success"; account: PaymentAccountPublic }
-  | { status: "unauthorized" | "invalid_state" | "invalid_token" | "unavailable" };
+  | {
+      status: "unauthorized" | "invalid_state" | "invalid_token" | "unavailable";
+      reason?: string;
+    };
 
 export type MercadoPagoAccountResult =
   | { status: "success"; account: PaymentAccountPublic | null }
@@ -147,6 +150,7 @@ export const startMercadoPagoOAuth = createServerFn({ method: "POST" })
     const params = new URLSearchParams({
       response_type: "code",
       client_id: clientId,
+      platform_id: "mp",
       redirect_uri: redirectUri,
       state,
       scope: "offline_access read",
@@ -194,7 +198,7 @@ export const exchangeMercadoPagoCode = createServerFn({ method: "POST" })
 
     const { data: stateRow } = await supabaseAdmin
       .from("payment_oauth_states")
-      .select("business_id, code_verifier")
+      .select("business_id, code_verifier, redirect_uri")
       .eq("state", data.state)
       .maybeSingle();
     if (!stateRow || stateRow.business_id !== businessId) {
@@ -202,7 +206,9 @@ export const exchangeMercadoPagoCode = createServerFn({ method: "POST" })
     }
     await supabaseAdmin.from("payment_oauth_states").delete().eq("state", data.state);
 
-    const redirectUri = await resolveRedirectUri();
+    // Reutiliza o redirect_uri gravado no início do fluxo (o MP exige que o
+    // redirect_uri do token exchange seja EXATAMENTE o usado na autorização).
+    const redirectUri = stateRow.redirect_uri ?? (await resolveRedirectUri());
 
     let tokenRes: Response;
     try {
@@ -227,11 +233,21 @@ export const exchangeMercadoPagoCode = createServerFn({ method: "POST" })
     }
 
     if (!tokenRes.ok) {
+      let message: string | null = null;
+      try {
+        const body = (await tokenRes.json()) as { message?: string; error_description?: string };
+        message = body.message ?? body.error_description ?? null;
+      } catch {
+        // corpo não-JSON: ignora
+      }
       await logPaymentEvent(businessId, "Erro OAuth", {
         stage: "token_exchange",
         status: tokenRes.status,
+        message,
       });
-      return tokenRes.status >= 500 ? { status: "unavailable" } : { status: "invalid_token" };
+      return tokenRes.status >= 500
+        ? { status: "unavailable", reason: message ?? undefined }
+        : { status: "invalid_token", reason: message ?? undefined };
     }
 
     let tokenData: { access_token?: string; refresh_token?: string; user_id?: string; expires_in?: number };

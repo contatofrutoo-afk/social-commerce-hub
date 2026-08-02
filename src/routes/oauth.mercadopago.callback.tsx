@@ -21,6 +21,7 @@ type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavail
 function CallbackPage() {
   const { code, state, error } = Route.useSearch();
   const [phase, setPhase] = useState<Phase>(error || !code ? "cancelled" : "processing");
+  const [reason, setReason] = useState<string | null>(null);
 
   useEffect(() => {
     if (error || !code) return;
@@ -41,6 +42,7 @@ function CallbackPage() {
           case "invalid_token":
           case "unauthorized":
           default:
+            if ("reason" in result && result.reason) setReason(result.reason);
             setPhase("invalid_token");
             break;
         }
@@ -73,7 +75,9 @@ function CallbackPage() {
     invalid_token: {
       icon: <XCircle className="size-8 text-destructive" />,
       title: "Não foi possível conectar sua conta. Tente novamente.",
-      description: "O link de autorização pode ter expirado. Inicie uma nova conexão pelo painel.",
+      description: reason
+        ? `O Mercado Pago retornou: ${reason}.`
+        : "O link de autorização pode ter expirado. Inicie uma nova conexão pelo painel.",
     },
     unavailable: {
       icon: <XCircle className="size-8 text-destructive" />,
