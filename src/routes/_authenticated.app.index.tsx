@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  customerRepository,
-  productRepository,
   orderRepository,
   checkinRepository,
   postRepository,
@@ -13,51 +12,32 @@ import {
 import { relativeTime, formatBRL } from "@/lib/format";
 import {
   Users,
-  ShoppingCart,
-  Heart,
+  UserCheck,
+  Eye,
+  ShoppingBag,
+  Receipt,
+  CheckCircle2,
+  PackageCheck,
+  Wallet,
+  TrendingUp,
+  Trophy,
   Sparkles,
   Store,
-  User,
-  Home,
-  MessageCircle,
-  TrendingUp,
   Clock,
   Calendar,
-  Lightbulb,
   AlertTriangle,
   Info,
-  CheckCircle2,
-  RefreshCw,
   ArrowUp,
   ArrowDown,
-  Minus,
-  Eye,
-  EyeOff,
-  ThumbsUp,
-  PackageCheck,
-  UserPlus,
-  UserCheck,
-  Crown,
-  AlertOctagon,
-  UserX,
-  BarChart3,
-  Hash,
-  Activity,
-  ChevronDown,
-  BrainCircuit,
-  Wallet,
-  Timer,
-  Truck,
+  Plus,
+  Megaphone,
+  Percent,
 } from "lucide-react";
-import type { VisitContext } from "@/repositories";
-import { useState, useMemo } from "react";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: DashboardPage,
   head: () => ({ meta: [{ title: "Dashboard — WEAZE" }] }),
 });
-
-// ─── Period helpers ───
 
 type PeriodKey = "today" | "7d" | "30d" | "90d" | "year";
 
@@ -98,46 +78,10 @@ function getComparisonBounds(period: PeriodKey) {
   return { start: start - duration, end: start };
 }
 
-function useCompanyId() {
-  const { data: role } = useQuery({
-    queryKey: ["my-role"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("*, company:companies(*)")
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-  });
-  return role?.company_id as string | undefined;
-}
-
-// ─── Filters ───
-
 function inRange(ts: string | number | Date | null | undefined, start: number, end: number) {
   if (!ts) return false;
   const t = new Date(ts).getTime();
   return t >= start && t <= end;
-}
-
-function countInRange<T>(
-  items: T[],
-  getTs: (item: T) => string | null | undefined,
-  start: number,
-  end: number,
-) {
-  return items.filter((i) => inRange(getTs(i), start, end)).length;
-}
-
-function sumInRange(
-  items: any[],
-  getTs: (item: any) => string | null | undefined,
-  getVal: (item: any) => number,
-  start: number,
-  end: number,
-) {
-  return items.filter((i) => inRange(getTs(i), start, end)).reduce((s, i) => s + getVal(i), 0);
 }
 
 function computeChange(current: number, previous: number) {
@@ -153,30 +97,43 @@ function pctStr(pct: number) {
   return (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%";
 }
 
-// ─── Dashboard Page ───
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+}
+
+function longDate() {
+  return new Date().toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+function useCompany() {
+  const { data: role } = useQuery({
+    queryKey: ["my-role"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("*, company:companies(*)")
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const anyRole = role as any;
+  return {
+    id: (anyRole?.company_id as string) ?? undefined,
+    name: (anyRole?.company?.name as string) ?? undefined,
+  };
+}
 
 function DashboardPage() {
-  const companyId = useCompanyId();
+  const company = useCompany();
+  const companyId = company.id;
   const [period, setPeriod] = useState<PeriodKey>("30d");
-  const [hiddenSections, setHiddenSections] = useState<Set<string>>(new Set());
-  const [activityFilter, setActivityFilter] = useState<string>("all");
 
-  const toggleSection = (id: string) => {
-    setHiddenSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  // ── Existing queries (kept intact) ──
-  const { data: customers } = useQuery({
-    queryKey: ["customers", companyId],
-    queryFn: () => customerRepository.listByCompany(companyId!),
-    enabled: !!companyId,
-    refetchInterval: 30_000,
-  });
   const { data: orders } = useQuery({
     queryKey: ["orders", companyId],
     queryFn: () => orderRepository.listByCompany(companyId!),
@@ -194,40 +151,12 @@ function DashboardPage() {
     queryFn: () => postRepository.listByCompany(companyId!),
     enabled: !!companyId,
   });
-  const { data: metrics } = useQuery({
-    queryKey: ["dashboard-metrics", companyId],
-    queryFn: () => dashboardRepository.getMetrics(companyId!),
-    enabled: !!companyId,
-  });
-  const { data: insights } = useQuery({
-    queryKey: ["insights", companyId],
-    queryFn: () => dashboardRepository.getInsights(companyId!),
-    enabled: !!companyId,
-  });
-  const { data: businessMetrics } = useQuery({
-    queryKey: ["business-metrics", companyId],
-    queryFn: () => dashboardRepository.getBusinessMetrics(companyId!),
-    enabled: !!companyId,
-  });
-  const { data: productMetrics } = useQuery({
-    queryKey: ["product-metrics", companyId],
-    queryFn: () => dashboardRepository.getProductMetrics(companyId!),
-    enabled: !!companyId,
-  });
-  const { data: paymentMetrics } = useQuery({
-    queryKey: ["payment-metrics", companyId],
-    queryFn: () => dashboardRepository.getPaymentMetrics(companyId!),
-    enabled: !!companyId,
-    refetchInterval: 30_000,
-  });
-
-  // ── New enrichment queries (for period filtering) ──
   const { data: allCheckins } = useQuery({
     queryKey: ["all-checkins", companyId],
     queryFn: async () => {
       const { data } = await supabase
         .from("checkins")
-        .select("context, source, created_at, customer_id, checked_out_at, customer:customers(name)")
+        .select("context, source, created_at, customer_id, customer:customers(name)")
         .eq("company_id", companyId!)
         .order("created_at", { ascending: false });
       return data ?? [];
@@ -235,33 +164,35 @@ function DashboardPage() {
     enabled: !!companyId,
     refetchInterval: 30_000,
   });
-
-  const { data: reactions } = useQuery({
-    queryKey: ["reactions-timeline", companyId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("post_reactions")
-        .select("type, created_at, customer_id, post:posts!inner(company_id)")
-        .eq("post.company_id", companyId!);
-      return data ?? [];
-    },
+  const { data: insights } = useQuery({
+    queryKey: ["insights", companyId],
+    queryFn: () => dashboardRepository.getInsights(companyId!),
     enabled: !!companyId,
-    refetchInterval: 30_000,
   });
 
-  const { data: productLikes } = useQuery({
-    queryKey: ["product-likes-timeline", companyId],
+  const { start: pStart, end: pEnd } = getPeriodBounds(period);
+  const { start: prevStart, end: prevEnd } = getComparisonBounds(period);
+
+  const { data: productEvents } = useQuery({
+    queryKey: ["product-events", companyId, prevStart],
     queryFn: async () => {
       const { data } = await supabase
-        .from("product_likes")
-        .select("created_at, product_id, customer_id, product:products!inner(company_id)")
-        .eq("product.company_id", companyId!);
+        .from("product_events")
+        .select("event_type, created_at, customer_id")
+        .eq("company_id", companyId!)
+        .gte("created_at", new Date(prevStart).toISOString())
+        .order("created_at", { ascending: false });
       return data ?? [];
     },
     enabled: !!companyId,
   });
 
-  // ── Unique present customers (deduplicate by customer_id) ──
+  const todayStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }, []);
+
   const presentCount = useMemo(() => {
     if (!present) return 0;
     const seen = new Set<string>();
@@ -272,820 +203,507 @@ function DashboardPage() {
     return seen.size;
   }, [present]);
 
-  // ── Period computations ──
-  const { start: pStart, end: pEnd } = getPeriodBounds(period);
-  const { start: prevStart, end: prevEnd } = getComparisonBounds(period);
+  const periodOrders = useMemo(
+    () => (orders ?? []).filter((o) => inRange(o.createdAt, pStart, pEnd)),
+    [orders, pStart, pEnd],
+  );
+  const prevPeriodOrders = useMemo(
+    () => (orders ?? []).filter((o) => inRange(o.createdAt, prevStart, prevEnd)),
+    [orders, prevStart, prevEnd],
+  );
+  const paidPeriodOrders = useMemo(
+    () => periodOrders.filter((o) => o.paymentStatus === "paid"),
+    [periodOrders],
+  );
+  const prevPaid = useMemo(
+    () => prevPeriodOrders.filter((o) => o.paymentStatus === "paid"),
+    [prevPeriodOrders],
+  );
 
-  const periodData = useMemo(() => {
-    if (!customers || !orders) return null;
+  const kpis = useMemo(() => {
+    const active = periodOrders.filter((o) => o.status !== "cancelled");
+    const prevActive = prevPeriodOrders.filter((o) => o.status !== "cancelled");
+    const revenue = paidPeriodOrders.reduce((s, o) => s + o.total, 0);
+    const prevRevenue = prevPaid.reduce((s, o) => s + o.total, 0);
+    const ticket = paidPeriodOrders.length > 0 ? revenue / paidPeriodOrders.length : 0;
+    const prevTicket = prevPaid.length > 0 ? prevRevenue / prevPaid.length : 0;
+    const served = new Set(paidPeriodOrders.map((o) => o.customerId)).size;
+    const prevServed = new Set(prevPaid.map((o) => o.customerId)).size;
 
-    const activeCustomers = customers.filter((c) => inRange(c.lastVisitAt, pStart, pEnd));
-    const periodOrders = orders.filter((o) => inRange(o.createdAt, pStart, pEnd));
-    const periodRevenue = periodOrders.reduce((s, o) => s + o.total, 0);
-    const periodTicket = periodOrders.length > 0 ? periodRevenue / periodOrders.length : 0;
-
-    // Previous period
-    const prevActive = customers.filter((c) => inRange(c.lastVisitAt, prevStart, prevEnd));
-    const prevOrders = orders.filter((o) => inRange(o.createdAt, prevStart, prevEnd));
-    const prevRevenue = prevOrders.reduce((s, o) => s + o.total, 0);
-    const prevTicket = prevOrders.length > 0 ? prevRevenue / prevOrders.length : 0;
+    const champMap: Record<string, { name: string; qty: number; total: number }> = {};
+    paidPeriodOrders.forEach((o) =>
+      o.items.forEach((i) => {
+        const key = i.productId || i.productName;
+        if (!champMap[key]) champMap[key] = { name: i.productName || "Item", qty: 0, total: 0 };
+        champMap[key].qty += i.quantity;
+        champMap[key].total += i.quantity * i.unitPrice;
+      }),
+    );
+    const champ = Object.values(champMap).sort((a, b) => b.qty - a.qty)[0] ?? null;
 
     return {
-      activeCustomers,
-      periodOrders,
-      periodRevenue,
-      periodTicket,
-      prevActive,
-      prevOrders,
+      orderCount: active.length,
+      prevOrderCount: prevActive.length,
+      revenue,
       prevRevenue,
+      ticket,
       prevTicket,
+      served,
+      prevServed,
+      champ,
     };
-  }, [customers, orders, pStart, pEnd, prevStart, prevEnd]);
+  }, [periodOrders, prevPeriodOrders, paidPeriodOrders, prevPaid]);
 
-  // Funnel data
-  const funnelData = useMemo(() => {
-    const checkinCount = (allCheckins ?? []).filter((c: any) =>
-      inRange(c.created_at, pStart, pEnd),
+  const funnel = useMemo(() => {
+    const checkins = (allCheckins ?? []) as any[];
+    const events = (productEvents ?? []) as any[];
+
+    const checkinCount = checkins.filter((c) => inRange(c.created_at, pStart, pEnd)).length;
+    const prevCheckin = checkins.filter((c) => inRange(c.created_at, prevStart, prevEnd)).length;
+    const activeCustomers = new Set(
+      checkins.filter((c) => inRange(c.created_at, pStart, pEnd)).map((c) => c.customer_id),
+    ).size;
+    const prevActive = new Set(
+      checkins.filter((c) => inRange(c.created_at, prevStart, prevEnd)).map((c) => c.customer_id),
+    ).size;
+    const views = events.filter(
+      (e) => e.event_type === "view" && inRange(e.created_at, pStart, pEnd),
     ).length;
-    const reactionCount = (reactions ?? []).filter((r: any) =>
-      inRange(r.created_at, pStart, pEnd),
+    const prevViews = events.filter(
+      (e) => e.event_type === "view" && inRange(e.created_at, prevStart, prevEnd),
     ).length;
-    const orderCount = (orders ?? []).filter((o) => inRange(o.createdAt, pStart, pEnd)).length;
+    const cartAdds = events.filter(
+      (e) => e.event_type === "cart_add" && inRange(e.created_at, pStart, pEnd),
+    ).length;
+    const prevCartAdds = events.filter(
+      (e) => e.event_type === "cart_add" && inRange(e.created_at, prevStart, prevEnd),
+    ).length;
     const completedCount = (orders ?? []).filter(
       (o) => o.status === "completed" && inRange(o.createdAt, pStart, pEnd),
-    ).length;
-
-    const prevCheckin = (allCheckins ?? []).filter((c: any) =>
-      inRange(c.created_at, prevStart, prevEnd),
-    ).length;
-    const prevReaction = (reactions ?? []).filter((r: any) =>
-      inRange(r.created_at, prevStart, prevEnd),
-    ).length;
-    const prevOrderCount = (orders ?? []).filter((o) =>
-      inRange(o.createdAt, prevStart, prevEnd),
     ).length;
     const prevCompleted = (orders ?? []).filter(
       (o) => o.status === "completed" && inRange(o.createdAt, prevStart, prevEnd),
     ).length;
 
+    const steps = [
+      { key: "checkins", label: "Check-ins", value: checkinCount, prev: prevCheckin, icon: Users },
+      {
+        key: "active",
+        label: "Clientes ativos",
+        value: activeCustomers,
+        prev: prevActive,
+        icon: UserCheck,
+      },
+      { key: "views", label: "Produtos visualizados", value: views, prev: prevViews, icon: Eye },
+      { key: "cart", label: "Sacolas", value: cartAdds, prev: prevCartAdds, icon: ShoppingBag },
+      {
+        key: "orders",
+        label: "Pedidos",
+        value: periodOrders.length,
+        prev: prevPeriodOrders.length,
+        icon: Receipt,
+      },
+      {
+        key: "paid",
+        label: "Pagamentos aprovados",
+        value: paidPeriodOrders.length,
+        prev: prevPaid.length,
+        icon: Wallet,
+      },
+      {
+        key: "completed",
+        label: "Concluídos",
+        value: completedCount,
+        prev: prevCompleted,
+        icon: PackageCheck,
+      },
+    ];
+    const max = Math.max(...steps.map((s) => s.value), 1);
+    return { steps, max };
+  }, [
+    allCheckins,
+    productEvents,
+    periodOrders,
+    prevPeriodOrders,
+    paidPeriodOrders,
+    prevPaid,
+    orders,
+    pStart,
+    pEnd,
+    prevStart,
+    prevEnd,
+  ]);
+
+  const todaySummary = useMemo(() => {
+    const todaysOrders = (orders ?? []).filter((o) => inRange(o.createdAt, todayStart, Date.now()));
+    const paidToday = todaysOrders.filter((o) => o.paymentStatus === "paid");
+    const revenueToday = paidToday.reduce((s, o) => s + o.total, 0);
+    const checkinsToday = (allCheckins ?? []).filter((c: any) =>
+      inRange(c.created_at, todayStart, Date.now()),
+    ).length;
     return {
-      steps: [
-        { key: "checkin", label: "Check-ins", value: checkinCount, prev: prevCheckin, icon: User },
-        {
-          key: "reaction",
-          label: "Curtidas",
-          value: reactionCount,
-          prev: prevReaction,
-          icon: Heart,
-        },
-        {
-          key: "order",
-          label: "Pedidos",
-          value: orderCount,
-          prev: prevOrderCount,
-          icon: ShoppingCart,
-        },
-        {
-          key: "completed",
-          label: "Concluídos",
-          value: completedCount,
-          prev: prevCompleted,
-          icon: CheckCircle2,
-        },
-      ],
-      maxStep: Math.max(checkinCount, reactionCount, orderCount, completedCount, 1),
+      ordersToday: todaysOrders.filter((o) => o.status !== "cancelled").length,
+      revenueToday,
+      ticketToday: paidToday.length > 0 ? revenueToday / paidToday.length : 0,
+      checkinsToday,
+      awaiting: todaysOrders.filter(
+        (o) => o.paymentStatus === "pending" || o.status === "awaiting_payment",
+      ).length,
+      inProduction: todaysOrders.filter((o) =>
+        ["payment_approved", "preparing", "ready"].includes(o.status),
+      ).length,
+      paidTodayCount: paidToday.length,
     };
-  }, [allCheckins, reactions, orders, pStart, pEnd, prevStart, prevEnd]);
+  }, [orders, allCheckins, todayStart]);
 
-  // Customer breakdown
-  const customerBreakdown = useMemo(() => {
-    if (!customers) return null;
-    const now = Date.now();
-    const day30 = 30 * 86400000;
-    const day60 = 60 * 86400000;
-
-    // Use all-time data for these classifications
-    const novos = customers.filter((c) => inRange(c.firstVisitAt, pStart, pEnd)).length;
-    const recorrentes = customers.filter(
-      (c) => c.visitCount > 1 && inRange(c.lastVisitAt, pStart, pEnd),
-    ).length;
-    const orderCountMap: Record<string, number> = {};
-    const orderTotalMap: Record<string, number> = {};
+  const liveEvents = useMemo(() => {
+    const since = Date.now() - 60 * 60 * 1000;
+    const list: { text: string; ts: string; type: string }[] = [];
     (orders ?? []).forEach((o) => {
-      orderCountMap[o.customerId] = (orderCountMap[o.customerId] ?? 0) + 1;
-      orderTotalMap[o.customerId] = (orderTotalMap[o.customerId] ?? 0) + o.total;
-    });
-    const vip = customers.filter(
-      (c) => (orderCountMap[c.id] ?? 0) >= 5 || (orderTotalMap[c.id] ?? 0) > 1000,
-    ).length;
-    const risco = customers.filter((c) => {
-      const last = new Date(c.lastVisitAt).getTime();
-      return now - last > day30 && now - last <= day60;
-    }).length;
-    const inativos = customers.filter(
-      (c) => now - new Date(c.lastVisitAt).getTime() > day60,
-    ).length;
-
-    return { novos, recorrentes, vip, risco, inativos };
-  }, [customers, orders, pStart, pEnd]);
-
-  // Product analysis
-  const productAnalysis = useMemo(() => {
-    if (!productMetrics || !productLikes) return null;
-
-    // Count product likes in period
-    const filteredLikes = (productLikes ?? []).filter((l: any) =>
-      inRange(l.created_at, pStart, pEnd),
-    );
-    const likeCountPerProduct: Record<string, number> = {};
-    filteredLikes.forEach((l: any) => {
-      likeCountPerProduct[l.product_id] = (likeCountPerProduct[l.product_id] ?? 0) + 1;
-    });
-
-    // Count orders in period per product
-    const periodOrderItems = (orders ?? []).filter((o) => inRange(o.createdAt, pStart, pEnd));
-    const orderCountPerProduct: Record<string, number> = {};
-    periodOrderItems.forEach((o) => {
-      o.items.forEach((i) => {
-        orderCountPerProduct[i.productId] = (orderCountPerProduct[i.productId] ?? 0) + i.quantity;
-      });
-    });
-
-    const withData = productMetrics.map((p) => {
-      const periodLikes = likeCountPerProduct[p.id] ?? 0;
-      const periodOrders = orderCountPerProduct[p.id] ?? 0;
-      const totalLikes = p.likes;
-      const totalOrders = p.orderCount;
-      return { ...p, periodLikes, periodOrders, totalLikes, totalOrders };
-    });
-
-    const maisVendidos = [...withData].sort((a, b) => b.periodOrders - a.periodOrders).slice(0, 5);
-    const maisCurtidos = [...withData].sort((a, b) => b.periodLikes - a.periodLikes).slice(0, 5);
-    const maiorConversao = [...withData]
-      .filter((p) => p.periodLikes > 0)
-      .sort((a, b) => b.periodOrders / b.periodLikes - a.periodOrders / a.periodLikes)
-      .slice(0, 5);
-    const menorConversao = [...withData]
-      .filter((p) => p.periodLikes > 0 && p.periodOrders > 0)
-      .sort((a, b) => a.periodOrders / a.periodLikes - b.periodOrders / b.periodLikes)
-      .slice(0, 5);
-    const interesseSemVenda = [...withData]
-      .filter((p) => p.periodLikes >= 3 && p.periodOrders === 0)
-      .sort((a, b) => b.periodLikes - a.periodLikes)
-      .slice(0, 5);
-
-    return { maisVendidos, maisCurtidos, maiorConversao, menorConversao, interesseSemVenda };
-  }, [productMetrics, productLikes, orders, pStart, pEnd]);
-
-  // Audience profile (from all checkins in period)
-  const audienceProfile = useMemo(() => {
-    const periodCheckins = (allCheckins ?? []).filter((c: any) =>
-      inRange(c.created_at, pStart, pEnd),
-    );
-    const ctxCounts: Record<string, number> = {};
-    periodCheckins.forEach((c: any) => {
-      ctxCounts[c.context] = (ctxCounts[c.context] ?? 0) + 1;
-    });
-    const hourCounts: Record<number, number> = {};
-    periodCheckins.forEach((c: any) => {
-      const h = new Date(c.created_at).getHours();
-      hourCounts[h] = (hourCounts[h] ?? 0) + 1;
-    });
-    const dayCounts: Record<string, number> = {};
-    const dayNames = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
-    periodCheckins.forEach((c: any) => {
-      const d = dayNames[new Date(c.created_at).getDay()];
-      dayCounts[d] = (dayCounts[d] ?? 0) + 1;
-    });
-
-    const total = periodCheckins.length || 1;
-    const contexts = Object.entries(ctxCounts).map(([k, v]) => ({
-      label: k,
-      value: v,
-      pct: (v / total) * 100,
-    }));
-    const hours = Object.entries(hourCounts).map(([k, v]) => ({ hour: Number(k), count: v }));
-    const days = Object.entries(dayCounts).map(([k, v]) => ({ day: k, count: v }));
-
-    return { contexts, hours, days };
-  }, [allCheckins, pStart, pEnd]);
-
-  // Check-in duration (average time between created_at and checked_out_at)
-  const avgDuration = useMemo(() => {
-    const checkedOut = (allCheckins ?? []).filter(
-      (c: any) => c.checked_out_at && inRange(c.created_at, pStart, pEnd),
-    );
-    if (checkedOut.length === 0) return null;
-    const totalMs = checkedOut.reduce((sum: number, c: any) => {
-      return sum + (new Date(c.checked_out_at).getTime() - new Date(c.created_at).getTime());
-    }, 0);
-    return Math.round(totalMs / checkedOut.length / 60000); // minutes
-  }, [allCheckins, pStart, pEnd]);
-
-  // Enhanced insights (period-aware)
-  const enhancedInsights = useMemo(() => {
-    const list: { type: "alert" | "positive" | "info"; title: string; description: string }[] = [];
-    if (!insights) return list;
-
-    // Copy existing insights
-    list.push(...insights);
-
-    // Period-specific insights
-    if (periodData && periodData.periodOrders.length > 0) {
-      const comp = computeChange(periodData.periodOrders.length, periodData.prevOrders.length);
-      if (comp.dir === "up" && comp.pct > 10) {
+      if (o.status !== "cancelled" && inRange(o.createdAt, since, Date.now())) {
         list.push({
-          type: "positive",
-          title: "Pedidos em alta",
-          description: `Pedidos ${pctStr(comp.pct)} em relação ao período anterior.`,
-        });
-      } else if (comp.dir === "down" && comp.pct > 10) {
-        list.push({
-          type: "alert",
-          title: "Pedidos em queda",
-          description: `Pedidos ${pctStr(comp.pct)} em relação ao período anterior.`,
+          text: `Pedido de ${formatBRL(o.total)}${o.tableLabel ? ` · ${o.tableLabel}` : ""}`,
+          ts: o.createdAt,
+          type: "order",
         });
       }
-    }
-
-    // Product interest mismatch
-    if (productAnalysis && productAnalysis.interesseSemVenda.length > 0) {
-      list.push({
-        type: "info",
-        title: "Produtos com interesse mas sem venda",
-        description: `${productAnalysis.interesseSemVenda.length} produto${productAnalysis.interesseSemVenda.length > 1 ? "s" : ""} recebeu${productAnalysis.interesseSemVenda.length > 1 ? "ram" : ""} curtidas mas não teve vendas no período. Considere uma oferta especial.`,
-      });
-    }
-
+    });
+    (allCheckins ?? []).forEach((c: any) => {
+      if (inRange(c.created_at, since, Date.now())) {
+        list.push({
+          text: `${c.customer?.name ?? "Cliente"} fez check-in`,
+          ts: c.created_at,
+          type: "checkin",
+        });
+      }
+    });
+    list.sort((a, b) => (b.ts > a.ts ? 1 : -1));
     return list.slice(0, 6);
-  }, [insights, periodData, productAnalysis]);
+  }, [orders, allCheckins]);
 
-  // Activities
   const allActivities = useMemo(() => {
     const list: { text: string; ts: string; type: string }[] = [];
-    (allCheckins ?? []).slice(0, 10).forEach((c: any) =>
+    (allCheckins ?? []).slice(0, 12).forEach((c: any) =>
       list.push({
-        text: "Novo check-in realizado",
+        text: `${c.customer?.name ?? "Cliente"} fez check-in`,
         ts: c.created_at,
         type: "checkin",
       }),
     );
-    (orders ?? []).slice(0, 10).forEach((o) =>
+    (orders ?? []).slice(0, 12).forEach((o) =>
       list.push({
-        text: `Pedido de ${formatBRL(o.total)} registrado`,
+        text: `Pedido de ${formatBRL(o.total)}${o.tableLabel ? ` · ${o.tableLabel}` : ""}`,
         ts: o.createdAt,
         type: "order",
       }),
     );
-    (posts ?? []).slice(0, 10).forEach((p) =>
+    (posts ?? []).slice(0, 12).forEach((p) =>
       list.push({
-        text: p.authorType === "business" ? "Nova publicação do estabelecimento" : "Nova publicação de cliente",
+        text:
+          p.authorType === "business"
+            ? "Nova publicação do estabelecimento"
+            : "Nova publicação de cliente",
         ts: p.createdAt,
         type: "post",
       }),
     );
-    (reactions ?? [])
-      .slice(0, 10)
-      .forEach((r: any) =>
-        list.push({ text: `Reação "${r.type}" em um post`, ts: r.created_at, type: "reaction" }),
-      );
     list.sort((a, b) => (b.ts > a.ts ? 1 : -1));
     return list;
-  }, [allCheckins, orders, posts, reactions]);
+  }, [allCheckins, orders, posts]);
 
-  const filteredActivities =
-    activityFilter === "all"
-      ? allActivities
-      : allActivities.filter((a) => a.type === activityFilter);
+  const weazeInsights = useMemo(() => {
+    const list: { type: "alert" | "positive" | "info"; title: string; description: string }[] = [];
+    list.push(...(insights ?? []));
+    const orderComp = computeChange(kpis?.orderCount ?? 0, kpis?.prevOrderCount ?? 0);
+    if (kpis && orderComp.dir === "up" && orderComp.pct > 10) {
+      list.push({
+        type: "positive",
+        title: "Pedidos em alta",
+        description: `Pedidos ${pctStr(orderComp.pct)} em relação ao período anterior.`,
+      });
+    } else if (kpis && orderComp.dir === "down" && orderComp.pct > 10) {
+      list.push({
+        type: "alert",
+        title: "Pedidos em queda",
+        description: `Pedidos ${pctStr(orderComp.pct)} em relação ao período anterior.`,
+      });
+    }
+    const revenueComp = computeChange(kpis?.revenue ?? 0, kpis?.prevRevenue ?? 0);
+    if (kpis && revenueComp.dir === "up" && revenueComp.pct > 10) {
+      list.push({
+        type: "positive",
+        title: "Receita crescendo",
+        description: `Receita ${pctStr(revenueComp.pct)} no período. Continue assim!`,
+      });
+    }
+    const cartStep = funnel.steps.find((s) => s.key === "cart");
+    const paidStep = funnel.steps.find((s) => s.key === "paid");
+    if (cartStep && paidStep && cartStep.value > 3 && paidStep.value === 0) {
+      list.push({
+        type: "info",
+        title: "Sacolas sem pagamento",
+        description: `${cartStep.value} produto(s) foram adicionados à sacola, mas nenhum pagamento foi aprovado. Revise o checkout.`,
+      });
+    }
+    return list.slice(0, 3);
+  }, [insights, kpis, funnel]);
 
   if (!companyId) return <div>Carregando…</div>;
 
   return (
     <div className="dash-surface -m-6 space-y-6 p-6 pb-8 md:-m-6 md:p-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Visão geral do seu negócio em tempo real.
-          </p>
-        </div>
-        <PeriodSelector current={period} onChange={setPeriod} />
-      </div>
-
-      {/* Presentes agora (mini banner) */}
-      {presentCount > 0 && (
-        <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-4 py-3 text-sm">
-          <span className="relative grid size-9 place-items-center rounded-xl kpi-accent">
-            <Store className="size-4" />
-            <span className="absolute -right-0.5 -top-0.5 grid size-3 place-items-center">
-              <span className="absolute inline-flex size-3 animate-ping rounded-full bg-primary/60" />
-              <span className="relative inline-flex size-2 rounded-full bg-primary" />
-            </span>
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-xl kpi-accent">
+            <Store className="size-5" />
           </span>
           <div>
-            <span className="number-display text-lg">{presentCount}</span>{" "}
-            <span className="text-muted-foreground">
-              cliente{presentCount > 1 ? "s" : ""} presente{presentCount > 1 ? "s" : ""} agora
-            </span>
+            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              {company.name ?? "Estabelecimento"}
+            </p>
+            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+              {greeting()}!
+            </h1>
+            <p className="mt-0.5 text-sm capitalize text-muted-foreground">{longDate()}</p>
           </div>
         </div>
-      )}
+        <PeriodSelector current={period} onChange={setPeriod} />
+      </header>
 
-      {/* Linha 1 — KPIs */}
-      <HideableSection
-        id="kpi"
-        hidden={hiddenSections.has("kpi")}
-        onToggle={toggleSection}
-        title="Métricas principais"
-      >
-        {periodData ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <KpiCard
-              icon={UserCheck}
-              label="Clientes ativos"
-              value={periodData.activeCustomers.length}
-              prevValue={periodData.prevActive.length}
-            />
-            <KpiCard
-              icon={ShoppingCart}
-              label="Pedidos"
-              value={periodData.periodOrders.length}
-              prevValue={periodData.prevOrders.length}
-            />
-            <KpiCard
-              icon={TrendingUp}
-              label="Receita"
-              value={periodData.periodRevenue}
-              prevValue={periodData.prevRevenue}
-              format="brl"
-            />
-            <KpiCard
-              icon={BarChart3}
-              label="Ticket médio"
-              value={periodData.periodTicket}
-              prevValue={periodData.prevTicket}
-              format="brl"
-            />
-            <KpiCard
-              icon={Clock}
-              label="Tempo médio"
-              value={avgDuration ?? 0}
-              format="min"
-              subtitle={avgDuration != null ? "min por visita" : "Sem dados de checkout"}
-            />
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+      <section className="dash-card p-5">
+        <div className="flex items-center gap-2">
+          <span className="relative flex size-2.5">
+            <span className="absolute inline-flex size-2.5 animate-ping rounded-full bg-green-500/70" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-green-500" />
+          </span>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Acontecendo Agora
+          </h2>
+          <span className="ml-auto rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            Ao vivo
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <LiveTile
+            icon={Users}
+            label="Clientes presentes"
+            value={String(presentCount)}
+            sub="agora no estabelecimento"
+          />
+          <LiveTile
+            icon={Clock}
+            label="Aguardando pagamento"
+            value={String(todaySummary.awaiting)}
+            sub="pedidos em aberto hoje"
+          />
+          <LiveTile
+            icon={PackageCheck}
+            label="Em produção"
+            value={String(todaySummary.inProduction)}
+            sub="preparo e pronto hoje"
+          />
+          <LiveTile
+            icon={Wallet}
+            label="Pagos hoje"
+            value={String(todaySummary.paidTodayCount)}
+            sub={formatBRL(todaySummary.revenueToday)}
+          />
+        </div>
+        {liveEvents.length > 0 && (
+          <div className="mt-4 space-y-1 border-t pt-3">
+            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Atividade recente
+            </p>
+            {liveEvents.map((e, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <ActivityDot type={e.type} />
+                  <span className="truncate">{e.text}</span>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">{relativeTime(e.ts)}</span>
+              </div>
+            ))}
           </div>
         )}
-      </HideableSection>
+      </section>
 
-      {/* Pagamentos online (Etapa 4) */}
-      <HideableSection
-        id="payments"
-        hidden={hiddenSections.has("payments")}
-        onToggle={toggleSection}
-        title="Pagamentos"
-      >
-        {paymentMetrics ? (
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Métricas do período
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          {kpis ? (
+            <>
               <KpiCard
                 icon={Wallet}
-                label="Aguardando pagamento"
-                value={paymentMetrics.awaitingPayment.count}
-                subtitle={`${formatBRL(paymentMetrics.awaitingPayment.total)} em aberto`}
+                label="Receita"
+                value={kpis.revenue}
+                prevValue={kpis.prevRevenue}
+                format="brl"
               />
               <KpiCard
-                icon={CheckCircle2}
-                label="Pagamentos aprovados"
-                value={paymentMetrics.paidCount}
-                subtitle={`${formatBRL(paymentMetrics.paidTotal)} no total`}
+                icon={Receipt}
+                label="Pedidos"
+                value={kpis.orderCount}
+                prevValue={kpis.prevOrderCount}
               />
               <KpiCard
                 icon={TrendingUp}
-                label="Receita do dia"
-                value={paymentMetrics.revenueToday}
-                format="brl"
-              />
-              <KpiCard
-                icon={BarChart3}
                 label="Ticket médio"
-                value={paymentMetrics.avgTicket}
+                value={kpis.ticket}
+                prevValue={kpis.prevTicket}
                 format="brl"
               />
               <KpiCard
-                icon={Activity}
-                label="Conversão"
-                value={paymentMetrics.conversionRate}
-                subtitle="pagos / total de pedidos"
+                icon={UserCheck}
+                label="Clientes atendidos"
+                value={kpis.served}
+                prevValue={kpis.prevServed}
               />
-              <KpiCard
-                icon={PackageCheck}
-                label="Pedidos em andamento"
-                value={paymentMetrics.activeCount}
-                subtitle="pagos e em preparação"
-              />
-              <KpiCard
-                icon={Truck}
-                label="Pedidos entregues"
-                value={paymentMetrics.deliveredCount}
-                subtitle="marcados como entregues"
-              />
-              <KpiCard
-                icon={Timer}
-                label="Tempo até pagamento"
-                value={Math.round(paymentMetrics.avgTimeToPaymentMinutes)}
-                format="min"
-                subtitle="média entre pedido e aprovação"
-              />
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-              <div className="dash-card p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Vendas por mesa
-                </p>
-                {paymentMetrics.byTable.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
-                ) : (
-                  <ul className="space-y-1 text-sm">
-                    {paymentMetrics.byTable.slice(0, 6).map((t) => (
-                      <li key={t.tableLabel ?? "sem-mesa"} className="flex items-center justify-between">
-                        <span className="text-muted-foreground">{t.tableLabel ?? "Sem mesa"}</span>
-                        <span className="font-medium">
-                          {t.count} pedido{t.count > 1 ? "s" : ""} · {formatBRL(t.total)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="dash-card p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Pedidos por horário
-                </p>
-                {paymentMetrics.byHour.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
-                ) : (
-                  <ul className="space-y-1 text-sm">
-                    {paymentMetrics.byHour.map((h) => (
-                      <li key={h.hour} className="flex items-center justify-between">
-                        <span className="text-muted-foreground">{String(h.hour).padStart(2, "0")}h</span>
-                        <span className="font-medium">{h.count}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="dash-card p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Por canal
-                </p>
-                {paymentMetrics.byProvider.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
-                ) : (
-                  <ul className="space-y-1 text-sm">
-                    {paymentMetrics.byProvider.map((p) => (
-                      <li key={p.provider} className="flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          {p.provider === "mercadopago" ? "Mercado Pago" : "No caixa"}
-                        </span>
-                        <span className="font-medium">
-                          {p.count} pedido{p.count > 1 ? "s" : ""} · {formatBRL(p.total)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="dash-card p-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Produtos mais vendidos
-                </p>
-                {paymentMetrics.topProducts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem vendas pagas ainda.</p>
-                ) : (
-                  <ul className="space-y-1 text-sm">
-                    {paymentMetrics.topProducts.slice(0, 6).map((p, i) => (
-                      <li key={p.name} className="flex items-center justify-between gap-2">
-                        <span className="truncate text-muted-foreground">
-                          <span className="mr-1 font-semibold text-foreground">{i + 1}º</span>
-                          {p.name}
-                        </span>
-                        <span className="shrink-0 font-medium">
-                          {p.quantity} un · {formatBRL(p.total)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        )}
-      </HideableSection>
+              <ChampionCard champ={kpis.champ} />
+              <InsightCard insight={weazeInsights[0]} />
+            </>
+          ) : (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          )}
+        </div>
+      </section>
 
-      {/* Linha 2 — Funil do Social Commerce */}
-      <HideableSection
-        id="funnel"
-        hidden={hiddenSections.has("funnel")}
-        onToggle={toggleSection}
-        title="Funil do Social Commerce"
-      >
-        <div className="grid gap-4 lg:grid-cols-4">
-          {funnelData.steps.map((step, i) => {
-            const comp = computeChange(step.value, step.prev);
-            const barWidth = step.value > 0 ? (step.value / funnelData.maxStep) * 100 : 0;
-            return (
-              <div key={step.key} className="dash-card p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="grid size-7 place-items-center rounded-lg kpi-accent">
+      <div className="grid gap-6 xl:grid-cols-3">
+        <section className="dash-card p-5 xl:col-span-2">
+          <div className="mb-1 flex items-center gap-2">
+            <TrendingUp className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Jornada do Cliente
+            </h2>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Da visita à conclusão do pedido — comparado ao período anterior
+          </p>
+          <div className="space-y-2">
+            {funnel.steps.map((step, i) => {
+              const prevValue = i > 0 ? funnel.steps[i - 1].value : 0;
+              const rate = prevValue > 0 ? (step.value / prevValue) * 100 : null;
+              const width = (step.value / funnel.max) * 100;
+              return (
+                <div key={step.key} className="flex items-center gap-3">
+                  <div className="flex w-44 shrink-0 items-center gap-2 text-xs font-medium text-muted-foreground sm:w-48">
+                    <span className="grid size-6 shrink-0 place-items-center rounded-lg kpi-accent">
                       <step.icon className="size-3.5" />
                     </span>
-                    <span className="text-xs font-medium text-muted-foreground">{step.label}</span>
+                    <span className="truncate">{step.label}</span>
                   </div>
-                  {i < 3 && (
-                    <ChevronRightIcon className="size-4 text-muted-foreground/40 hidden lg:block" />
-                  )}
-                </div>
-                <div className="mt-2 number-display text-3xl">{step.value}</div>
-                <ComparisonBadge {...comp} />
-                {/* Progress bar */}
-                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-1.5 rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all"
-                    style={{ width: `${barWidth}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        {/* Conversion arrows between steps */}
-        <div className="mt-2 grid gap-4 lg:grid-cols-3">
-          {funnelData.steps.slice(0, 3).map((step, i) => {
-            const next = funnelData.steps[i + 1];
-            const rate = step.value > 0 ? (next.value / step.value) * 100 : 0;
-            const prevRate = step.prev > 0 ? (next.prev / step.prev) * 100 : 0;
-            const rateComp = computeChange(rate, prevRate);
-            return (
-              <div
-                key={step.key}
-                className="rounded-lg bg-muted/50 px-3 py-2 text-center text-xs text-muted-foreground"
-              >
-                <span className="font-medium">{step.label}</span>
-                <ArrowRight className="inline-block size-3 mx-1" />
-                <span className="font-medium">{next.label}</span>
-                <span className="ml-1">{rate.toFixed(1)}%</span>
-                <ComparisonBadge {...rateComp} />
-              </div>
-            );
-          })}
-        </div>
-      </HideableSection>
-
-      {/* Linha 3 — Clientes */}
-      <HideableSection
-        id="customers"
-        hidden={hiddenSections.has("customers")}
-        onToggle={toggleSection}
-        title="Clientes"
-      >
-        {customerBreakdown ? (
-          <>
-            <div className="grid gap-3 sm:grid-cols-5">
-              <CustomerTile
-                icon={UserPlus}
-                label="Novos"
-                value={customerBreakdown.novos}
-                color="blue"
-              />
-              <CustomerTile
-                icon={UserCheck}
-                label="Recorrentes"
-                value={customerBreakdown.recorrentes}
-                color="green"
-              />
-              <CustomerTile icon={Crown} label="VIP" value={customerBreakdown.vip} color="amber" />
-              <CustomerTile
-                icon={AlertOctagon}
-                label="Risco"
-                value={customerBreakdown.risco}
-                color="orange"
-              />
-              <CustomerTile
-                icon={UserX}
-                label="Inativos"
-                value={customerBreakdown.inativos}
-                color="red"
-              />
-            </div>
-            {/* Top engaged — aggregated only, no names */}
-            {metrics && metrics.mostEngagedCustomers.length > 0 && (
-              <div className="mt-4">
-                <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                  Engajamento
-                </h4>
-                <div className="grid gap-2 sm:grid-cols-3">
-                  <div className="rounded-lg border px-3 py-2">
-                    <div className="text-2xl font-bold">{metrics.mostEngagedCustomers.length}</div>
-                    <div className="text-xs text-muted-foreground">clientes engajados</div>
-                  </div>
-                  <div className="rounded-lg border px-3 py-2">
-                    <div className="text-2xl font-bold">
-                      {metrics.mostEngagedCustomers.reduce((s: number, c: any) => s + (c.reactionCount ?? 0), 0)}
+                  <div className="relative h-9 flex-1 overflow-hidden rounded-lg bg-muted/50">
+                    <div
+                      className="h-full rounded-lg bg-gradient-to-r from-primary to-primary/60 transition-all"
+                      style={{ width: `${width}%` }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-between px-3 text-xs font-medium">
+                      <span className="number-display">{step.value}</span>
+                      {rate != null && (
+                        <span className="text-muted-foreground">{rate.toFixed(0)}%</span>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground">reações totais</div>
                   </div>
-                  <div className="rounded-lg border px-3 py-2">
-                    <div className="text-2xl font-bold">
-                      {metrics.mostEngagedCustomers.reduce((s: number, c: any) => s + (c.orderCount ?? 0), 0)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">pedidos</div>
+                  <div className="hidden w-24 shrink-0 justify-end md:flex">
+                    <TrendPill {...computeChange(step.value, step.prev)} />
                   </div>
                 </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">Carregando dados de clientes…</p>
-        )}
-      </HideableSection>
-
-      {/* Linha 4 — Produtos */}
-      <HideableSection
-        id="products"
-        hidden={hiddenSections.has("products")}
-        onToggle={toggleSection}
-        title="Produtos"
-      >
-        {productAnalysis ? (
-          <div className="grid gap-4 lg:grid-cols-5">
-            <MiniCard title="Mais vendidos" empty={productAnalysis.maisVendidos.length === 0}>
-              {productAnalysis.maisVendidos.slice(0, 4).map((p) => (
-                <div key={p.id} className="flex justify-between text-xs">
-                  <span className="truncate">{p.name}</span>
-                  <span className="font-semibold shrink-0 ml-2">{p.periodOrders}</span>
-                </div>
-              ))}
-            </MiniCard>
-            <MiniCard title="Mais curtidos" empty={productAnalysis.maisCurtidos.length === 0}>
-              {productAnalysis.maisCurtidos.slice(0, 4).map((p) => (
-                <div key={p.id} className="flex justify-between text-xs">
-                  <span className="truncate">{p.name}</span>
-                  <span className="font-semibold shrink-0 ml-2">{p.periodLikes}</span>
-                </div>
-              ))}
-            </MiniCard>
-            <MiniCard title="Maior conversão" empty={productAnalysis.maiorConversao.length === 0}>
-              {productAnalysis.maiorConversao.slice(0, 4).map((p) => {
-                const rate =
-                  p.periodLikes > 0 ? ((p.periodOrders / p.periodLikes) * 100).toFixed(0) : "0";
-                return (
-                  <div key={p.id} className="flex justify-between text-xs">
-                    <span className="truncate">{p.name}</span>
-                    <span className="font-semibold shrink-0 ml-2">{rate}%</span>
-                  </div>
-                );
-              })}
-            </MiniCard>
-            <MiniCard title="Menor conversão" empty={productAnalysis.menorConversao.length === 0}>
-              {productAnalysis.menorConversao.slice(0, 4).map((p) => {
-                const rate =
-                  p.periodLikes > 0 ? ((p.periodOrders / p.periodLikes) * 100).toFixed(0) : "0";
-                return (
-                  <div key={p.id} className="flex justify-between text-xs">
-                    <span className="truncate">{p.name}</span>
-                    <span className="font-semibold shrink-0 ml-2">{rate}%</span>
-                  </div>
-                );
-              })}
-            </MiniCard>
-            <MiniCard
-              title="Interesse sem venda"
-              empty={productAnalysis.interesseSemVenda.length === 0}
-            >
-              {productAnalysis.interesseSemVenda.slice(0, 4).map((p) => (
-                <div key={p.id} className="flex justify-between text-xs">
-                  <span className="truncate">{p.name}</span>
-                  <span className="font-semibold shrink-0 ml-2">{p.periodLikes} ❤</span>
-                </div>
-              ))}
-            </MiniCard>
+              );
+            })}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Carregando dados de produtos…</p>
-        )}
-      </HideableSection>
+        </section>
 
-      {/* Linha 5 — Perfil do público */}
-      <HideableSection
-        id="audience"
-        hidden={hiddenSections.has("audience")}
-        onToggle={toggleSection}
-        title="Perfil do público"
-      >
-        {audienceProfile.contexts.length > 0 ? (
-          <div className="grid gap-4 lg:grid-cols-3">
-            {/* Contextos */}
-            <Card title="Contexto">
-              <div className="space-y-2">
-                {audienceProfile.contexts.map((c) => (
-                  <div key={c.label}>
-                    <div className="flex justify-between text-xs">
-                      <span className="capitalize">{c.label}</span>
-                      <span>
-                        {c.value} ({c.pct.toFixed(0)}%)
-                      </span>
-                    </div>
-                    <div className="mt-0.5 h-1.5 w-full rounded-full bg-muted">
-                      <div
-                        className="h-1.5 rounded-full bg-primary"
-                        style={{ width: `${c.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-                {audienceProfile.contexts.length === 0 && (
-                  <p className="text-xs text-muted-foreground">Nenhum check-in no período.</p>
-                )}
-              </div>
-            </Card>
-            {/* Horários */}
-            <Card title="Horários de pico">
-              <div className="space-y-1">
-                {[8, 10, 12, 14, 16, 18, 20, 22].map((h) => {
-                  const found = audienceProfile.hours.find((x) => x.hour === h);
-                  const count = found?.count ?? 0;
-                  const maxH = Math.max(...audienceProfile.hours.map((x) => x.count), 1);
-                  const pct = (count / maxH) * 100;
-                  return (
-                    <div key={h} className="flex items-center gap-2 text-xs">
-                      <span className="w-6 shrink-0 text-right text-muted-foreground">
-                        {String(h).padStart(2, "0")}h
-                      </span>
-                      <div className="h-2 w-full rounded-full bg-muted">
-                        <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="w-6 shrink-0 text-right">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-            {/* Dias */}
-            <Card title="Dias da semana">
-              <div className="space-y-1">
-                {["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"].map((d) => {
-                  const found = audienceProfile.days.find((x) => x.day === d);
-                  const count = found?.count ?? 0;
-                  const maxD = Math.max(...audienceProfile.days.map((x) => x.count), 1);
-                  const pct = (count / maxD) * 100;
-                  return (
-                    <div key={d} className="flex items-center gap-2 text-xs">
-                      <span className="w-12 shrink-0 capitalize text-muted-foreground">
-                        {d.slice(0, 3)}
-                      </span>
-                      <div className="h-2 w-full rounded-full bg-muted">
-                        <div className="h-2 rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="w-6 shrink-0 text-right">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
+        <section className="dash-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Calendar className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Resumo do Dia
+            </h2>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Nenhum dado de público no período.</p>
-        )}
-      </HideableSection>
+          <div className="space-y-3">
+            <DayRow label="Pedidos hoje" value={String(todaySummary.ordersToday)} />
+            <DayRow label="Receita hoje" value={formatBRL(todaySummary.revenueToday)} />
+            <DayRow label="Ticket médio hoje" value={formatBRL(todaySummary.ticketToday)} />
+            <DayRow label="Check-ins hoje" value={String(todaySummary.checkinsToday)} />
+            <DayRow label="Clientes presentes" value={String(presentCount)} />
+          </div>
+          <Link
+            to="/app/pedidos"
+            className="mt-5 flex items-center justify-center gap-1 rounded-lg bg-primary/10 px-4 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary/20"
+          >
+            Ver pedidos
+          </Link>
+        </section>
+      </div>
 
-      {/* Linha 6 — Insights Inteligentes */}
-      <HideableSection
-        id="insights"
-        hidden={hiddenSections.has("insights")}
-        onToggle={toggleSection}
-        title="Insights Inteligentes"
-      >
-        {enhancedInsights.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {enhancedInsights.map((ins, i) => {
+      <div className="grid gap-6 xl:grid-cols-3">
+        <section className="dash-card p-5 xl:col-span-2">
+          <div className="mb-3 flex items-center gap-2">
+            <Clock className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Últimas Atividades
+            </h2>
+          </div>
+          {allActivities.length > 0 ? (
+            <ul className="space-y-1">
+              {allActivities.slice(0, 15).map((a, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <ActivityDot type={a.type} />
+                    <span className="truncate">{a.text}</span>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {relativeTime(a.ts)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nenhuma atividade ainda.</p>
+          )}
+        </section>
+
+        <section className="dash-card p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Ações Rápidas
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            <QuickAction to="/app/produtos" icon={Plus} label="Novo Produto" />
+            <QuickAction to="/app/feed" icon={Megaphone} label="Nova Publicação" />
+            <QuickAction to="/app/produtos" icon={Percent} label="Criar Promoção" />
+            <QuickAction to="/app/pedidos" icon={Receipt} label="Ver Pedidos" />
+            <QuickAction to="/app/financeiro" icon={Wallet} label="Abrir Financeiro" />
+          </div>
+        </section>
+      </div>
+
+      <section>
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="size-4 text-primary" />
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Inteligência WEAZE
+          </h2>
+        </div>
+        {weazeInsights.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {weazeInsights.map((ins, i) => {
               const iconMap: Record<string, any> = {
                 alert: AlertTriangle,
                 positive: CheckCircle2,
@@ -1101,7 +719,7 @@ function DashboardPage() {
                 <div key={i} className={`rounded-xl border p-4 ${colorMap[ins.type] ?? ""}`}>
                   <div className="flex items-start gap-2">
                     <Icon
-                      className={`size-5 mt-0.5 shrink-0 ${
+                      className={`mt-0.5 size-5 shrink-0 ${
                         ins.type === "alert"
                           ? "text-destructive"
                           : ins.type === "positive"
@@ -1119,115 +737,124 @@ function DashboardPage() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">Nenhum insight disponível ainda.</p>
-        )}
-      </HideableSection>
-
-      {/* Persona Inteligente — Card promocional */}
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-primary/10">
-              <BrainCircuit className="size-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold">Persona Inteligente</h3>
-              <p className="text-xs text-muted-foreground">
-                Conheça profundamente o perfil coletivo dos seus clientes
-              </p>
-            </div>
+          <div className="dash-card p-5 text-sm text-muted-foreground">
+            Ainda não há insights suficientes. Continue movimentando seu estabelecimento.
           </div>
-          <Link
-            to="/app/persona"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Ver análise completa
-          </Link>
-        </div>
-      </div>
-
-      {/* Linha 7 — Últimas atividades */}
-      <HideableSection
-        id="activities"
-        hidden={hiddenSections.has("activities")}
-        onToggle={toggleSection}
-        title="Últimas atividades"
-      >
-        <div className="mb-3 flex flex-wrap gap-2">
-          {[
-            { key: "all", label: "Todas" },
-            { key: "checkin", label: "Check-ins" },
-            { key: "order", label: "Pedidos" },
-            { key: "post", label: "Publicações" },
-            { key: "reaction", label: "Reações" },
-          ].map((f) => (
-            <button
-              key={f.key}
-              onClick={() => setActivityFilter(f.key)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                activityFilter === f.key
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-        {filteredActivities.length > 0 ? (
-          <ul className="space-y-1">
-            {filteredActivities.slice(0, 12).map((a, i) => (
-              <li
-                key={i}
-                className="flex justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <ActivityDot type={a.type} />
-                  <span className="truncate">{a.text}</span>
-                </div>
-                <span className="shrink-0 text-xs text-muted-foreground">{relativeTime(a.ts)}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">Nenhuma atividade no período.</p>
         )}
-      </HideableSection>
+      </section>
     </div>
   );
 }
 
-// ─── Shared sub-components ───
-
-function ChevronRightIcon({ className }: { className?: string }) {
+function LiveTile({
+  icon: Icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  sub: string;
+}) {
   return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M9 18l6-6-6-6" />
-    </svg>
+    <div className="rounded-xl border bg-muted/30 p-4">
+      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <span className="grid size-6 place-items-center rounded-lg kpi-accent">
+          <Icon className="size-3.5" />
+        </span>
+        {label}
+      </div>
+      <div className="mt-2 number-display text-3xl">{value}</div>
+      <div className="text-xs text-muted-foreground">{sub}</div>
+    </div>
   );
 }
 
-function ArrowRight({ className }: { className?: string }) {
+function DayRow({ label, value }: { label: string; value: string }) {
   return (
-    <svg
-      className={className}
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
+    <div className="flex items-center justify-between border-b border-muted/50 pb-2 text-sm last:border-0 last:pb-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function QuickAction({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors hover:border-primary/30 hover:bg-muted/50"
     >
-      <path d="M5 12h14M12 5l7 7-7 7" />
-    </svg>
+      <span className="grid size-8 place-items-center rounded-lg kpi-accent">
+        <Icon className="size-4" />
+      </span>
+      {label}
+    </Link>
+  );
+}
+
+function ChampionCard({ champ }: { champ: { name: string; qty: number; total: number } | null }) {
+  return (
+    <div className="dash-card p-5">
+      <div className="flex items-start justify-between">
+        <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          Produto campeão
+        </span>
+        <span className="grid size-9 place-items-center rounded-xl bg-amber-500/10 text-amber-600">
+          <Trophy className="size-4" />
+        </span>
+      </div>
+      {champ ? (
+        <>
+          <div className="mt-3 truncate text-xl font-bold leading-tight">{champ.name}</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {champ.qty} vendido{champ.qty > 1 ? "s" : ""} · {formatBRL(champ.total)}
+          </div>
+        </>
+      ) : (
+        <div className="mt-3 text-sm text-muted-foreground">Sem vendas no período</div>
+      )}
+    </div>
+  );
+}
+
+function InsightCard({
+  insight,
+}: {
+  insight?: { type: string; title: string; description: string };
+}) {
+  return (
+    <div className="dash-card bg-gradient-to-br from-primary/10 via-transparent to-transparent p-5">
+      <div className="flex items-start justify-between">
+        <span className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          Insight WEAZE
+        </span>
+        <span className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Sparkles className="size-4" />
+        </span>
+      </div>
+      {insight ? (
+        <>
+          <div className="mt-3 text-sm font-bold leading-snug">{insight.title}</div>
+          <p className="mt-1 text-xs text-muted-foreground">{insight.description}</p>
+        </>
+      ) : (
+        <div className="mt-3 text-sm text-muted-foreground">
+          Dados insuficientes para um insight. Aguarde mais movimentação.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div className="dash-card p-5">
+      <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+      <div className="mt-3 h-8 w-24 animate-pulse rounded bg-muted" />
+      <div className="mt-2 h-3 w-16 animate-pulse rounded bg-muted" />
+    </div>
   );
 }
 
@@ -1242,49 +869,6 @@ function ActivityDot({ type }: { type: string }) {
     <span className={`size-2 shrink-0 rounded-full ${colors[type] ?? "bg-muted-foreground"}`} />
   );
 }
-
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="dash-card p-5">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function MiniCard({
-  title,
-  empty,
-  children,
-}: {
-  title: string;
-  empty: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card title={title}>
-      {empty ? (
-        <p className="text-xs text-muted-foreground">Sem dados no período.</p>
-      ) : (
-        <div className="space-y-1.5">{children}</div>
-      )}
-    </Card>
-  );
-}
-
-function SkeletonCard() {
-  return (
-    <div className="dash-card p-5">
-      <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-      <div className="mt-3 h-8 w-24 animate-pulse rounded bg-muted" />
-      <div className="mt-2 h-3 w-16 animate-pulse rounded bg-muted" />
-    </div>
-  );
-}
-
-// ─── Period Selector ───
 
 function PeriodSelector({
   current,
@@ -1312,26 +896,22 @@ function PeriodSelector({
   );
 }
 
-// ─── KPI Card with comparison ───
-
 function KpiCard({
   icon: Icon,
   label,
   value,
   prevValue,
   format,
-  subtitle,
 }: {
   icon: any;
   label: string;
   value: number;
   prevValue?: number;
   format?: "brl" | "min";
-  subtitle?: string;
 }) {
-  const display = format === "brl" ? formatBRL(value) : format === "min" ? `${value}min` : String(value);
-  const prevNumber = prevValue ?? 0;
-  const comp = computeChange(value, prevNumber);
+  const display =
+    format === "brl" ? formatBRL(value) : format === "min" ? `${value}min` : String(value);
+  const comp = computeChange(value, prevValue ?? 0);
 
   return (
     <div className="dash-card group relative overflow-hidden p-5 hover:dash-card-hover">
@@ -1345,17 +925,16 @@ function KpiCard({
         </span>
       </div>
       <div className="relative mt-3 number-display text-3xl">{display}</div>
-      {subtitle && (
-        <div className="relative mt-1 text-xs text-muted-foreground">{subtitle}</div>
-      )}
       <div className="relative mt-2">
-        {prevValue != null ? <ComparisonBadge {...comp} /> : <span className="text-xs text-muted-foreground">—</span>}
+        {prevValue != null ? (
+          <ComparisonBadge {...comp} />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </div>
     </div>
   );
 }
-
-// ─── Comparison badge ───
 
 function ComparisonBadge({ pct, dir }: { pct: number; dir: "up" | "down" | "flat" }) {
   if (dir === "flat") return <span className="text-xs text-muted-foreground">— sem alteração</span>;
@@ -1377,93 +956,19 @@ function ComparisonBadge({ pct, dir }: { pct: number; dir: "up" | "down" | "flat
   );
 }
 
-// ─── Customer tile ───
-
-function CustomerTile({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: any;
-  label: string;
-  value: number;
-  color: "blue" | "green" | "amber" | "orange" | "red";
-}) {
-  const colors: Record<string, string> = {
-    blue: "text-blue-600 bg-blue-500/10",
-    green: "text-green-600 bg-green-500/10",
-    amber: "text-amber-600 bg-amber-500/10",
-    orange: "text-orange-600 bg-orange-500/10",
-    red: "text-red-600 bg-red-500/10",
-  };
+function TrendPill({ pct, dir }: { pct: number; dir: "up" | "down" | "flat" }) {
+  if (dir === "flat") return <span className="text-xs text-muted-foreground">—</span>;
+  const Icon = dir === "up" ? ArrowUp : ArrowDown;
+  const cls =
+    dir === "up"
+      ? "text-green-700 bg-green-500/10 border-green-500/20"
+      : "text-destructive bg-destructive/10 border-destructive/20";
   return (
-    <div className="dash-card p-4">
-      <div className={`inline-grid size-9 place-items-center rounded-xl ${colors[color]}`}>
-        <Icon className="size-4" />
-      </div>
-      <div className="mt-3 number-display text-2xl">{value}</div>
-      <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-        {label}
-      </div>
-    </div>
-  );
-}
-
-// ─── Hideable section (card with ⋮ menu) ───
-
-function HideableSection({
-  id,
-  hidden,
-  onToggle,
-  title,
-  children,
-}: {
-  id: string;
-  hidden: boolean;
-  onToggle: (id: string) => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
-          {title}
-        </h2>
-        <div className="relative">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted/50 transition-colors"
-          >
-            <svg className="size-4" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="5" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="12" cy="19" r="1.5" />
-            </svg>
-          </button>
-          {menuOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 z-20 w-36 rounded-lg border bg-popover p-1 shadow-md">
-                <button
-                  onClick={() => {
-                    onToggle(id);
-                    setMenuOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs hover:bg-muted/50 transition-colors"
-                >
-                  {hidden ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-                  {hidden ? "Mostrar" : "Ocultar"}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-      {!hidden && children}
-    </div>
+    <span
+      className={`inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs font-semibold ${cls}`}
+    >
+      <Icon className="size-3" />
+      {pctStr(pct)}
+    </span>
   );
 }
