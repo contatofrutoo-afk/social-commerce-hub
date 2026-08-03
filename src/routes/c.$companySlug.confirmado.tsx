@@ -86,6 +86,19 @@ function OrderConfirmedPage() {
   const awaitingPayment = order?.status === "awaiting_payment" || (!!paymentId && order?.paymentStatus === "pending");
   const approved = status === "approved" || order?.status === "payment_approved";
   const statusLabel = order ? orderStatusLabel(order.status) : "Enviado";
+  const isTableOrder = !!order?.tableId;
+
+  const subtitle = approved
+    ? isTableOrder
+      ? "O estabelecimento foi notificado. Acompanhe o status em tempo real."
+      : "Sua compra foi concluída com sucesso."
+    : awaitingPayment
+      ? isTableOrder
+        ? "Assim que o pagamento for confirmado, o estabelecimento começará o preparo."
+        : "Assim que o pagamento for confirmado, sua compra será finalizada."
+      : isTableOrder
+        ? "O estabelecimento foi notificado. Acompanhe o status em tempo real."
+        : "O estabelecimento foi notificado. Obrigado pela compra!";
 
   return (
     <div className="p-4">
@@ -100,13 +113,7 @@ function OrderConfirmedPage() {
         <h1 className="mt-4 text-xl font-bold">
           {approved ? "Pagamento aprovado!" : awaitingPayment ? "Aguardando confirmação" : "Pedido enviado!"}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {approved
-            ? "O estabelecimento foi notificado. Acompanhe o status em tempo real."
-            : awaitingPayment
-              ? "Assim que o pagamento for confirmado, o estabelecimento começará o preparo."
-              : "O estabelecimento foi notificado. Acompanhe o status em tempo real."}
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
       <div className="rounded-xl border bg-card p-4">
@@ -127,37 +134,60 @@ function OrderConfirmedPage() {
                   <dd className="text-sm font-medium">{paymentStatusLabel(order.paymentStatus)}</dd>
                 </div>
               )}
+              {!isTableOrder && (
+                <div className="space-y-1.5 py-3">
+                  <dt className="text-sm text-muted-foreground">Itens</dt>
+                  <div className="space-y-1">
+                    {order.items.map((i) => (
+                      <div key={i.id} className="flex items-center justify-between text-sm">
+                        <span className="truncate pr-2">
+                          {i.productName} <span className="text-muted-foreground">× {i.quantity}</span>
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {formatBRL(i.quantity * i.unitPrice)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-between py-3">
                 <dt className="text-sm text-muted-foreground">Total</dt>
                 <dd className="text-sm font-bold">{formatBRL(order.total)}</dd>
               </div>
             </>
           )}
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-sm text-muted-foreground">Status</dt>
-            <dd>
-              <Badge variant={order ? ORDER_STATUS_META[order.status]?.variant ?? "secondary" : "secondary"}>
-                {statusLabel}
-              </Badge>
-            </dd>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <dt className="text-sm text-muted-foreground">Tempo estimado</dt>
-            <dd className="text-sm font-medium">
-              {waitingCounter
-                ? "Pague no caixa para iniciar o preparo"
-                : awaitingPayment
-                  ? "Após a confirmação do pagamento"
-                  : "30–40 min"}
-            </dd>
-          </div>
+          {isTableOrder && (
+            <>
+              <div className="flex items-center justify-between py-3">
+                <dt className="text-sm text-muted-foreground">Status</dt>
+                <dd>
+                  <Badge variant={order ? ORDER_STATUS_META[order.status]?.variant ?? "secondary" : "secondary"}>
+                    {statusLabel}
+                  </Badge>
+                </dd>
+              </div>
+              <div className="flex items-center justify-between py-3">
+                <dt className="text-sm text-muted-foreground">Tempo estimado</dt>
+                <dd className="text-sm font-medium">
+                  {waitingCounter
+                    ? "Pague no caixa para iniciar o preparo"
+                    : awaitingPayment
+                      ? "Após a confirmação do pagamento"
+                      : "30–40 min"}
+                </dd>
+              </div>
+            </>
+          )}
         </dl>
       </div>
 
       <div className="mt-4 space-y-2">
-        <Button className="w-full" size="lg" onClick={() => navigate({ to: "/c/$companySlug/meus-pedidos", params: { companySlug } })}>
-          Acompanhar Pedido
-        </Button>
+        {isTableOrder && (
+          <Button className="w-full" size="lg" onClick={() => navigate({ to: "/c/$companySlug/meus-pedidos", params: { companySlug } })}>
+            Acompanhar Pedido
+          </Button>
+        )}
         <Button variant="outline" className="w-full" onClick={() => navigate({ to: "/c/$companySlug/feed", params: { companySlug } })}>
           Voltar ao catálogo
         </Button>

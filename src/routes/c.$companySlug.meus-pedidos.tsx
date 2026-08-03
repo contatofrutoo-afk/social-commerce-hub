@@ -115,9 +115,11 @@ function MyOrdersPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={ORDER_STATUS_META[o.status]?.variant ?? "secondary"}>
-                    {orderStatusLabel(o.status)}
-                  </Badge>
+                  {o.tableId && (
+                    <Badge variant={ORDER_STATUS_META[o.status]?.variant ?? "secondary"}>
+                      {orderStatusLabel(o.status)}
+                    </Badge>
+                  )}
                   <button
                     type="button"
                     aria-label="Remover pedido"
@@ -146,10 +148,16 @@ function MyOrdersPage() {
                 ))}
               </div>
 
-              <div className="mt-3 flex items-center justify-between border-t pt-2 text-sm">
-                <span className="text-xs text-muted-foreground">
-                  {paymentMethodLabel(o.paymentMethod)}
-                </span>
+              <div
+                className={`mt-3 flex items-center gap-2 border-t pt-2 text-sm ${
+                  o.tableId ? "justify-between" : "justify-end"
+                }`}
+              >
+                {o.tableId && (
+                  <span className="text-xs text-muted-foreground">
+                    {paymentMethodLabel(o.paymentMethod)}
+                  </span>
+                )}
                 <span className="font-bold">{formatBRL(o.total)}</span>
               </div>
 
