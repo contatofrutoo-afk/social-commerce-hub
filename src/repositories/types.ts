@@ -277,7 +277,12 @@ export interface Insight {
 
 export type TimelineEventType =
   | "checkin"
+  | "logout"
   | "order"
+  | "payment_approved"
+  | "order_done"
+  | "view"
+  | "cart_add"
   | "reaction_love"
   | "reaction_dislike"
   | "comment"
@@ -394,6 +399,13 @@ export interface CustomerInsights {
   commentCount: number;
   wishedProducts: ProductInteraction[];
   favoriteCategories: { category: string; count: number }[];
+
+  // Navegação real (product_events)
+  mostViewedProducts: ProductInteraction[];
+  cartAddedProducts: ProductInteraction[];
+  accessedCategories: { category: string; count: number }[];
+  avgSessionDurationMinutes: number | null;
+  totalAccesses: number;
 
   // Habits
   habits: VisitHabits;

@@ -142,7 +142,7 @@ export const crmRepository = {
       supabase
         .from("orders")
         .select(
-          `id, total, status, created_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price))`,
+          `id, total, status, created_at, updated_at, payment_status, payment_approved_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price))`,
         )
         .eq("customer_id", customerId)
         .order("created_at", { ascending: false }),
@@ -181,6 +181,13 @@ export const crmRepository = {
         .eq("customer_id", customerId)
         .in("event_type", ["cart_add", "purchase"])
         .order("created_at", { ascending: false }),
+      supabase
+        .from("product_events")
+        .select("id, event_type, product_id, created_at")
+        .eq("customer_id", customerId)
+        .eq("event_type", "view")
+        .order("created_at", { ascending: false })
+        .limit(300),
     ]);
 
     function settle<T>(r: PromiseSettledResult<{ data: T; error: any }>, fallback: T): T {
@@ -204,18 +211,33 @@ export const crmRepository = {
     const wishesRows = settle<any[]>(results[7] as any, []);
     const allTables = settle<any[]>(results[8] as any, []);
     const productEvents = settle<any[]>(results[9] as any, []);
+    const viewRows = settle<any[]>(results[10] as any, []);
 
     const eventProductIds = [
-      ...new Set(productEvents.map((e: any) => e.product_id).filter(Boolean)),
+      ...new Set(
+        [...productEvents, ...viewRows].map((e: any) => e.product_id).filter(Boolean),
+      ),
     ];
     let productNameMap = new Map<string, string>();
+    let productInfoMap = new Map<string, { name: string; category: string | null; imageUrl: string | null; price: number }>();
     if (eventProductIds.length > 0) {
       const { data: eventProducts } = await supabase
         .from("products")
-        .select("id, name")
+        .select("id, name, category, image_url, price")
         .in("id", eventProductIds);
       if (eventProducts) {
         productNameMap = new Map(eventProducts.map((p: any) => [p.id, p.name]));
+        productInfoMap = new Map(
+          eventProducts.map((p: any) => [
+            p.id,
+            {
+              name: p.name ?? "Produto",
+              category: p.category ?? null,
+              imageUrl: p.image_url ?? null,
+              price: Number(p.price ?? 0),
+            },
+          ]),
+        );
       }
     }
 
@@ -229,16 +251,14 @@ export const crmRepository = {
         id: `ck-${c.id}`,
         type: "checkin",
         createdAt: c.created_at,
-        description: `Check-in: ${c.context}`,
-        metadata: { context: c.context },
+        description: "Entrou na plataforma",
       });
       if (c.checked_out_at) {
         timeline.push({
           id: `cko-${c.id}`,
-          type: "checkin",
+          type: "logout",
           createdAt: c.checked_out_at,
-          description: `Check-out`,
-          metadata: { context: c.context, checkout: true },
+          description: "Logout",
         });
       }
     });
@@ -264,9 +284,30 @@ export const crmRepository = {
         id: `ord-${o.id}`,
         type: "order",
         createdAt: o.created_at,
-        description: `Pedido: ${items}`,
+        description: `Pedido criado: ${items}`,
         metadata: { total: Number(o.total), orderId: o.id },
       });
+      if (o.payment_approved_at) {
+        timeline.push({
+          id: `pay-${o.id}`,
+          type: "payment_approved",
+          createdAt: o.payment_approved_at,
+          description: `Pagamento aprovado — ${Number(o.total).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          })}`,
+          metadata: { orderId: o.id },
+        });
+      }
+      if (o.status === "completed" || o.status === "delivered" || o.status === "ready") {
+        timeline.push({
+          id: `done-${o.id}`,
+          type: "order_done",
+          createdAt: o.updated_at ?? o.created_at,
+          description: "Pedido concluído",
+          metadata: { orderId: o.id },
+        });
+      }
     });
     reactionRows.forEach((r: any) => {
       const products = r.post?.post_products ?? [];
@@ -292,6 +333,25 @@ export const crmRepository = {
         description: `Curtiu produto: ${l.product?.name ?? ""}`,
       });
     });
+    viewRows.slice(0, 20).forEach((v: any) => {
+      timeline.push({
+        id: `view-${v.id}`,
+        type: "view",
+        createdAt: v.created_at,
+        description: `Visualizou produto: ${productNameMap.get(v.product_id) ?? "Produto"}`,
+      });
+    });
+    productEvents
+      .filter((e: any) => e.event_type === "cart_add")
+      .slice(0, 20)
+      .forEach((e: any) => {
+        timeline.push({
+          id: `cart-${e.id}`,
+          type: "cart_add",
+          createdAt: e.created_at,
+          description: `Adicionou à sacola: ${productNameMap.get(e.product_id) ?? "Produto"}`,
+        });
+      });
     commentsRows.forEach((cm: any) => {
       timeline.push({
         id: `cm-${cm.id}`,
@@ -363,6 +423,69 @@ export const crmRepository = {
       if (!wishMap.has(pid))
         wishMap.set(pid, toProductInteraction({ ...w.product, product_id: pid, count: 1 }));
     });
+
+    // --- Produtos mais visualizados (product_events view) ---
+    const viewCountMap = new Map<string, number>();
+    viewRows.forEach((v: any) => {
+      if (!v.product_id) return;
+      viewCountMap.set(v.product_id, (viewCountMap.get(v.product_id) ?? 0) + 1);
+    });
+    const mostViewedProducts: ProductInteraction[] = Array.from(viewCountMap.entries())
+      .map(([pid, count]) => {
+        const info = productInfoMap.get(pid) ?? { name: "Produto", category: null, imageUrl: null, price: 0 };
+        return {
+          productId: pid,
+          name: info.name,
+          category: info.category,
+          imageUrl: info.imageUrl,
+          price: info.price,
+          count,
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    // --- Produtos adicionados à sacola (product_events cart_add) ---
+    const cartAddCountMap = new Map<string, number>();
+    productEvents
+      .filter((e: any) => e.event_type === "cart_add")
+      .forEach((e: any) => {
+        if (!e.product_id) return;
+        cartAddCountMap.set(e.product_id, (cartAddCountMap.get(e.product_id) ?? 0) + 1);
+      });
+    const cartAddedProducts: ProductInteraction[] = Array.from(cartAddCountMap.entries())
+      .map(([pid, count]) => {
+        const info = productInfoMap.get(pid) ?? { name: "Produto", category: null, imageUrl: null, price: 0 };
+        return {
+          productId: pid,
+          name: info.name,
+          category: info.category,
+          imageUrl: info.imageUrl,
+          price: info.price,
+          count,
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+
+    // --- Categorias mais acessadas (via visualizações) ---
+    const categoryAccessCount: Record<string, number> = {};
+    mostViewedProducts.forEach((p) => {
+      if (p.category) categoryAccessCount[p.category] = (categoryAccessCount[p.category] ?? 0) + p.count;
+    });
+    const accessedCategories = Object.entries(categoryAccessCount)
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // --- Tempo médio de permanência (entrada/saída reais) ---
+    const sessionDurations = visitHistory
+      .map((v) => v.durationMinutes)
+      .filter((d): d is number => d != null);
+    const avgSessionDurationMinutes =
+      sessionDurations.length > 0
+        ? Math.round(sessionDurations.reduce((s, d) => s + d, 0) / sessionDurations.length)
+        : null;
+
+    // --- Quantidade de acessos (check-ins) ---
+    const totalAccesses = checkins.length;
 
     // --- Visit contexts ---
     const visitContexts: Record<string, number> = {};
@@ -756,6 +879,13 @@ export const crmRepository = {
       lastComment: commentsRows.length > 0 ? commentsRows[0].created_at : null,
       visitContexts: Object.entries(visitContexts).map(([context, count]) => ({ context, count })),
       timeline,
+
+      // Navegação real (product_events)
+      mostViewedProducts,
+      cartAddedProducts,
+      accessedCategories,
+      avgSessionDurationMinutes,
+      totalAccesses,
 
       // New fields
       name: customer.name,
