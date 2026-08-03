@@ -19,10 +19,39 @@
 
 -- ============================================================
 -- 1) upsert_customer_visit (onboarding QR/link) sem gender/age
+--
+-- Remove TODAS as overloads existentes (public primeiro, para o
+-- wrapper não bloquear o DROP da versão private que ele chama).
 -- ============================================================
-DROP FUNCTION IF EXISTS private.upsert_customer_visit(uuid, text, text);
-DROP FUNCTION IF EXISTS private.upsert_customer_visit(uuid, text, text, text, text);
-DROP FUNCTION IF EXISTS private.upsert_customer_visit(uuid, text, text, text, text, text);
+DO $$
+DECLARE
+  r record;
+BEGIN
+  FOR r IN
+    SELECT n.nspname AS schema, p.proname AS name,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname IN ('upsert_customer_visit', 'update_customer_self')
+    ORDER BY p.proname
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %I.%I(%s)', r.schema, r.name, r.args);
+  END LOOP;
+
+  FOR r IN
+    SELECT n.nspname AS schema, p.proname AS name,
+           pg_get_function_identity_arguments(p.oid) AS args
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'private'
+      AND p.proname IN ('upsert_customer_visit', 'update_customer_self')
+    ORDER BY p.proname
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %I.%I(%s)', r.schema, r.name, r.args);
+  END LOOP;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION private.upsert_customer_visit(
   _company_id uuid,
@@ -105,10 +134,6 @@ BEGIN
 END;
 $$;
 
-DROP FUNCTION IF EXISTS public.upsert_customer_visit(uuid, text, text);
-DROP FUNCTION IF EXISTS public.upsert_customer_visit(uuid, text, text, text, text);
-DROP FUNCTION IF EXISTS public.upsert_customer_visit(uuid, text, text, text, text, text);
-
 CREATE OR REPLACE FUNCTION public.upsert_customer_visit(
   _company_id uuid,
   _name text,
@@ -128,10 +153,8 @@ GRANT EXECUTE ON FUNCTION public.upsert_customer_visit(uuid, text, text, text) T
 
 -- ============================================================
 -- 2) update_customer_self (salvar Perfil) sem gender/age
+--    (as overloads antigas já foram removidas no passo 1)
 -- ============================================================
-DROP FUNCTION IF EXISTS private.update_customer_self(uuid, uuid, text, text, text);
-DROP FUNCTION IF EXISTS private.update_customer_self(uuid, uuid, text, text, text, text, text);
-
 CREATE OR REPLACE FUNCTION private.update_customer_self(
   _customer_id uuid,
   _token uuid,
@@ -204,9 +227,6 @@ BEGIN
   RETURN QUERY SELECT _customer_id, _token;
 END;
 $$;
-
-DROP FUNCTION IF EXISTS public.update_customer_self(uuid, uuid, text, text, text);
-DROP FUNCTION IF EXISTS public.update_customer_self(uuid, uuid, text, text, text, text, text);
 
 CREATE OR REPLACE FUNCTION public.update_customer_self(
   _customer_id uuid,
