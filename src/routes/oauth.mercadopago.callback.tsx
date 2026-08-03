@@ -36,6 +36,7 @@ function CallbackPage() {
             setPhase("success");
             break;
           case "unavailable":
+            if ("reason" in result && result.reason) setReason(result.reason);
             setPhase("unavailable");
             break;
           case "invalid_state":
@@ -46,8 +47,11 @@ function CallbackPage() {
             setPhase("invalid_token");
             break;
         }
-      } catch {
-        if (active) setPhase("invalid_token");
+      } catch (err) {
+        if (active) {
+          setReason(err instanceof Error ? err.message : String(err));
+          setPhase("invalid_token");
+        }
       }
     })();
 
@@ -82,7 +86,9 @@ function CallbackPage() {
     unavailable: {
       icon: <XCircle className="size-8 text-destructive" />,
       title: "Mercado Pago indisponível no momento.",
-      description: "Não foi possível concluir a conexão agora. Tente novamente em alguns instantes.",
+      description: reason
+        ? `Detalhe: ${reason}.`
+        : "Não foi possível concluir a conexão agora. Tente novamente em alguns instantes.",
     },
   };
 

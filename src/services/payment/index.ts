@@ -41,6 +41,20 @@ export type {
 } from "@/lib/mercadopago.checkout.functions";
 
 async function getPanelJwt(): Promise<string> {
+  // Garante um token fresco: o fluxo OAuth leva o usuário ao Mercado Pago,
+  // então o access_token pode ter expirado ao voltar ao callback.
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    const now = Date.now();
+    const expiresAt = session.session?.expires_at ? session.session.expires_at * 1000 : 0;
+    if (!session.session || (expiresAt && expiresAt <= now + 30_000)) {
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      const token = refreshed.session?.access_token;
+      if (token) return token;
+    }
+  } catch {
+    // segue para o caminho normal abaixo
+  }
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("Sessão expirada. Faça login novamente.");

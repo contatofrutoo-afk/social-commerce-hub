@@ -175,171 +175,200 @@ const ExchangeInput = z.object({
  * Troca o authorization_code por tokens (enviando o code_verifier do PKCE) e
  * persiste em merchant_payment_accounts com os tokens criptografados.
  */
+async function runMercadoPagoExchange(data: {
+  jwt: string;
+  code: string;
+  state: string;
+}): Promise<MercadoPagoExchangeResult> {
+  const businessId = await getBusinessIdFromJwt(data.jwt);
+  if (!businessId) {
+    return {
+      status: "unauthorized",
+      reason: "Sessão do painel não reconhecida no callback. Faça login novamente e tente conectar.",
+    };
+  }
+
+  const { requireClientCredentials, resolveRedirectUri, logPaymentEvent } = await import(
+    "@/lib/mercadopago.server"
+  );
+  const { encryptToken } = await import("@/lib/token-crypto.server");
+
+  let clientId: string;
+  let clientSecret: string;
+  try {
+    ({ clientId, clientSecret } = await requireClientCredentials());
+  } catch {
+    return { status: "invalid_token", reason: "Credenciais do Mercado Pago não configuradas." };
+  }
+
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: stateRow, error: stateErr } = await supabaseAdmin
+    .from("payment_oauth_states")
+    .select("business_id, code_verifier, redirect_uri")
+    .eq("state", data.state)
+    .maybeSingle();
+  if (stateErr) {
+    await logPaymentEvent(businessId, "Erro OAuth", {
+      stage: "state_lookup",
+      message: stateErr.message,
+    });
+  }
+  if (!stateRow || stateRow.business_id !== businessId) {
+    return {
+      status: "invalid_state",
+      reason: stateErr?.message ?? "state não encontrado (link pode ter expirado).",
+    };
+  }
+  await supabaseAdmin.from("payment_oauth_states").delete().eq("state", data.state);
+
+  // Reutiliza o redirect_uri gravado no início do fluxo (o MP exige que o
+  // redirect_uri do token exchange seja EXATAMENTE o usado na autorização).
+  const redirectUri = stateRow.redirect_uri ?? (await resolveRedirectUri());
+
+  let tokenRes: Response;
+  try {
+    tokenRes = await fetch(MERCADO_PAGO_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: data.code,
+        redirect_uri: redirectUri,
+        code_verifier: stateRow.code_verifier ?? "",
+      }),
+    });
+  } catch {
+    await logPaymentEvent(businessId, "Erro OAuth", { stage: "token_exchange", reason: "network" });
+    return { status: "unavailable" };
+  }
+
+  if (!tokenRes.ok) {
+    let message: string | null = null;
+    try {
+      const body = (await tokenRes.json()) as { message?: string; error_description?: string };
+      message = body.message ?? body.error_description ?? null;
+    } catch {
+      // corpo não-JSON: ignora
+    }
+    await logPaymentEvent(businessId, "Erro OAuth", {
+      stage: "token_exchange",
+      status: tokenRes.status,
+      message,
+    });
+    return tokenRes.status >= 500
+      ? { status: "unavailable", reason: message ?? undefined }
+      : { status: "invalid_token", reason: message ?? undefined };
+  }
+
+  let tokenData: {
+    access_token?: string;
+    refresh_token?: string;
+    user_id?: string;
+    expires_in?: number;
+  };
+  try {
+    tokenData = (await tokenRes.json()) as typeof tokenData;
+  } catch {
+    return { status: "invalid_token" };
+  }
+
+  if (!tokenData.access_token) {
+    await logPaymentEvent(businessId, "Erro OAuth", {
+      stage: "token_exchange",
+      missing: "access_token",
+    });
+    return { status: "invalid_token" };
+  }
+
+  const expiresAt = tokenData.expires_in
+    ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+    : null;
+  const providerUserId = tokenData.user_id ? String(tokenData.user_id) : null;
+
+  let accountName: string | null = null;
+  let accountId: string | null = null;
+  try {
+    const meRes = await fetch(MERCADO_PAGO_USERS_ME_URL, {
+      headers: { accept: "application/json", authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (meRes.ok) {
+      const me = (await meRes.json()) as {
+        nickname?: string;
+        first_name?: string;
+        last_name?: string;
+        id?: number;
+      };
+      accountName = me.nickname || [me.first_name, me.last_name].filter(Boolean).join(" ") || null;
+      accountId = me.id != null ? String(me.id) : null;
+    }
+  } catch {
+    // best-effort — não invalida a conexão
+  }
+
+  const now = new Date().toISOString();
+  const encryptedAccess = await encryptToken(tokenData.access_token);
+  const encryptedRefresh = await encryptToken(tokenData.refresh_token ?? null);
+
+  const { error: upsertErr } = await supabaseAdmin
+    .from("merchant_payment_accounts")
+    .upsert(
+      {
+        merchant_id: businessId,
+        provider: "mercadopago",
+        connected: true,
+        account_name: accountName,
+        account_id: accountId,
+        provider_user_id: providerUserId,
+        access_token: encryptedAccess,
+        refresh_token: encryptedRefresh,
+        expires_at: expiresAt,
+        last_sync_at: now,
+        connected_at: now,
+        updated_at: now,
+      },
+      { onConflict: "merchant_id,provider" },
+    );
+
+  if (upsertErr) {
+    await logPaymentEvent(businessId, "Erro OAuth", {
+      stage: "persist",
+      message: upsertErr.message,
+    });
+    return { status: "unavailable", reason: upsertErr.message };
+  }
+
+  await logPaymentEvent(businessId, "Conta conectada", {
+    provider: "mercadopago",
+    provider_user_id: providerUserId,
+  });
+
+  const { data: saved } = await supabaseAdmin
+    .from("merchant_payment_accounts")
+    .select(PUBLIC_COLUMNS)
+    .eq("merchant_id", businessId)
+    .eq("provider", "mercadopago")
+    .maybeSingle();
+
+  const account = sanitizeAccount(saved);
+  if (!account) return { status: "unavailable" };
+  return { status: "success", account };
+}
+
 export const exchangeMercadoPagoCode = createServerFn({ method: "POST" })
   .inputValidator((raw) => ExchangeInput.parse(raw))
   .handler(async ({ data }): Promise<MercadoPagoExchangeResult> => {
-    const businessId = await getBusinessIdFromJwt(data.jwt);
-    if (!businessId) return { status: "unauthorized" };
-
-    const { requireClientCredentials, resolveRedirectUri, logPaymentEvent } = await import(
-      "@/lib/mercadopago.server"
-    );
-    const { encryptToken } = await import("@/lib/token-crypto.server");
-
-    let clientId: string;
-    let clientSecret: string;
     try {
-      ({ clientId, clientSecret } = await requireClientCredentials());
-    } catch {
-      return { status: "invalid_token" };
+      return await runMercadoPagoExchange(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { status: "invalid_token", reason: `Falha interna: ${message}` };
     }
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: stateRow, error: stateErr } = await supabaseAdmin
-      .from("payment_oauth_states")
-      .select("business_id, code_verifier, redirect_uri")
-      .eq("state", data.state)
-      .maybeSingle();
-    if (stateErr) {
-      await logPaymentEvent(businessId, "Erro OAuth", {
-        stage: "state_lookup",
-        message: stateErr.message,
-      });
-    }
-    if (!stateRow || stateRow.business_id !== businessId) {
-      return {
-        status: "invalid_state",
-        reason: stateErr?.message ?? "state não encontrado (link pode ter expirado).",
-      };
-    }
-    await supabaseAdmin.from("payment_oauth_states").delete().eq("state", data.state);
-
-    // Reutiliza o redirect_uri gravado no início do fluxo (o MP exige que o
-    // redirect_uri do token exchange seja EXATAMENTE o usado na autorização).
-    const redirectUri = stateRow.redirect_uri ?? (await resolveRedirectUri());
-
-    let tokenRes: Response;
-    try {
-      tokenRes = await fetch(MERCADO_PAGO_TOKEN_URL, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          client_id: clientId,
-          client_secret: clientSecret,
-          code: data.code,
-          redirect_uri: redirectUri,
-          code_verifier: stateRow.code_verifier ?? "",
-        }),
-      });
-    } catch {
-      await logPaymentEvent(businessId, "Erro OAuth", { stage: "token_exchange", reason: "network" });
-      return { status: "unavailable" };
-    }
-
-    if (!tokenRes.ok) {
-      let message: string | null = null;
-      try {
-        const body = (await tokenRes.json()) as { message?: string; error_description?: string };
-        message = body.message ?? body.error_description ?? null;
-      } catch {
-        // corpo não-JSON: ignora
-      }
-      await logPaymentEvent(businessId, "Erro OAuth", {
-        stage: "token_exchange",
-        status: tokenRes.status,
-        message,
-      });
-      return tokenRes.status >= 500
-        ? { status: "unavailable", reason: message ?? undefined }
-        : { status: "invalid_token", reason: message ?? undefined };
-    }
-
-    let tokenData: { access_token?: string; refresh_token?: string; user_id?: string; expires_in?: number };
-    try {
-      tokenData = (await tokenRes.json()) as typeof tokenData;
-    } catch {
-      return { status: "invalid_token" };
-    }
-
-    if (!tokenData.access_token) {
-      await logPaymentEvent(businessId, "Erro OAuth", { stage: "token_exchange", missing: "access_token" });
-      return { status: "invalid_token" };
-    }
-
-    const expiresAt = tokenData.expires_in
-      ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
-      : null;
-    const providerUserId = tokenData.user_id ? String(tokenData.user_id) : null;
-
-    let accountName: string | null = null;
-    let accountId: string | null = null;
-    try {
-      const meRes = await fetch(MERCADO_PAGO_USERS_ME_URL, {
-        headers: { accept: "application/json", authorization: `Bearer ${tokenData.access_token}` },
-      });
-      if (meRes.ok) {
-        const me = (await meRes.json()) as {
-          nickname?: string;
-          first_name?: string;
-          last_name?: string;
-          id?: number;
-        };
-        accountName = me.nickname || [me.first_name, me.last_name].filter(Boolean).join(" ") || null;
-        accountId = me.id != null ? String(me.id) : null;
-      }
-    } catch {
-      // best-effort — não invalida a conexão
-    }
-
-    const now = new Date().toISOString();
-    const encryptedAccess = await encryptToken(tokenData.access_token);
-    const encryptedRefresh = await encryptToken(tokenData.refresh_token ?? null);
-
-    const { error: upsertErr } = await supabaseAdmin
-      .from("merchant_payment_accounts")
-      .upsert(
-        {
-          merchant_id: businessId,
-          provider: "mercadopago",
-          connected: true,
-          account_name: accountName,
-          account_id: accountId,
-          provider_user_id: providerUserId,
-          access_token: encryptedAccess,
-          refresh_token: encryptedRefresh,
-          expires_at: expiresAt,
-          last_sync_at: now,
-          connected_at: now,
-          updated_at: now,
-        },
-        { onConflict: "merchant_id,provider" },
-      );
-
-    if (upsertErr) {
-      await logPaymentEvent(businessId, "Erro OAuth", { stage: "persist", message: upsertErr.message });
-      return { status: "unavailable" };
-    }
-
-    await logPaymentEvent(businessId, "Conta conectada", {
-      provider: "mercadopago",
-      provider_user_id: providerUserId,
-    });
-
-    const { data: saved } = await supabaseAdmin
-      .from("merchant_payment_accounts")
-      .select(PUBLIC_COLUMNS)
-      .eq("merchant_id", businessId)
-      .eq("provider", "mercadopago")
-      .maybeSingle();
-
-    const account = sanitizeAccount(saved);
-    if (!account) return { status: "unavailable" };
-    return { status: "success", account };
   });
 
 /** Status atual da conta do Mercado Pago da empresa (sem tokens). */
