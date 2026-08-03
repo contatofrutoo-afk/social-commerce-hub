@@ -134,7 +134,7 @@ function AppLayout() {
   const nav: { to: any; label: string; icon: any; exact?: boolean }[] = [
     { to: "/app", label: "Dashboard", icon: BarChart3, exact: true },
     { to: "/app/clientes", label: "Clientes", icon: Users },
-    { to: "/app/persona", label: "Persona Inteligente", icon: BrainCircuit },
+    { to: "/app/persona", label: "Inteligência WEAZE", icon: BrainCircuit },
     { to: "/app/feed", label: "Publicações", icon: Newspaper },
     { to: "/app/produtos", label: "Produtos", icon: Package },
     { to: "/app/catalogo", label: "Catálogo Inteligente", icon: QrCode },
