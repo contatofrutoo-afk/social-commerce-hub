@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { companyRepository, postRepository, commentRepository } from "@/repositories";
@@ -113,11 +113,6 @@ function FeedPage() {
           </div>
           <p className="mt-4 font-display text-lg font-semibold">Ainda não há publicações</p>
           <p className="mt-1 text-sm text-muted-foreground">Seja o primeiro a compartilhar uma experiência.</p>
-          <Button asChild className="mt-5 rounded-full">
-            <Link to="/c/$companySlug/publicar" params={{ companySlug }}>
-              Publicar experiência
-            </Link>
-          </Button>
         </div>
       )}
       {posts?.map((p) => (
