@@ -24,8 +24,6 @@ function map(r: any): Customer {
     name: r.name,
     whatsapp: r.whatsapp,
     avatarUrl: r.avatar_url,
-    gender: r.gender ?? null,
-    ageRange: r.age_range ?? null,
     firstVisitAt: r.first_visit_at,
     lastVisitAt: r.last_visit_at,
     visitCount: r.visit_count,
@@ -70,16 +68,12 @@ export const customerRepository = {
     companyId: string;
     name: string;
     whatsapp: string;
-    gender?: string | null;
-    ageRange?: string | null;
     ip?: string | null;
   }): Promise<{ customerId: string; sessionToken: string }> {
     const args = {
       _company_id: input.companyId,
       _name: input.name,
       _whatsapp: input.whatsapp,
-      _gender: input.gender ?? undefined,
-      _age_range: input.ageRange ?? undefined,
     };
     let { data, error } = await supabase.rpc("upsert_customer_visit", {
       ...args,
@@ -112,7 +106,7 @@ export const customerRepository = {
   async updateSelf(
     customerId: string,
     token: string,
-    patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl" | "gender" | "ageRange">>,
+    patch: Partial<Pick<Customer, "name" | "whatsapp" | "avatarUrl">>,
     ip?: string | null,
   ): Promise<{ customerId: string; sessionToken: string }> {
     const args = {
@@ -121,8 +115,6 @@ export const customerRepository = {
       _name: (patch.name ?? null) as string,
       _whatsapp: (patch.whatsapp ?? null) as string,
       _avatar_url: (patch.avatarUrl ?? null) as string,
-      _gender: (patch.gender ?? null) as string,
-      _age_range: (patch.ageRange ?? null) as string,
     };
     let { data, error } = await supabase.rpc("update_customer_self", {
       ...args,

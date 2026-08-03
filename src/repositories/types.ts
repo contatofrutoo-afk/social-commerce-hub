@@ -38,8 +38,6 @@ export interface Customer {
   name: string;
   whatsapp: string;
   avatarUrl: string | null;
-  gender: string | null;
-  ageRange: string | null;
   firstVisitAt: string;
   lastVisitAt: string;
   visitCount: number;
@@ -387,8 +385,6 @@ export interface CustomerInsights {
   name: string;
   whatsapp: string;
   avatarUrl: string | null;
-  gender: string | null;
-  ageRange: string | null;
   customerSince: string;
 
   // Behavior

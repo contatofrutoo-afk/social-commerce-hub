@@ -20,7 +20,7 @@ export function getAnonymousId(): string {
   return id;
 }
 
-export type WeazeProfile = { name: string; whatsapp: string; gender?: string | null; ageRange?: string | null };
+export type WeazeProfile = { name: string; whatsapp: string };
 
 export function getLastProfile(): WeazeProfile | null {
   if (typeof window === "undefined") return null;

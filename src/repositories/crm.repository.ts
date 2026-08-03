@@ -891,8 +891,6 @@ export const crmRepository = {
       name: customer.name,
       whatsapp: customer.whatsapp,
       avatarUrl: customer.avatar_url,
-      gender: customer.gender ?? null,
-      ageRange: customer.age_range ?? null,
       customerSince: customer.created_at,
 
       dislikeCount,

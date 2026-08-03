@@ -488,12 +488,10 @@ export type Database = {
           accepted_checkin_privacy_at: string | null
           accepted_privacy_at: string | null
           accepted_terms_at: string | null
-          age_range: string | null
           avatar_url: string | null
           company_id: string
           created_at: string
           first_visit_at: string
-          gender: string | null
           id: string
           last_ip: string | null
           last_visit_at: string
@@ -506,12 +504,10 @@ export type Database = {
           accepted_checkin_privacy_at?: string | null
           accepted_privacy_at?: string | null
           accepted_terms_at?: string | null
-          age_range?: string | null
           avatar_url?: string | null
           company_id: string
           created_at?: string
           first_visit_at?: string
-          gender?: string | null
           id?: string
           last_ip?: string | null
           last_visit_at?: string
@@ -524,12 +520,10 @@ export type Database = {
           accepted_checkin_privacy_at?: string | null
           accepted_privacy_at?: string | null
           accepted_terms_at?: string | null
-          age_range?: string | null
           avatar_url?: string | null
           company_id?: string
           created_at?: string
           first_visit_at?: string
-          gender?: string | null
           id?: string
           last_ip?: string | null
           last_visit_at?: string
@@ -1655,12 +1649,10 @@ export type Database = {
           accepted_checkin_privacy_at: string | null
           accepted_privacy_at: string | null
           accepted_terms_at: string | null
-          age_range: string | null
           avatar_url: string | null
           company_id: string
           created_at: string
           first_visit_at: string
-          gender: string | null
           id: string
           last_ip: string | null
           last_visit_at: string
@@ -1805,10 +1797,8 @@ export type Database = {
       }
       update_customer_self: {
         Args: {
-          _age_range?: string
           _avatar_url: string
           _customer_id: string
-          _gender?: string
           _ip_address?: string
           _name: string
           _token: string
@@ -1821,9 +1811,7 @@ export type Database = {
       }
       upsert_customer_visit: {
         Args: {
-          _age_range?: string
           _company_id: string
-          _gender?: string
           _ip_address?: string
           _name: string
           _whatsapp: string

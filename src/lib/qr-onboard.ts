@@ -35,14 +35,10 @@ export async function onboardViaQr(opts: {
       ? {
           name: profile.name,
           whatsapp: profile.whatsapp,
-          gender: profile.gender ?? null,
-          ageRange: profile.ageRange ?? null,
         }
       : {
           name: ANONYMOUS_NAME,
           whatsapp: getAnonymousId(),
-          gender: null,
-          ageRange: null,
         };
 
   // IP público do aparelho: permite que o mesmo usuário (celular/PC) seja
@@ -53,8 +49,6 @@ export async function onboardViaQr(opts: {
     companyId: opts.companyId,
     name: identity.name,
     whatsapp: identity.whatsapp,
-    gender: identity.gender,
-    ageRange: identity.ageRange,
     ip,
   });
 
