@@ -16,7 +16,7 @@ async function getKeyMaterial(): Promise<CryptoKey | null> {
   return globalThis.crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
-    "SHA-256",
+    { name: "HKDF" },
     false,
     ["deriveKey"],
   );
