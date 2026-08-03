@@ -11,9 +11,8 @@ const SIGNED_URL_TTL = 60 * 60 * 24 * 365; // 1 ano
 const UploadInput = z.object({
   customerId: z.string().uuid(),
   sessionToken: z.string().uuid(),
-  kind: z.enum(["avatar", "comment", "post"]),
+  kind: z.enum(["avatar", "comment"]),
   postId: z.string().uuid().optional(),
-  companyId: z.string().uuid().optional(),
   mimeType: z.enum(ALLOWED_ALL_MIME),
   fileName: z.string().min(1).max(200),
   // base64-encoded file content (no data: prefix)
@@ -38,8 +37,6 @@ function extFromMime(mime: string, fallback: string) {
  * Upload verificado de arquivo do cliente B2C.
  *
  * - `avatar` e `comment`: bucket privado `weaze-private`, retorna signed URL.
- * - `post`: bucket público `weaze-media` sob `feed/{companyId}/{customerId}/...`,
- *   retorna URL pública (o post referenciando a mídia libera a leitura via policy).
  *
  * O par (customerId, sessionToken) é validado via RPC `get_customer_self`
  * antes de qualquer escrita — apenas o dono da sessão consegue enviar arquivos.
@@ -47,11 +44,11 @@ function extFromMime(mime: string, fallback: string) {
 export const uploadCustomerFile = createServerFn({ method: "POST" })
   .inputValidator((raw) => UploadInput.parse(raw))
   .handler(async ({ data }) => {
-    const { customerId, sessionToken, kind, postId, companyId, mimeType, fileName, base64 } = data;
+    const { customerId, sessionToken, kind, postId, mimeType, fileName, base64 } = data;
 
     const isVideo = (ALLOWED_VIDEO_MIME as readonly string[]).includes(mimeType);
-    if (isVideo && kind !== "post") {
-      throw new Error("Vídeo permitido apenas em publicações");
+    if (isVideo) {
+      throw new Error("Vídeo não suportado para avatar/comentário");
     }
 
     // Decodifica e valida tamanho
@@ -72,24 +69,9 @@ export const uploadCustomerFile = createServerFn({ method: "POST" })
     if (selfErr) throw new Error("Sessão inválida");
     const list = Array.isArray(self) ? self : self ? [self] : [];
     if (list.length === 0) throw new Error("Sessão inválida");
-    const selfRow = list[0] as { company_id?: string };
 
     const ext = extFromMime(mimeType, (fileName.split(".").pop() ?? "jpg").toLowerCase());
     const rand = crypto.randomUUID();
-
-    if (kind === "post") {
-      if (!companyId) throw new Error("companyId é obrigatório para publicação");
-      if (selfRow.company_id && selfRow.company_id !== companyId) {
-        throw new Error("Cliente não pertence a esta empresa");
-      }
-      const path = `feed/${companyId}/${customerId}/${rand}.${ext}`;
-      const { error: upErr } = await supabaseAdmin.storage
-        .from("weaze-media")
-        .upload(path, buffer, { contentType: mimeType, upsert: false });
-      if (upErr) throw new Error(upErr.message);
-      const { data: pub } = supabaseAdmin.storage.from("weaze-media").getPublicUrl(path);
-      return { url: pub.publicUrl, path };
-    }
 
     let path: string;
     if (kind === "avatar") {

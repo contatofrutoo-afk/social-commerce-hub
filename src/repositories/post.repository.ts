@@ -51,26 +51,28 @@ export const postRepository = {
       _viewer_customer_id: myCustomerId ?? null,
     });
     if (error) throw error;
-    return ((data ?? []) as any[]).map((r) => ({
-      id: r.id,
-      companyId: r.company_id,
-      authorType: r.author_type,
-      customerId: r.customer_id,
-      customerName: r.customer_name,
-      customerAvatarUrl: r.customer_avatar_url ?? null,
-      companyLogoUrl: r.company_logo_url ?? null,
-      imageUrl: r.image_url,
-      videoUrl: r.video_url,
-      text: r.text,
-      category: r.category,
-      companions: r.companions,
-      createdAt: r.created_at,
-      products: (r.products ?? []).map(mapProduct),
-      loveCount: r.love_count ?? 0,
-      dislikeCount: r.dislike_count ?? 0,
-      commentCount: r.comment_count ?? 0,
-      myReaction: r.my_reaction ?? null,
-    }));
+    return ((data ?? []) as any[])
+      .filter((r) => r.author_type === "business")
+      .map((r) => ({
+        id: r.id,
+        companyId: r.company_id,
+        authorType: r.author_type,
+        customerId: r.customer_id,
+        customerName: r.customer_name,
+        customerAvatarUrl: r.customer_avatar_url ?? null,
+        companyLogoUrl: r.company_logo_url ?? null,
+        imageUrl: r.image_url,
+        videoUrl: r.video_url,
+        text: r.text,
+        category: r.category,
+        companions: r.companions,
+        createdAt: r.created_at,
+        products: (r.products ?? []).map(mapProduct),
+        loveCount: r.love_count ?? 0,
+        dislikeCount: r.dislike_count ?? 0,
+        commentCount: r.comment_count ?? 0,
+        myReaction: r.my_reaction ?? null,
+      }));
   },
 
   async createBusinessPost(input: {
@@ -101,30 +103,6 @@ export const postRepository = {
       if (e2) throw e2;
     }
     return mapPost({ ...data, post_reactions: [], post_products: [], comments: [{ count: 0 }] });
-  },
-
-  async createCustomerPost(input: {
-    companyId: string;
-    customerId: string;
-    sessionToken: string;
-    text: string;
-    imageUrl?: string | null;
-    videoUrl?: string | null;
-    category?: string;
-    companions?: VisitContext;
-  }): Promise<{ id: string }> {
-    const { data, error } = await supabase.rpc("create_customer_post" as any, {
-      _customer_id: input.customerId,
-      _token: input.sessionToken,
-      _company_id: input.companyId,
-      _text: input.text,
-      _image_url: input.imageUrl ?? null,
-      _category: input.category ?? null,
-      _companions: (input.companions as string | undefined) ?? null,
-      _video_url: input.videoUrl ?? null,
-    });
-    if (error) throw error;
-    return { id: data as string };
   },
 
   async setReaction(postId: string, customerId: string, token: string, type: ReactionType | null) {
@@ -158,34 +136,8 @@ export const postRepository = {
     if (error) throw error;
   },
 
-  async updateCustomerPost(
-    postId: string,
-    customerId: string,
-    token: string,
-    text: string,
-    imageUrl: string | null,
-  ) {
-    const { error } = await supabase.rpc("update_customer_post" as any, {
-      _customer_id: customerId,
-      _token: token,
-      _post_id: postId,
-      _text: text,
-      _image_url: imageUrl ?? "",
-    });
-    if (error) throw error;
-  },
-
   async remove(postId: string) {
     const { error } = await supabase.from("posts").delete().eq("id", postId);
-    if (error) throw error;
-  },
-
-  async removeCustomerPost(postId: string, customerId: string, token: string) {
-    const { error } = await supabase.rpc("delete_customer_post" as any, {
-      _customer_id: customerId,
-      _token: token,
-      _post_id: postId,
-    });
     if (error) throw error;
   },
 };

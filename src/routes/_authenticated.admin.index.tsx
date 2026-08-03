@@ -148,7 +148,8 @@ function WeazeDashboard() {
               supabase
                 .from("posts")
                 .select("*", { count: "exact", head: true })
-                .eq("company_id", cid),
+                .eq("company_id", cid)
+                .eq("author_type", "business"),
               supabase
                 .from("checkins")
                 .select("*", { count: "exact", head: true })

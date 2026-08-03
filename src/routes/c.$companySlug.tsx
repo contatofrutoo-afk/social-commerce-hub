@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { companyRepository } from "@/repositories";
-import { Newspaper, ShoppingBag, User, Camera } from "lucide-react";
+import { Newspaper, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -31,7 +31,6 @@ function ClientLayout() {
 
   const tabs = [
     { to: "/c/$companySlug/feed", label: "Catálogo", icon: Newspaper },
-    { to: "/c/$companySlug/publicar", label: "Publicar", icon: Camera },
     { to: "/c/$companySlug/sacola", label: "Sacola", icon: ShoppingBag, badge: cart.count },
     { to: "/c/$companySlug/perfil", label: "Perfil", icon: User },
   ] as const;
@@ -85,7 +84,7 @@ function ClientLayout() {
 
       {showTabs && (
         <nav className="fixed bottom-0 left-0 right-0 z-20 border-t bg-background">
-          <div className="mx-auto grid max-w-2xl grid-cols-4">
+          <div className="mx-auto grid max-w-2xl grid-cols-3">
             {tabs.map((t) => {
               const active = location.pathname.includes(t.to.replace("/c/$companySlug", ""));
               return (

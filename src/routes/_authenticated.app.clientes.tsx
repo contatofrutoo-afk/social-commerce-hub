@@ -27,7 +27,6 @@ import {
   MousePointerClick,
   CheckCircle2,
   BadgeCheck,
-  Edit3,
   Gift,
   LogOut,
   Trash2,
@@ -640,7 +639,6 @@ function TimelineItem({ event }: { event: TimelineEvent }) {
     comment: MessageCircle,
     like: Star,
     wish: Gift,
-    post: Edit3,
   };
   const Icon = iconMap[event.type] ?? Clock;
 

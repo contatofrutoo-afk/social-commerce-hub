@@ -399,10 +399,7 @@ function DashboardPage() {
     );
     (posts ?? []).slice(0, 12).forEach((p) =>
       list.push({
-        text:
-          p.authorType === "business"
-            ? "Nova publicação do estabelecimento"
-            : "Nova publicação de cliente",
+        text: "Nova publicação do estabelecimento",
         ts: p.createdAt,
         type: "post",
       }),

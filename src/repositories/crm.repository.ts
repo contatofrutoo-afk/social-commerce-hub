@@ -163,11 +163,6 @@ export const crmRepository = {
         .eq("customer_id", customerId)
         .order("created_at", { ascending: false }),
       supabase
-        .from("posts")
-        .select("id, created_at")
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }),
-      supabase
         .from("product_wishes")
         .select(`product_id, product:products(id, name, category, image_url, price)`)
         .eq("customer_id", customerId),
@@ -207,11 +202,10 @@ export const crmRepository = {
     const reactionRows = settle<any[]>(results[3] as any, []);
     const likesRows = settle<any[]>(results[4] as any, []);
     const commentsRows = settle<any[]>(results[5] as any, []);
-    const postsRows = settle<any[]>(results[6] as any, []);
-    const wishesRows = settle<any[]>(results[7] as any, []);
-    const allTables = settle<any[]>(results[8] as any, []);
-    const productEvents = settle<any[]>(results[9] as any, []);
-    const viewRows = settle<any[]>(results[10] as any, []);
+    const wishesRows = settle<any[]>(results[6] as any, []);
+    const allTables = settle<any[]>(results[7] as any, []);
+    const productEvents = settle<any[]>(results[8] as any, []);
+    const viewRows = settle<any[]>(results[9] as any, []);
 
     const eventProductIds = [
       ...new Set(
@@ -358,14 +352,6 @@ export const crmRepository = {
         type: "comment",
         createdAt: cm.created_at,
         description: cm.text ? `Comentou: ${cm.text.substring(0, 80)}` : "Comentou",
-      });
-    });
-    postsRows.forEach((p: any) => {
-      timeline.push({
-        id: `post-${p.id}`,
-        type: "post",
-        createdAt: p.created_at,
-        description: "Nova publicação",
       });
     });
     wishesRows.forEach((w: any) => {
@@ -602,7 +588,6 @@ export const crmRepository = {
     // --- Engagement ---
     const daysSinceLastVisit = checkins.length > 0 ? daysSince(checkins[0].created_at) : null;
     const photoCount = commentsRows.filter((c: any) => c.image_url).length;
-    const postsCount = postsRows.length;
     const commentCount = commentsRows.length;
 
     const isNew = checkins.length <= 1 && totalOrders === 0;
@@ -610,7 +595,7 @@ export const crmRepository = {
     const isVip = totalOrders >= 5 || totalSpent > 1000;
     const isRepeatBuyer = totalOrders >= 2;
     const totalInteractions =
-      loveCount + dislikeCount + commentCount + postsCount + likesRows.length;
+      loveCount + dislikeCount + commentCount + likesRows.length;
 
     let engagementLevel: "muito_ativo" | "ativo" | "pouco_ativo" | "baixo_engajamento";
     if (isInactive) {
@@ -687,7 +672,6 @@ export const crmRepository = {
       ...reactionRows.map((r: any) => r.created_at),
       ...likesRows.map((l: any) => l.created_at),
       ...commentsRows.map((cm: any) => cm.created_at),
-      ...postsRows.map((p: any) => p.created_at),
     ].filter(Boolean);
     const lastInteractionAt =
       allTimestamps.length > 0
@@ -706,7 +690,6 @@ export const crmRepository = {
         .sort()
         .reverse()[0] ?? null;
     const lastCommentAt = commentsRows.length > 0 ? commentsRows[0].created_at : null;
-    const lastPostAt = postsRows.length > 0 ? postsRows[0].created_at : null;
     const lastLikeAt = likesRows.length > 0 ? likesRows[0].created_at : null;
 
     // --- Liked but not ordered ---
@@ -895,7 +878,6 @@ export const crmRepository = {
 
       dislikeCount,
       loveCount,
-      postsCount,
       photoCount,
       commentCount,
       wishedProducts: Array.from(wishMap.values()),
@@ -942,7 +924,6 @@ export const crmRepository = {
       lastLoveAt,
       lastDislikeAt,
       lastCommentAt,
-      lastPostAt,
       lastLikeAt,
       likedButNotOrdered,
       interestFunnel,

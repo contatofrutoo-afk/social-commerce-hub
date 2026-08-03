@@ -285,8 +285,7 @@ export type TimelineEventType =
   | "reaction_dislike"
   | "comment"
   | "like"
-  | "wish"
-  | "post";
+  | "wish";
 
 export interface TimelineEvent {
   id: string;
@@ -390,7 +389,6 @@ export interface CustomerInsights {
   // Behavior
   dislikeCount: number;
   loveCount: number;
-  postsCount: number;
   photoCount: number;
   commentCount: number;
   wishedProducts: ProductInteraction[];
@@ -428,7 +426,6 @@ export interface CustomerInsights {
   lastLoveAt: string | null;
   lastDislikeAt: string | null;
   lastCommentAt: string | null;
-  lastPostAt: string | null;
   lastLikeAt: string | null;
   likedButNotOrdered: ProductInteraction[];
   interestFunnel: InterestFunnel;

@@ -281,7 +281,7 @@ async function fetchAllData(): Promise<RawData> {
     supabase.from("company_payments").select("*"),
     supabase.from("orders").select("*"),
     supabase.from("checkins").select("*"),
-    supabase.from("posts").select("*"),
+    supabase.from("posts").select("*").eq("author_type", "business"),
     supabase.from("post_reactions").select("*"),
     supabase.from("comments").select("*"),
     supabase.from("products").select("*"),

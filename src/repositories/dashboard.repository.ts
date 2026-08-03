@@ -583,7 +583,7 @@ export const dashboardRepository = {
       supabase.from("customers").select("id, company_id, name, whatsapp, avatar_url, first_visit_at, last_visit_at, visit_count, created_at").eq("company_id", companyId),
       supabase.from("checkins").select("context, source, created_at, customer_id").eq("company_id", companyId),
       supabase.from("orders").select("total, created_at, customer_id").eq("company_id", companyId),
-      supabase.from("posts").select("id").eq("company_id", companyId),
+      supabase.from("posts").select("id").eq("company_id", companyId).eq("author_type", "business"),
       supabase.from("comments").select("id, image_url").eq("post.company_id", companyId),
     ]);
 

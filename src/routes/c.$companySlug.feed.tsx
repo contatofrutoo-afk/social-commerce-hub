@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { companyRepository, postRepository, commentRepository } from "@/repositories";
@@ -7,7 +7,6 @@ import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/sess
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/components/image-upload";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
@@ -15,32 +14,12 @@ import { fileToBase64 } from "@/lib/file-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { optimizedImageUrl } from "@/lib/image-url";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
   Heart,
   ThumbsDown,
   MessageCircle,
   ShoppingBag,
   Store,
   User as UserIcon,
-  MoreVertical,
-  Pencil,
-  Trash2,
   Send,
 } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
@@ -112,12 +91,9 @@ function FeedPage() {
             <Store className="size-6" />
           </div>
           <p className="mt-4 font-display text-lg font-semibold">Ainda não há publicações</p>
-          <p className="mt-1 text-sm text-muted-foreground">Seja o primeiro a compartilhar uma experiência.</p>
-          <Button asChild className="mt-5 rounded-full">
-            <Link to="/c/$companySlug/publicar" params={{ companySlug }}>
-              Publicar experiência
-            </Link>
-          </Button>
+          <p className="mt-1 text-sm text-muted-foreground">
+            O estabelecimento ainda não publicou nada no catálogo.
+          </p>
         </div>
       )}
       {posts?.map((p) => (
@@ -126,7 +102,6 @@ function FeedPage() {
           post={p}
           customerId={session.customerId}
           sessionToken={session.sessionToken}
-          companyId={session.companyId}
           cart={cart}
         />
       ))}
@@ -138,35 +113,15 @@ function PostCard({
   post,
   customerId,
   sessionToken,
-  companyId,
   cart,
 }: {
   post: Post;
   customerId: string;
   sessionToken: string;
-  companyId: string;
   cart: ReturnType<typeof useCart>;
 }) {
   const qc = useQueryClient();
   const [showComments, setShowComments] = useState(false);
-  const [editingPost, setEditingPost] = useState(false);
-  const [editText, setEditText] = useState(post.text ?? "");
-  const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
-  const isCompanyMember = post.companyId === companyId;
-  const isPostAuthor = post.authorType === "customer" && post.customerId === customerId;
-
-  const canEdit =
-    (post.authorType === "customer" && isPostAuthor) ||
-    (post.authorType === "business" && isCompanyMember);
-
-  const canDelete =
-    isPostAuthor ||
-    (post.authorType === "customer" && isCompanyMember) ||
-    (post.authorType === "business" && isCompanyMember);
-
-  const showMenu = canEdit || canDelete;
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
@@ -178,33 +133,6 @@ function PostCard({
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
     onError: (err) => toast.error(`Erro ao reagir: ${(err as Error).message}`),
-  });
-
-  const editMutation = useMutation({
-    mutationFn: () =>
-      postRepository.updateCustomerPost(
-        post.id,
-        customerId,
-        sessionToken,
-        editText.trim(),
-        editImageUrl,
-      ),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["feed"] });
-      setEditingPost(false);
-      toast.success("Publicação atualizada");
-    },
-    onError: (err) => toast.error(`Erro ao editar: ${(err as Error).message}`),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => postRepository.removeCustomerPost(post.id, customerId, sessionToken),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["feed"] });
-      setConfirmDelete(false);
-      toast.success("Publicação removida");
-    },
-    onError: (err) => toast.error(`Erro ao excluir: ${(err as Error).message}`),
   });
 
   return (
@@ -241,36 +169,6 @@ function PostCard({
           <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-accent-foreground capitalize">
             {post.companions}
           </span>
-        )}
-        {showMenu && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full">
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {canEdit && (
-                <DropdownMenuItem
-                  onClick={() => {
-                    setEditText(post.text ?? "");
-                    setEditImageUrl(post.imageUrl);
-                    setEditingPost(true);
-                  }}
-                >
-                  <Pencil className="size-4" /> Editar
-                </DropdownMenuItem>
-              )}
-              {canDelete && (
-                <DropdownMenuItem
-                  onClick={() => setConfirmDelete(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="size-4" /> Excluir
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         )}
       </header>
 
@@ -372,60 +270,6 @@ function PostCard({
       {showComments && (
         <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />
       )}
-
-      {/* Edit Dialog */}
-      <Dialog open={editingPost} onOpenChange={setEditingPost}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar publicação</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Textarea
-              placeholder="Texto"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              maxLength={500}
-            />
-            <ImageUpload
-              value={editImageUrl}
-              onChange={setEditImageUrl}
-              folder={`edit/${customerId}/${post.id}`}
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setEditingPost(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => editMutation.mutate()}
-              disabled={editMutation.isPending || (!editText.trim() && !editImageUrl)}
-            >
-              Salvar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir publicação?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A publicação será removida permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteMutation.mutate()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </article>
   );
 }
