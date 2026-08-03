@@ -274,7 +274,7 @@ function OrderCard({
 
   const ContextIcon = order.context ? contextIcons[order.context] : null;
   const orderStatus = order.status as OrderStatus;
-  const actionLabel = ORDER_ACTION_LABEL[orderStatus] ?? null;
+  const actionLabel = order.tableId ? (ORDER_ACTION_LABEL[orderStatus] ?? null) : null;
 
   const handleRemoveItem = (itemId: string) => {
     setRemovedItemIds((prev) => new Set(prev).add(itemId));
