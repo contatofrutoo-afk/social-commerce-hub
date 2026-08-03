@@ -151,4 +151,13 @@ export const orderRepository = {
     });
     if (error) throw error;
   },
+
+  /** Conclui de uma vez um pedido de loja (sem mesa): confirma pagamento no
+   *  caixa (payment paid) e finaliza o pedido. */
+  async finalizeOrder(orderId: string): Promise<void> {
+    const { error } = await supabase.rpc("finalize_order" as any, {
+      _order_id: orderId,
+    });
+    if (error) throw error;
+  },
 };

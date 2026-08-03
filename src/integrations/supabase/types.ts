@@ -1561,6 +1561,7 @@ export type Database = {
         Returns: string
       }
       complete_order: { Args: { _order_id: string }; Returns: undefined }
+      finalize_order: { Args: { _order_id: string }; Returns: undefined }
       create_checkin: {
         Args: {
           _company_id: string

@@ -99,6 +99,14 @@ function OrdersPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
   });
 
+  const finalize = useMutation({
+    mutationFn: (orderId: string) => orderRepository.finalizeOrder(orderId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+      toast.success("Pedido finalizado.");
+    },
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => orderRepository.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
@@ -191,6 +199,7 @@ function OrdersPage() {
           title="Em andamento"
           orders={active}
           action={advance}
+          onFinalize={finalize}
           onDelete={remove}
           onRemoveItem={removeItem}
         />
@@ -211,12 +220,14 @@ function Column({
   title,
   orders,
   action,
+  onFinalize,
   onDelete,
   onRemoveItem,
 }: {
   title: string;
   orders: any[];
   action?: { mutate: (order: Order) => void; isPending: boolean };
+  onFinalize?: { mutate: (orderId: string) => void; isPending: boolean };
   onDelete?: { mutate: (id: string) => void };
   onRemoveItem?: {
     mutate: (vars: { orderId: string; itemId: string }) => void;
@@ -237,6 +248,7 @@ function Column({
             key={o.id}
             order={o}
             action={action}
+            onFinalize={onFinalize}
             onDelete={onDelete}
             onRemoveItem={onRemoveItem}
           />
@@ -249,11 +261,13 @@ function Column({
 function OrderCard({
   order,
   action,
+  onFinalize,
   onDelete,
   onRemoveItem,
 }: {
   order: any;
   action?: { mutate: (order: Order) => void; isPending: boolean };
+  onFinalize?: { mutate: (orderId: string) => void; isPending: boolean };
   onDelete?: { mutate: (id: string) => void };
   onRemoveItem?: {
     mutate: (vars: { orderId: string; itemId: string }) => void;
@@ -391,6 +405,17 @@ function OrderCard({
           >
             <CheckCircle2 className="size-3.5" />
             {actionLabel}
+          </Button>
+        )}
+        {onFinalize && !order.tableId && (
+          <Button
+            size="sm"
+            onClick={() => onFinalize.mutate(order.id)}
+            disabled={onFinalize.isPending || visibleItems.length === 0}
+            className="gap-1"
+          >
+            <CheckCircle2 className="size-3.5" />
+            Finalizar
           </Button>
         )}
         {onDelete && (
