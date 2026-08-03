@@ -316,6 +316,12 @@ CREATE TABLE IF NOT EXISTS public.merchant_payment_accounts (
   UNIQUE (merchant_id, provider)
 );
 
+ALTER TABLE public.merchant_payment_accounts
+  ADD COLUMN IF NOT EXISTS account_name text,
+  ADD COLUMN IF NOT EXISTS account_id text,
+  ADD COLUMN IF NOT EXISTS connected_at timestamptz,
+  ADD COLUMN IF NOT EXISTS last_sync_at timestamptz;
+
 CREATE INDEX IF NOT EXISTS merchant_payment_accounts_merchant_idx
   ON public.merchant_payment_accounts (merchant_id);
 
