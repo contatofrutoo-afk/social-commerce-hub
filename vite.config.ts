@@ -7,6 +7,10 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // Pin the Worker compatibility date: from 2026-08-04 onwards the runtime rejects
+  // builds that still declare the `nodejs_compat` flag (it became implicit), which
+  // made every SSR request fail with a 502 / "Internal server error".
+  nitro: { compatibilityDate: "2026-08-03" } as { preset?: string },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
