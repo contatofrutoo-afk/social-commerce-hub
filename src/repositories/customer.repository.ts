@@ -3,11 +3,22 @@ import type { Customer, VisitContext } from "./types";
 
 /** Detecta quando o banco rejeita a chamada por não conhecer algum argumento
  *  (ex.: a migration que adiciona `_ip_address` ainda não foi aplicada no
- *  Supabase). Nesse caso as RPCs são chamadas novamente sem o argumento novo. */
+ *  Supabase, ou sobraram overloads antigas da mesma função no banco). Nesse
+ *  caso as RPCs são chamadas novamente com os argumentos mínimos.
+ *  - PGRST202: função/assinatura não encontrada
+ *  - PGRST203: PostgREST não consegue escolher entre overloads candidatas
+ *  - 42883:   função não existe (erro do Postgres direto) */
 function isUnsupportedParamError(error: unknown): boolean {
   const code = (error as { code?: string } | null)?.code;
   const message = String((error as { message?: unknown } | null)?.message ?? "");
-  return code === "PGRST202" || message.includes("Could not find the function");
+  return (
+    code === "PGRST202" ||
+    code === "PGRST203" ||
+    code === "42883" ||
+    message.includes("Could not find the function") ||
+    message.includes("Could not choose the best candidate function") ||
+    message.includes("does not exist")
+  );
 }
 
 /** Clientes anonimizados pelo "Excluir meus dados" (LGPD) ficam com
