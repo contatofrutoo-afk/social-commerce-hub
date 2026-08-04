@@ -488,10 +488,12 @@ export type Database = {
           accepted_checkin_privacy_at: string | null
           accepted_privacy_at: string | null
           accepted_terms_at: string | null
+          age_range: string | null
           avatar_url: string | null
           company_id: string
           created_at: string
           first_visit_at: string
+          gender: string | null
           id: string
           last_ip: string | null
           last_visit_at: string
@@ -504,10 +506,12 @@ export type Database = {
           accepted_checkin_privacy_at?: string | null
           accepted_privacy_at?: string | null
           accepted_terms_at?: string | null
+          age_range?: string | null
           avatar_url?: string | null
           company_id: string
           created_at?: string
           first_visit_at?: string
+          gender?: string | null
           id?: string
           last_ip?: string | null
           last_visit_at?: string
@@ -520,10 +524,12 @@ export type Database = {
           accepted_checkin_privacy_at?: string | null
           accepted_privacy_at?: string | null
           accepted_terms_at?: string | null
+          age_range?: string | null
           avatar_url?: string | null
           company_id?: string
           created_at?: string
           first_visit_at?: string
+          gender?: string | null
           id?: string
           last_ip?: string | null
           last_visit_at?: string
@@ -570,7 +576,7 @@ export type Database = {
           id?: string
           last_sync_at?: string | null
           merchant_id: string
-          provider: string
+          provider?: string
           provider_user_id?: string | null
           refresh_token?: string | null
           updated_at?: string
@@ -608,7 +614,7 @@ export type Database = {
           order_id: string
           product_id: string
           quantity: number
-          total: number
+          total: number | null
           unit_price: number
         }
         Insert: {
@@ -617,6 +623,7 @@ export type Database = {
           order_id: string
           product_id: string
           quantity?: number
+          total?: number | null
           unit_price?: number
         }
         Update: {
@@ -625,6 +632,7 @@ export type Database = {
           order_id?: string
           product_id?: string
           quantity?: number
+          total?: number | null
           unit_price?: number
         }
         Relationships: [
@@ -721,6 +729,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_table_id_fkey"
             columns: ["table_id"]
             isOneToOne: false
@@ -791,47 +806,6 @@ export type Database = {
           },
         ]
       }
-      payment_oauth_states: {
-        Row: {
-          business_id: string
-          code_challenge: string | null
-          code_verifier: string | null
-          created_at: string
-          expires_at: string
-          id: string
-          redirect_uri: string
-          state: string
-        }
-        Insert: {
-          business_id: string
-          code_challenge?: string | null
-          code_verifier?: string | null
-          created_at?: string
-          expires_at: string
-          id?: string
-          redirect_uri: string
-          state: string
-        }
-        Update: {
-          business_id?: string
-          code_challenge?: string | null
-          code_verifier?: string | null
-          created_at?: string
-          expires_at?: string
-          id?: string
-          redirect_uri?: string
-          state?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_oauth_states_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payment_logs: {
         Row: {
           business_id: string
@@ -874,42 +848,6 @@ export type Database = {
           },
         ]
       }
-      platform_settings: {
-        Row: {
-          id: number
-          mercadopago_access_token: string | null
-          mercadopago_client_id: string | null
-          mercadopago_client_secret: string | null
-          mercadopago_encryption_key: string | null
-          mercadopago_public_key: string | null
-          mercadopago_redirect_uri: string | null
-          mercadopago_webhook_secret: string | null
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          mercadopago_access_token?: string | null
-          mercadopago_client_id?: string | null
-          mercadopago_client_secret?: string | null
-          mercadopago_encryption_key?: string | null
-          mercadopago_public_key?: string | null
-          mercadopago_redirect_uri?: string | null
-          mercadopago_webhook_secret?: string | null
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          mercadopago_access_token?: string | null
-          mercadopago_client_id?: string | null
-          mercadopago_client_secret?: string | null
-          mercadopago_encryption_key?: string | null
-          mercadopago_public_key?: string | null
-          mercadopago_redirect_uri?: string | null
-          mercadopago_webhook_secret?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       payment_methods: {
         Row: {
           available_at: string | null
@@ -944,6 +882,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "payment_methods_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_oauth_states: {
+        Row: {
+          business_id: string
+          code_challenge: string | null
+          code_verifier: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          redirect_uri: string
+          state: string
+        }
+        Insert: {
+          business_id: string
+          code_challenge?: string | null
+          code_verifier?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          redirect_uri: string
+          state: string
+        }
+        Update: {
+          business_id?: string
+          code_challenge?: string | null
+          code_verifier?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redirect_uri?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_oauth_states_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1017,6 +996,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          id: number
+          mercadopago_access_token: string | null
+          mercadopago_client_id: string | null
+          mercadopago_client_secret: string | null
+          mercadopago_encryption_key: string | null
+          mercadopago_public_key: string | null
+          mercadopago_redirect_uri: string | null
+          mercadopago_webhook_secret: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          mercadopago_access_token?: string | null
+          mercadopago_client_id?: string | null
+          mercadopago_client_secret?: string | null
+          mercadopago_encryption_key?: string | null
+          mercadopago_public_key?: string | null
+          mercadopago_redirect_uri?: string | null
+          mercadopago_webhook_secret?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          mercadopago_access_token?: string | null
+          mercadopago_client_id?: string | null
+          mercadopago_client_secret?: string | null
+          mercadopago_encryption_key?: string | null
+          mercadopago_public_key?: string | null
+          mercadopago_redirect_uri?: string | null
+          mercadopago_webhook_secret?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       post_products: {
         Row: {
@@ -1095,6 +1110,7 @@ export type Database = {
           id: string
           image_url: string | null
           text: string | null
+          updated_at: string
           video_url: string | null
         }
         Insert: {
@@ -1107,6 +1123,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           text?: string | null
+          updated_at?: string
           video_url?: string | null
         }
         Update: {
@@ -1119,6 +1136,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           text?: string | null
+          updated_at?: string
           video_url?: string | null
         }
         Relationships: [
@@ -1555,7 +1573,6 @@ export type Database = {
         Returns: string
       }
       complete_order: { Args: { _order_id: string }; Returns: undefined }
-      finalize_order: { Args: { _order_id: string }; Returns: undefined }
       create_checkin: {
         Args: {
           _company_id: string
@@ -1577,20 +1594,33 @@ export type Database = {
         }
         Returns: string
       }
-      create_customer_order: {
-        Args: {
-          _company_id: string
-          _customer_id: string
-          _items: Json
-          _note: string
-          _payment_method?: string
-          _payment_provider?: string
-          _session_id?: string
-          _table_id?: string
-          _token: string
-        }
-        Returns: string
-      }
+      create_customer_order:
+        | {
+            Args: {
+              _company_id: string
+              _customer_id: string
+              _items: Json
+              _note: string
+              _payment_method?: string
+              _table_id?: string
+              _token: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _company_id: string
+              _customer_id: string
+              _items: Json
+              _note: string
+              _payment_method?: string
+              _payment_provider?: string
+              _session_id?: string
+              _table_id?: string
+              _token: string
+            }
+            Returns: string
+          }
       create_customer_post:
         | {
             Args: {
@@ -1622,6 +1652,10 @@ export type Database = {
         Returns: undefined
       }
       delete_company: { Args: { _company_id: string }; Returns: undefined }
+      delete_customer_order: {
+        Args: { _customer_id: string; _order_id: string; _token: string }
+        Returns: undefined
+      }
       delete_customer_post: {
         Args: { _customer_id: string; _post_id: string; _token: string }
         Returns: undefined
@@ -1632,6 +1666,7 @@ export type Database = {
       }
       delete_order_item: { Args: { _item_id: string }; Returns: Json }
       ensure_super_admin: { Args: never; Returns: boolean }
+      finalize_order: { Args: { _order_id: string }; Returns: undefined }
       get_company_public: {
         Args: { _slug: string }
         Returns: {
@@ -1649,10 +1684,12 @@ export type Database = {
           accepted_checkin_privacy_at: string | null
           accepted_privacy_at: string | null
           accepted_terms_at: string | null
+          age_range: string | null
           avatar_url: string | null
           company_id: string
           created_at: string
           first_visit_at: string
+          gender: string | null
           id: string
           last_ip: string | null
           last_visit_at: string
@@ -1797,8 +1834,10 @@ export type Database = {
       }
       update_customer_self: {
         Args: {
+          _age_range?: string
           _avatar_url: string
           _customer_id: string
+          _gender?: string
           _ip_address?: string
           _name: string
           _token: string
@@ -1811,7 +1850,9 @@ export type Database = {
       }
       upsert_customer_visit: {
         Args: {
+          _age_range?: string
           _company_id: string
+          _gender?: string
           _ip_address?: string
           _name: string
           _whatsapp: string
@@ -1824,7 +1865,16 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "staff" | "admin"
-      order_status: "received" | "payment_at_counter" | "awaiting_payment" | "payment_approved" | "preparing" | "ready" | "delivered" | "completed" | "cancelled"
+      order_status:
+        | "received"
+        | "completed"
+        | "payment_at_counter"
+        | "preparing"
+        | "ready"
+        | "cancelled"
+        | "awaiting_payment"
+        | "payment_approved"
+        | "delivered"
       post_author_type: "business" | "customer"
       reaction_type: "love" | "dislike"
       visit_context: "sozinho" | "casal" | "amigos" | "familia"
@@ -1956,7 +2006,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "staff", "admin"],
-      order_status: ["received", "payment_at_counter", "preparing", "ready", "completed", "cancelled"],
+      order_status: [
+        "received",
+        "completed",
+        "payment_at_counter",
+        "preparing",
+        "ready",
+        "cancelled",
+        "awaiting_payment",
+        "payment_approved",
+        "delivered",
+      ],
       post_author_type: ["business", "customer"],
       reaction_type: ["love", "dislike"],
       visit_context: ["sozinho", "casal", "amigos", "familia"],
