@@ -1546,6 +1546,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_platform_payments: {
+        Args: never
+        Returns: {
+          company_id: string
+          company_name: string
+          created_at: string
+          gross_amount: number
+          id: string
+          mercadopago_payment_id: string
+          net_amount: number
+          order_id: string
+          paid_at: string
+          payment_method: string
+          payment_origin: string
+          payment_status: string
+        }[]
+      }
       admin_set_company_status: {
         Args: { _company_id: string; _new_status: string; _reason?: string }
         Returns: undefined
