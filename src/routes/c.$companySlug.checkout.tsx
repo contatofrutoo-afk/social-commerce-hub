@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckoutStepper } from "@/components/checkout-stepper";
 import { formatBRL } from "@/lib/format";
 import { readCheckoutDraft, saveCheckoutDraft } from "@/lib/checkout-draft";
-import { useState } from "react";
+import { readCheckoutItems } from "@/lib/checkout-items";
+import { useState, useMemo } from "react";
 import { OrderItemOptions } from "@/components/product-options-selector";
 
 export const Route = createFileRoute("/c/$companySlug/checkout")({
@@ -29,6 +30,18 @@ function CheckoutPage() {
     typeof window !== "undefined" && company ? readCheckoutDraft(company.id).note ?? "" : "",
   );
 
+  const checkoutKeys = useMemo(
+    () => (company ? readCheckoutItems(company.id) : []),
+    [company],
+  );
+
+  const filteredItems = useMemo(() => {
+    if (checkoutKeys.length === 0) return cart.items;
+    return cart.items.filter((i) => checkoutKeys.includes(i.key));
+  }, [cart.items, checkoutKeys]);
+
+  const filteredTotal = filteredItems.reduce((s, i) => s + i.price * i.quantity, 0);
+
   function handleContinue() {
     if (!company) return;
     saveCheckoutDraft(company.id, { note });
@@ -42,11 +55,11 @@ function CheckoutPage() {
       <CheckoutStepper steps={STEPS} current={0} />
 
       <div className="space-y-3">
-        {cart.items.length === 0 ? (
+        {filteredItems.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-muted-foreground">Nenhum item na sacola.</p>
-            <Button className="mt-4" variant="outline" onClick={() => navigate({ to: "/c/$companySlug/feed", params: { companySlug } })}>
-              Ver catálogo
+            <p className="text-muted-foreground">Nenhum item selecionado.</p>
+            <Button className="mt-4" variant="outline" onClick={() => navigate({ to: "/c/$companySlug/sacola", params: { companySlug } })}>
+              Voltar à sacola
             </Button>
           </div>
         ) : (
@@ -54,7 +67,7 @@ function CheckoutPage() {
             <div className="rounded-xl border bg-card p-4">
               <h2 className="mb-3 text-sm font-semibold">Resumo do pedido</h2>
               <div className="space-y-2">
-                {cart.items.map((i) => (
+                {filteredItems.map((i) => (
                   <div key={i.key} className="text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <span>
@@ -67,7 +80,7 @@ function CheckoutPage() {
                 ))}
                 <div className="flex items-center justify-between border-t pt-2 text-sm font-bold">
                   <span>Total</span>
-                  <span>{formatBRL(cart.total)}</span>
+                  <span>{formatBRL(filteredTotal)}</span>
                 </div>
               </div>
             </div>

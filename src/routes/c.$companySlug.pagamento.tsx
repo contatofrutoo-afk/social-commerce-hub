@@ -8,11 +8,12 @@ import { CheckoutStepper } from "@/components/checkout-stepper";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { readCheckoutDraft, clearCheckoutDraft } from "@/lib/checkout-draft";
+import { readCheckoutItems, clearCheckoutItems } from "@/lib/checkout-items";
 import type { PaymentMethod } from "@/repositories/types";
 import { paymentService, type CreatePixPaymentResult } from "@/services/payment";
 import { Check, Copy, CreditCard, Loader2, QrCode, RefreshCcw, Store } from "lucide-react";
 import { toast } from "sonner";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export const Route = createFileRoute("/c/$companySlug/pagamento")({
   component: PaymentPage,
@@ -112,6 +113,26 @@ function PaymentPage() {
   const cart = useCart(company?.id);
   const clearCart = cart.clear;
 
+  const checkoutKeys = useMemo(
+    () => (company ? readCheckoutItems(company.id) : []),
+    [company],
+  );
+
+  const filteredItems = useMemo(() => {
+    if (checkoutKeys.length === 0) return cart.items;
+    return cart.items.filter((i) => checkoutKeys.includes(i.key));
+  }, [cart.items, checkoutKeys]);
+
+  const filteredTotal = filteredItems.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  const removePurchasedItems = useCallback(() => {
+    if (!company) return;
+    for (const key of checkoutKeys) {
+      cart.setQty(key, 0);
+    }
+    clearCheckoutItems(company.id);
+  }, [company, checkoutKeys, cart]);
+
   const { data: mpConfig } = useQuery({
     queryKey: ["mp-config"],
     queryFn: () => paymentService.checkout.config(),
@@ -146,7 +167,7 @@ function PaymentPage() {
     async (companyId: string, orderId: string, result: MercadoPagoPaymentResult) => {
       await paymentService.checkout.confirmOrder(companyId, orderId, result.payment_id);
       clearCheckoutDraft(companyId);
-      clearCart();
+      removePurchasedItems();
       qc.invalidateQueries({ queryKey: ["orders"] });
       navigate({
         to: "/c/$companySlug/confirmado",
@@ -154,7 +175,7 @@ function PaymentPage() {
         search: { orderId, paymentId: result.payment_id, status: result.status },
       });
     },
-    [companySlug, qc, clearCart, navigate],
+    [companySlug, qc, removePurchasedItems, navigate],
   );
 
   useEffect(() => {
@@ -192,7 +213,7 @@ function PaymentPage() {
   const startPayment = useMutation({
     mutationFn: async () => {
       if (!company) throw new Error("Sessão inválida");
-      if (cart.items.length === 0) throw new Error("Sacola vazia");
+      if (filteredItems.length === 0) throw new Error("Nenhum item selecionado");
       const active = await ensureFreshSession();
       const draft = readCheckoutDraft(company.id);
 
@@ -207,7 +228,7 @@ function PaymentPage() {
           paymentMethod: selected,
           paymentProvider: "mercadopago",
           sessionId: getAnonymousId(),
-          items: cart.items,
+          items: filteredItems,
         });
 
         if (selected === "pix") {
@@ -271,7 +292,7 @@ function PaymentPage() {
         paymentMethod: "counter",
         paymentProvider: "counter",
         sessionId: getAnonymousId(),
-        items: cart.items,
+        items: filteredItems,
       });
       return { orderId: res.id };
     },
@@ -286,7 +307,7 @@ function PaymentPage() {
       }
       toast.success("Pedido enviado! O estabelecimento foi notificado.");
       if (company) clearCheckoutDraft(company.id);
-      cart.clear();
+      removePurchasedItems();
       qc.invalidateQueries({ queryKey: ["orders"] });
       navigate({
         to: "/c/$companySlug/confirmado",
@@ -513,7 +534,7 @@ function PaymentPage() {
       <div className="mt-4 rounded-xl border bg-card p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Total a pagar</span>
-          <span className="text-lg font-bold">{formatBRL(cart.total)}</span>
+          <span className="text-lg font-bold">{formatBRL(filteredTotal)}</span>
         </div>
       </div>
 
@@ -529,7 +550,7 @@ function PaymentPage() {
       <Button
         className="mt-4 w-full"
         size="lg"
-        disabled={startPayment.isPending || cart.items.length === 0}
+        disabled={startPayment.isPending || filteredItems.length === 0}
         onClick={() => startPayment.mutate()}
       >
         {startPayment.isPending
