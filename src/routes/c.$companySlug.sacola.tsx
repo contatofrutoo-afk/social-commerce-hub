@@ -162,7 +162,7 @@ function BagPage() {
             const freshMedia = mediaByProduct?.get(i.productId);
             const isChecked = selected.has(i.key);
             return (
-            <div key={i.key} className={`rounded-xl border bg-card p-3 transition ${isChecked ? "ring-1 ring-primary/40" : "opacity-60"}`}>
+            <div key={i.key} className={`rounded-xl border bg-card p-3 transition ${isChecked ? "ring-1 ring-primary/40" : ""}`}>
               <div className="flex gap-3">
                 <button
                   type="button"
