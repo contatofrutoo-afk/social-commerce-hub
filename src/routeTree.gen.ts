@@ -45,6 +45,7 @@ import { Route as AuthenticatedAppCatalogoRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppAtendimentoRouteImport } from './routes/_authenticated.app.atendimento'
 import { Route as AuthenticatedAdminMetricasRouteImport } from './routes/_authenticated.admin.metricas'
 import { Route as AuthenticatedAdminLicencasRouteImport } from './routes/_authenticated.admin.licencas'
+import { Route as AuthenticatedAdminFinanceiroPlataformaRouteImport } from './routes/_authenticated.admin.financeiro-plataforma'
 import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_authenticated.admin.financeiro'
 import { Route as AuthenticatedAdminEmpresasRouteImport } from './routes/_authenticated.admin.empresas'
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated.admin.configuracoes'
@@ -241,6 +242,12 @@ const AuthenticatedAdminLicencasRoute =
     path: '/licencas',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminFinanceiroPlataformaRoute =
+  AuthenticatedAdminFinanceiroPlataformaRouteImport.update({
+    id: '/financeiro-plataforma',
+    path: '/financeiro-plataforma',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFinanceiroRoute =
   AuthenticatedAdminFinanceiroRouteImport.update({
     id: '/financeiro',
@@ -292,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/admin/financeiro-plataforma': typeof AuthenticatedAdminFinanceiroPlataformaRoute
   '/admin/licencas': typeof AuthenticatedAdminLicencasRoute
   '/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
@@ -332,6 +340,7 @@ export interface FileRoutesByTo {
   '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/admin/financeiro-plataforma': typeof AuthenticatedAdminFinanceiroPlataformaRoute
   '/admin/licencas': typeof AuthenticatedAdminLicencasRoute
   '/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
@@ -377,6 +386,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/empresas': typeof AuthenticatedAdminEmpresasRouteWithChildren
   '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/_authenticated/admin/financeiro-plataforma': typeof AuthenticatedAdminFinanceiroPlataformaRoute
   '/_authenticated/admin/licencas': typeof AuthenticatedAdminLicencasRoute
   '/_authenticated/admin/metricas': typeof AuthenticatedAdminMetricasRoute
   '/_authenticated/app/atendimento': typeof AuthenticatedAppAtendimentoRoute
@@ -422,6 +432,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/empresas'
     | '/admin/financeiro'
+    | '/admin/financeiro-plataforma'
     | '/admin/licencas'
     | '/admin/metricas'
     | '/app/atendimento'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/configuracoes'
     | '/admin/empresas'
     | '/admin/financeiro'
+    | '/admin/financeiro-plataforma'
     | '/admin/licencas'
     | '/admin/metricas'
     | '/app/atendimento'
@@ -506,6 +518,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/empresas'
     | '/_authenticated/admin/financeiro'
+    | '/_authenticated/admin/financeiro-plataforma'
     | '/_authenticated/admin/licencas'
     | '/_authenticated/admin/metricas'
     | '/_authenticated/app/atendimento'
@@ -801,6 +814,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLicencasRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/financeiro-plataforma': {
+      id: '/_authenticated/admin/financeiro-plataforma'
+      path: '/financeiro-plataforma'
+      fullPath: '/admin/financeiro-plataforma'
+      preLoaderRoute: typeof AuthenticatedAdminFinanceiroPlataformaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/financeiro': {
       id: '/_authenticated/admin/financeiro'
       path: '/financeiro'
@@ -865,6 +885,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEmpresasRoute: typeof AuthenticatedAdminEmpresasRouteWithChildren
   AuthenticatedAdminFinanceiroRoute: typeof AuthenticatedAdminFinanceiroRoute
+  AuthenticatedAdminFinanceiroPlataformaRoute: typeof AuthenticatedAdminFinanceiroPlataformaRoute
   AuthenticatedAdminLicencasRoute: typeof AuthenticatedAdminLicencasRoute
   AuthenticatedAdminMetricasRoute: typeof AuthenticatedAdminMetricasRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -875,6 +896,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminEmpresasRoute: AuthenticatedAdminEmpresasRouteWithChildren,
   AuthenticatedAdminFinanceiroRoute: AuthenticatedAdminFinanceiroRoute,
+  AuthenticatedAdminFinanceiroPlataformaRoute:
+    AuthenticatedAdminFinanceiroPlataformaRoute,
   AuthenticatedAdminLicencasRoute: AuthenticatedAdminLicencasRoute,
   AuthenticatedAdminMetricasRoute: AuthenticatedAdminMetricasRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

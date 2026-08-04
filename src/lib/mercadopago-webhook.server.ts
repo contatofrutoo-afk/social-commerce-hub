@@ -28,9 +28,14 @@ interface MercadoPagoPayment {
   status_detail?: string;
   external_reference?: string | null;
   date_approved?: string | null;
-  payment_method?: { id?: string } | null;
+  transaction_amount?: number | null;
+  net_received_amount?: number | null;
+  payment_method?: { id?: string; type?: string } | null;
   collector?: { id: number } | null;
 }
+
+type PlatformPaymentMethod = "pix" | "credit_card" | "debit_card" | "cash" | "other";
+type PlatformPaymentStatus = "approved" | "cancelled" | "refunded" | "pending";
 
 export async function handleMercadoPagoWebhook(request: Request): Promise<Response> {
   if (request.method !== "POST") {
@@ -200,6 +205,13 @@ async function updateOrderFromPayment({ payment, orderId, merchantId, data, type
     updated = error ? 0 : 1;
   }
 
+  // Financeiro da Plataforma: consolidação idempotente por payment do MP.
+  const order = orderId ? await getOrderById(orderId) : null;
+  const companyId = order?.company_id ?? merchantId;
+  if (companyId) {
+    await upsertPlatformPayment({ payment, companyId });
+  }
+
   await logPaymentEvent(merchantId ?? "webhook", "Payment processado", {
     paymentId: payment.id,
     orderId,
@@ -210,6 +222,89 @@ async function updateOrderFromPayment({ payment, orderId, merchantId, data, type
   });
 
   return { paymentId: payment.id, orderId, status: payment.status, updated };
+}
+
+async function upsertPlatformPayment({
+  payment,
+  companyId,
+}: {
+  payment: MercadoPagoPayment;
+  companyId: string;
+}) {
+  const supabaseAdmin = await loadSupabaseAdmin();
+
+  const { data: company } = await supabaseAdmin
+    .from("companies")
+    .select("name")
+    .eq("id", companyId)
+    .maybeSingle();
+
+  const gross = payment.transaction_amount ?? 0;
+  const net = payment.net_received_amount ?? gross;
+
+  const { error } = await supabaseAdmin
+    .from("platform_payments" as any)
+    .upsert(
+      {
+        company_id: companyId,
+        company_name: company?.name ?? null,
+        order_id: payment.external_reference ?? null,
+        payment_origin: "mercado_pago",
+        payment_method: mapPaymentMethod(payment),
+        payment_status: mapPaymentStatus(payment.status),
+        gross_amount: gross,
+        net_amount: net,
+        mercadopago_payment_id: String(payment.id),
+        paid_at:
+          payment.status === "approved"
+            ? payment.date_approved ?? new Date().toISOString()
+            : null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "mercadopago_payment_id" },
+    );
+
+  if (error) {
+    await logPaymentEvent(companyId, "Erro ao registrar pagamento na plataforma", {
+      paymentId: payment.id,
+      message: error.message,
+    });
+  }
+}
+
+function mapPaymentMethod(payment: MercadoPagoPayment): PlatformPaymentMethod {
+  const id = payment.payment_method?.id?.toLowerCase() ?? "";
+  const type = payment.payment_method?.type?.toLowerCase() ?? "";
+  if (id === "pix") return "pix";
+  if (type === "credit_card") return "credit_card";
+  if (type === "debit_card") return "debit_card";
+  if (id.startsWith("deb")) return "debit_card";
+  if (/visa|master|amex|elo|hipercard|hiper|naranja|nativa|maestro/.test(id)) {
+    return "credit_card";
+  }
+  return "other";
+}
+
+function mapPaymentStatus(status: MercadoPagoPaymentStatus): PlatformPaymentStatus {
+  switch (status) {
+    case "approved":
+      return "approved";
+    case "pending":
+    case "in_process":
+    case "authorized":
+    case "in_mediation":
+      return "pending";
+    case "rejected":
+    case "cancelled":
+    case "expired":
+      return "cancelled";
+    case "refunded":
+    case "charged_back":
+    case "partly_refunded":
+      return "refunded";
+    default:
+      return "pending";
+  }
 }
 
 async function fetchMercadoPagoPayment(
@@ -234,10 +329,17 @@ async function getOrderById(orderId: string) {
   const supabaseAdmin = await loadSupabaseAdmin();
   const { data } = await supabaseAdmin
     .from("orders")
-    .select("id, merchant_id, payment_status")
+    .select("id, merchant_id, company_id, payment_status")
     .eq("id", orderId)
     .maybeSingle();
-  return data as { id: string; merchant_id: string | null; payment_status: string | null } | null;
+  return data as
+    | {
+        id: string;
+        merchant_id: string | null;
+        company_id: string | null;
+        payment_status: string | null;
+      }
+    | null;
 }
 
 async function getMerchantIdForOrder(orderId: string): Promise<string | null> {

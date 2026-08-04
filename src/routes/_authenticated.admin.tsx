@@ -19,6 +19,7 @@ import {
   LogOut,
   Shield,
   ClipboardCheck,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +72,7 @@ const items = [
   { to: "/admin/aprovacoes", label: "Aprovações", icon: ClipboardCheck },
   { to: "/admin/empresas", label: "Empresas", icon: Building2 },
   { to: "/admin/financeiro", label: "Financeiro", icon: DollarSign },
+  { to: "/admin/financeiro-plataforma", label: "Financeiro da Plataforma", icon: Landmark },
   { to: "/admin/licencas", label: "Licenças", icon: FileText },
   { to: "/admin/metricas", label: "Métricas", icon: TrendingUp },
   { to: "/admin/configuracoes", label: "Configurações", icon: Settings },
