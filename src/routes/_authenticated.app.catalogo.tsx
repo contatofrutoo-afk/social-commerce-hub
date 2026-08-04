@@ -115,7 +115,8 @@ function CatalogoPage() {
 
   function buildQrUrl(slug: string) {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}/p/${slug}`;
+    // `src=catalogo` marca a jornada: check-in de origem "Catálogo inteligente".
+    return `${origin}/p/${slug}?src=catalogo`;
   }
 
   function openNew() {

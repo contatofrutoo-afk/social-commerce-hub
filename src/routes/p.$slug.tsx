@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { productRepository } from "@/repositories";
 import { useCart } from "@/hooks/use-cart";
 import { getSessionForCompany } from "@/lib/session";
+import { onboardViaQr } from "@/lib/qr-onboard";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/format";
 import { ArrowLeft, ShoppingCart, Package, Minus, Plus, Eye, ScanLine, Hash, ChevronLeft, ChevronRight } from "lucide-react";
@@ -38,6 +39,27 @@ function ProductPage() {
         .catch(() => {});
       productRepository.incrementCounter(product.id, "views_count").catch(() => {});
     }
+  }, [product?.id]);
+
+  // QR do Catálogo Inteligente (`/p/{slug}?src=catalogo`) também abre a jornada
+  // com check-in de origem "Catálogo inteligente", registrada no Dashboard.
+  // Só no PRIMEIRO contato deste aparelho com a loja: quem já tem sessão (veio
+  // por link geral, QR geral ou mesa) preserva o canal de entrada e a mesa —
+  // chamar auto_checkin aqui re-mapearia table_id para NULL e removeria o
+  // cliente da presença da mesa.
+  useEffect(() => {
+    if (!product) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("src") !== "catalogo") return;
+
+    const companySlug = product.companySlug ?? slug.split("-")[0];
+    if (getSessionForCompany(companySlug)) return;
+
+    onboardViaQr({
+      companyId: product.companyId,
+      companySlug,
+      source: "catalogo",
+    }).catch(() => {});
   }, [product?.id]);
 
   if (isPending) {

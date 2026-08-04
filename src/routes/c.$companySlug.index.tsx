@@ -37,6 +37,7 @@ function CheckinPage() {
 
     const params = new URLSearchParams(window.location.search);
     const tableId = params.get("t") ?? params.get("table") ?? "";
+    const src = params.get("src") ?? params.get("origem") ?? "";
 
     (async () => {
       try {
@@ -44,7 +45,7 @@ function CheckinPage() {
           companyId: company.id,
           companySlug,
           tableId: tableId || null,
-          source: tableId ? "mesa" : "link",
+          source: tableId ? "mesa" : src === "qr" ? "qr" : "link",
         });
         queryClient.setQueryData(["company", companySlug], company);
         await queryClient.prefetchQuery({

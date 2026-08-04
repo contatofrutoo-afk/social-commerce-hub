@@ -32,6 +32,12 @@ import {
   Plus,
   Megaphone,
   Percent,
+  Link2,
+  QrCode,
+  Armchair,
+  ScanLine,
+  Landmark,
+  HandCoins,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/")({
@@ -48,6 +54,27 @@ const PERIOD_LABELS: Record<PeriodKey, string> = {
   "90d": "90 dias",
   year: "Este ano",
 };
+
+type ChannelKey = "link" | "qr" | "mesa" | "catalogo";
+
+const CHANNELS: { key: ChannelKey; label: string; icon: any; color: string }[] = [
+  { key: "link", label: "Link geral", icon: Link2, color: "#3b82f6" },
+  { key: "qr", label: "QR geral", icon: QrCode, color: "#8b5cf6" },
+  { key: "mesa", label: "Mesa", icon: Armchair, color: "#f59e0b" },
+  { key: "catalogo", label: "Catálogo inteligente", icon: ScanLine, color: "#10b981" },
+];
+
+// Normaliza a origem do check-in em um dos 4 canais de entrada da jornada.
+function channelFromSource(
+  source: string | null | undefined,
+  tableId: string | null | undefined,
+): ChannelKey {
+  const s = (source ?? "").toLowerCase();
+  if (tableId || s.startsWith("mesa")) return "mesa";
+  if (s === "qr" || s === "qrcode") return "qr";
+  if (s === "catalogo" || s === "catalogo-inteligente") return "catalogo";
+  return "link";
+}
 
 function getPeriodBounds(period: PeriodKey) {
   const now = Date.now();
@@ -356,6 +383,115 @@ function DashboardPage() {
     };
   }, [orders, allCheckins, todayStart]);
 
+  // Jornada por canal de entrada: check-in → pedido → pagamento, comparado ao período anterior.
+  const journeyByChannel = useMemo(() => {
+    const empty = () => ({
+      checkins: 0,
+      prevCheckins: 0,
+      customers: 0,
+      orders: 0,
+      prevOrders: 0,
+      paid: 0,
+      prevPaid: 0,
+      revenue: 0,
+      prevRevenue: 0,
+    });
+    const map = new Map<ChannelKey, ReturnType<typeof empty>>(CHANNELS.map((c) => [c.key, empty()]));
+    const checkins = (allCheckins ?? []) as any[];
+
+    const customerSets = new Map<ChannelKey, Set<string>>();
+    checkins.forEach((c: any) => {
+      const ch = channelFromSource(c.source, c.table_id);
+      const row = map.get(ch)!;
+      if (inRange(c.created_at, pStart, pEnd)) {
+        row.checkins += 1;
+        let set = customerSets.get(ch);
+        if (!set) {
+          set = new Set();
+          customerSets.set(ch, set);
+        }
+        set.add(c.customer_id);
+      } else if (inRange(c.created_at, prevStart, prevEnd)) {
+        row.prevCheckins += 1;
+      }
+    });
+    customerSets.forEach((set, ch) => {
+      map.get(ch)!.customers = set.size;
+    });
+
+    // Atribui cada pedido ao canal do check-in mais recente do cliente antes do pedido.
+    const byCustomer = new Map<string, { ch: ChannelKey; ts: number }[]>();
+    checkins.forEach((c: any) => {
+      const list = byCustomer.get(c.customer_id) ?? [];
+      list.push({
+        ch: channelFromSource(c.source, c.table_id),
+        ts: new Date(c.created_at).getTime(),
+      });
+      byCustomer.set(c.customer_id, list);
+    });
+    byCustomer.forEach((list) => list.sort((a, b) => a.ts - b.ts));
+    const channelOfOrder = (o: any): ChannelKey => {
+      const list = byCustomer.get(o.customerId);
+      if (!list || list.length === 0) return "link";
+      const t = new Date(o.createdAt).getTime();
+      let ch: ChannelKey = "link";
+      for (const c of list) {
+        if (c.ts <= t) ch = c.ch;
+        else break;
+      }
+      return ch;
+    };
+
+    (orders ?? []).forEach((o) => {
+      if (o.status === "cancelled") return;
+      const row = map.get(channelOfOrder(o))!;
+      if (inRange(o.createdAt, pStart, pEnd)) {
+        row.orders += 1;
+        if (o.paymentStatus === "paid") {
+          row.paid += 1;
+          row.revenue += o.total;
+        }
+      } else if (inRange(o.createdAt, prevStart, prevEnd)) {
+        row.prevOrders += 1;
+        if (o.paymentStatus === "paid") {
+          row.prevPaid += 1;
+          row.prevRevenue += o.total;
+        }
+      }
+    });
+
+    return CHANNELS.map((meta) => ({ ...meta, ...map.get(meta.key)! }));
+  }, [allCheckins, orders, pStart, pEnd, prevStart, prevEnd]);
+
+  // Pagamentos aprovados por modalidade: Mercado Pago (confirmado online) vs No balcão.
+  const paymentSplit = useMemo(() => {
+    let mpCount = 0;
+    let mpAmount = 0;
+    let counterCount = 0;
+    let counterAmount = 0;
+    paidPeriodOrders.forEach((o) => {
+      // Só é Mercado Pago quando o pedido confirma o pagamento online (payment_approved);
+      // o restante é pagamento feito no balcão do estabelecimento.
+      const isMp = o.paymentProvider === "mercadopago" && o.status === "payment_approved";
+      if (isMp) {
+        mpCount += 1;
+        mpAmount += o.total;
+      } else {
+        counterCount += 1;
+        counterAmount += o.total;
+      }
+    });
+    const totalAmount = mpAmount + counterAmount;
+    return {
+      mpCount,
+      mpAmount,
+      counterCount,
+      counterAmount,
+      mpShare: totalAmount > 0 ? (mpAmount / totalAmount) * 100 : 0,
+      counterShare: totalAmount > 0 ? (counterAmount / totalAmount) * 100 : 0,
+    };
+  }, [paidPeriodOrders]);
+
   const liveEvents = useMemo(() => {
     const since = Date.now() - 60 * 60 * 1000;
     const list: { text: string; ts: string; type: string }[] = [];
@@ -646,6 +782,72 @@ function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-3">
         <section className="dash-card p-5 xl:col-span-2">
+          <div className="mb-1 flex items-center gap-2">
+            <ScanLine className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Jornada por Origem
+            </h2>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Check-in → pedido → pagamento por canal de entrada, no período
+          </p>
+          <div className="space-y-3">
+            {journeyByChannel.map((ch) => (
+              <ChannelRow key={ch.key} channel={ch} />
+            ))}
+          </div>
+        </section>
+
+        <section className="dash-card p-5">
+          <div className="mb-1 flex items-center gap-2">
+            <Wallet className="size-4 text-primary" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Pagamentos
+            </h2>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Aprovados no período, por modalidade
+          </p>
+          <div className="mb-5 flex h-3 w-full overflow-hidden rounded-full bg-muted/60">
+            <div
+              className="h-full bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6]"
+              style={{ width: `${paymentSplit.mpShare}%` }}
+              title="Mercado Pago"
+            />
+            <div
+              className="h-full bg-gradient-to-r from-[#f59e0b] to-[#ef4444]"
+              style={{ width: `${paymentSplit.counterShare}%` }}
+              title="No balcão"
+            />
+          </div>
+          <div className="space-y-3">
+            <PaymentRow
+              icon={Landmark}
+              label="Mercado Pago"
+              count={paymentSplit.mpCount}
+              amount={paymentSplit.mpAmount}
+              share={paymentSplit.mpShare}
+              tone="text-blue-600"
+            />
+            <PaymentRow
+              icon={HandCoins}
+              label="No balcão"
+              count={paymentSplit.counterCount}
+              amount={paymentSplit.counterAmount}
+              share={paymentSplit.counterShare}
+              tone="text-amber-600"
+            />
+          </div>
+          <div className="mt-5 rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
+            Pagamentos aprovados: {paidPeriodOrders.length} pedido
+            {paidPeriodOrders.length !== 1 ? "s" : ""} ·{" "}
+            {formatBRL(paymentSplit.mpAmount + paymentSplit.counterAmount)}
+          </div>
+        </section>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <section className="dash-card p-5 xl:col-span-2">
           <div className="mb-3 flex items-center gap-2">
             <Clock className="size-4 text-primary" />
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -773,6 +975,86 @@ function DayRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between border-b border-muted/50 pb-2 text-sm last:border-0 last:pb-0">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function ChannelRow({ channel }: { channel: any }) {
+  const conversion = channel.checkins > 0 ? (channel.orders / channel.checkins) * 100 : null;
+  const orderRate = channel.orders > 0 ? (channel.paid / channel.orders) * 100 : null;
+  return (
+    <div className="rounded-xl border p-3">
+      <div className="flex items-center gap-2">
+        <span
+          className="grid size-7 shrink-0 place-items-center rounded-lg"
+          style={{ backgroundColor: `${channel.color}1a`, color: channel.color }}
+        >
+          <channel.icon className="size-4" />
+        </span>
+        <span className="text-sm font-semibold">{channel.label}</span>
+        <span className="ml-auto text-xs text-muted-foreground">
+          {channel.customers} cliente{channel.customers !== 1 ? "s" : ""}
+        </span>
+        <TrendPill {...computeChange(channel.checkins, channel.prevCheckins)} />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <MiniMetric label="Check-ins" value={String(channel.checkins)} />
+        <MiniMetric label="Pedidos" value={String(channel.orders)} />
+        <MiniMetric label="Pagos" value={String(channel.paid)} />
+        <div className="rounded-lg bg-muted/40 px-2 py-1.5">
+          <div className="text-xs text-muted-foreground">Receita</div>
+          <div className="number-display text-sm font-bold">{formatBRL(channel.revenue)}</div>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center gap-4 text-[11px] text-muted-foreground">
+        <span>Conversão: {conversion != null ? `${conversion.toFixed(1)}%` : "—"}</span>
+        <span>Pagos/Pedidos: {orderRate != null ? `${orderRate.toFixed(1)}%` : "—"}</span>
+      </div>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-muted/40 px-2 py-1.5">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="number-display text-sm font-bold">{value}</div>
+    </div>
+  );
+}
+
+function PaymentRow({
+  icon: Icon,
+  label,
+  count,
+  amount,
+  share,
+  tone,
+}: {
+  icon: any;
+  label: string;
+  count: number;
+  amount: number;
+  share: number;
+  tone: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className={`grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50 ${tone}`}>
+        <Icon className="size-4" />
+      </span>
+      <div className="flex-1">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium">{label}</span>
+          <span className="text-xs text-muted-foreground">
+            {count} pedido{count !== 1 ? "s" : ""}
+          </span>
+        </div>
+        <div className="number-display font-bold">{formatBRL(amount)}</div>
+      </div>
+      <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+        {share.toFixed(0)}%
+      </span>
     </div>
   );
 }

@@ -139,6 +139,9 @@ function SettingsPage() {
 
   const baseUrl = getBaseUrl();
   const generalLink = company ? `${baseUrl}/c/${company.slug}` : "";
+  // QR do Link Geral leva `?src=qr` para a plataforma mapear a jornada como
+  // "QR geral" (distinta do link compartilhado direto, que fica sem o parâmetro).
+  const generalQrUrl = company ? `${baseUrl}/c/${company.slug}?src=qr` : "";
   const vendasLink = company ? `${baseUrl}/c/${company.slug}/vendas` : "";
 
   const save = useMutation({
@@ -275,7 +278,7 @@ function SettingsPage() {
               <Copy className="size-4 mr-2" />
               Copiar Link
             </Button>
-            <QrCodeDialog url={generalLink} label="QR Code — Link Geral" />
+            <QrCodeDialog url={generalQrUrl} label="QR Code — Link Geral" />
           </div>
         </div>
       )}
