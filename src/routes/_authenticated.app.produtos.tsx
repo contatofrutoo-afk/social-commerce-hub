@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { productRepository, dashboardRepository } from "@/repositories";
 import type { Product, ProductMetric, MediaItem } from "@/repositories/types";
+import { ProductOptionsEditor, draftFromProductOption, type ProductOptionDraft } from "@/components/product-options-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/image-upload";
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/app/produtos")({
   head: () => ({ meta: [{ title: "Produtos — WEAZE" }] }),
 });
 
-const empty = { name: "", category: "", price: 0, image_url: "", video_url: "", description: "", available: true, mediaItems: [] as MediaItem[] };
+const empty = { name: "", category: "", price: 0, image_url: "", video_url: "", description: "", available: true, mediaItems: [] as MediaItem[], options: [] as ProductOptionDraft[] };
 
 function ProductsPage() {
   const qc = useQueryClient();
@@ -64,12 +65,14 @@ function ProductsPage() {
       if (editing) {
         const updated = await productRepository.update(editing.id, payload);
         await productRepository.setMedia(editing.id, form.mediaItems);
+        await productRepository.setOptions(editing.id, form.options);
         return updated;
       }
       const created = await productRepository.create(companyId!, payload);
       if (form.mediaItems.length > 0) {
         await productRepository.setMedia(created.id, form.mediaItems);
       }
+      await productRepository.setOptions(created.id, form.options);
       return created;
     },
     onSuccess: () => {
@@ -101,6 +104,7 @@ function ProductsPage() {
       description: p.description ?? "",
       available: p.available,
       mediaItems: (p.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
+      options: (p.options ?? []).map(draftFromProductOption),
     });
     setOpen(true);
   }
@@ -166,6 +170,10 @@ function ProductsPage() {
                   onCheckedChange={(v) => setForm({ ...form, available: v })}
                 />
               </div>
+              <ProductOptionsEditor
+                value={form.options}
+                onChange={(options) => setForm({ ...form, options })}
+              />
               <Button onClick={() => save.mutate()} disabled={save.isPending || !form.name}>
                 Salvar
               </Button>
