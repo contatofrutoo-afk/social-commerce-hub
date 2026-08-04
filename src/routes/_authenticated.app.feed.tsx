@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { postRepository, productRepository, dashboardRepository } from "@/repositories";
 import type { PostMetric } from "@/repositories/types";
@@ -145,6 +145,31 @@ function FeedAdminPage() {
     onError: (err) => toast.error(`Erro ao salvar opções: ${(err as Error).message}`),
   });
 
+  const toggleProduct = useCallback(
+    (productId: string) => {
+      setSelectedProducts((s) => {
+        const isActive = s.includes(productId);
+        if (isActive) return s.filter((x) => x !== productId);
+        const next = [...s, productId];
+        if (next.length === 1) {
+          const p = products?.find((x) => x.id === productId);
+          if (p) {
+            if (p.videoUrl && !videoUrl) {
+              setVideoUrl(p.videoUrl);
+              setMediaType("video");
+            } else if (p.imageUrl && !imageUrl) {
+              setImageUrl(p.imageUrl);
+              setMediaType("image");
+            }
+            if (p.description && !text) setText(p.description);
+          }
+        }
+        return next;
+      });
+    },
+    [products, imageUrl, videoUrl, text],
+  );
+
   const openOptionsFor = (p: Product) => {
     setOptionsDraft((p.options ?? []).map(draftFromProductOption));
     setOptionsProduct(p);
@@ -225,11 +250,7 @@ function FeedAdminPage() {
               return (
                 <button
                   key={p.id}
-                  onClick={() =>
-                    setSelectedProducts((s) =>
-                      active ? s.filter((x) => x !== p.id) : [...s, p.id],
-                    )
-                  }
+                  onClick={() => toggleProduct(p.id)}
                   className={`rounded-full border px-3 py-1 text-xs ${
                     active ? "border-primary bg-accent" : ""
                   }`}
@@ -247,8 +268,11 @@ function FeedAdminPage() {
                   <div key={p.id} className="flex items-center justify-between rounded-lg border bg-muted/40 px-2.5 py-1.5 text-xs">
                     <span className="truncate font-medium">
                       {p.name}
+                      <span className="ml-2 text-[10px] text-muted-foreground">
+                        {formatBRL(p.price)}
+                      </span>
                       {(p.options?.length ?? 0) > 0 && (
-                        <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                        <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
                           {p.options!.length} opção(ões)
                         </span>
                       )}
