@@ -220,11 +220,11 @@ function WeazeFinanceiroPlataforma() {
       setLoading(true);
       try {
         const [paymentsRes, companiesRes] = await Promise.all([
-          (supabase as any).from("platform_payments").select("*").order("paid_at", { ascending: false }),
+          (supabase as any).rpc("admin_list_platform_payments"),
           supabase.from("companies").select("id, name, city, status").order("name"),
         ]);
         if (paymentsRes.error) throw paymentsRes.error;
-        setPayments(paymentsRes.data ?? []);
+        setPayments((paymentsRes.data ?? []) as PaymentRow[]);
         setCompanies(companiesRes.data ?? []);
       } catch (err) {
         console.error("Erro ao carregar financeiro da plataforma:", err);
