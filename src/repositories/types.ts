@@ -54,6 +54,40 @@ export interface Checkin {
 
 export type ProductStatus = "active" | "inactive";
 
+export type ProductOptionType = "single" | "multiple" | "text" | "quantity" | "toggle";
+
+export interface ProductOptionValue {
+  id: string;
+  label: string;
+  priceAdjust: number;
+  available: boolean;
+  sortOrder: number;
+  imageUrl?: string | null;
+}
+
+export interface ProductOption {
+  id: string;
+  name: string;
+  optionType: ProductOptionType;
+  required: boolean;
+  minSelect: number | null;
+  maxSelect: number | null;
+  priceAdjust: number;
+  sortOrder: number;
+  values: ProductOptionValue[];
+}
+
+/** Seleção feita pelo cliente. Preço unitário = produto + soma dos ajustes. */
+export interface SelectedOption {
+  optionId?: string;
+  optionName: string;
+  valueId?: string | null;
+  valueLabel?: string | null;
+  freeText?: string | null;
+  quantity?: number;
+  priceAdjust: number;
+}
+
 export interface ProductMedia {
   id: string;
   mediaType: "image" | "video";
@@ -84,6 +118,8 @@ export interface Product {
   revenue: number;
   uniqueCustomers: number;
   media?: ProductMedia[];
+  options?: ProductOption[];
+  hasOptions?: boolean;
 }
 
 export interface ProductEvent {
@@ -155,6 +191,7 @@ export interface OrderItem {
   quantity: number;
   note: string | null;
   unitPrice: number;
+  options?: SelectedOption[];
 }
 
 export interface MediaItem {
@@ -163,14 +200,17 @@ export interface MediaItem {
 }
 
 export interface CartItem {
+  key: string;
   productId: string;
   name: string;
   price: number;
+  basePrice?: number;
   imageUrl: string | null;
   videoUrl: string | null;
   media?: { url: string; type: "image" | "video" }[];
   quantity: number;
   note?: string;
+  options?: SelectedOption[];
 }
 
 // --- Analytics ---

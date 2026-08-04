@@ -31,6 +31,12 @@ import { POST_CATEGORIES, getPostCategoryBadge } from "@/lib/post-categories";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { optimizedImageUrl } from "@/lib/image-url";
 import {
+  ProductOptionsEditor,
+  draftFromProductOption,
+  type ProductOptionDraft,
+} from "@/components/product-options-editor";
+import type { Product } from "@/repositories/types";
+import {
   Trash2,
   Heart,
   MessageCircle,
@@ -43,6 +49,7 @@ import {
   Play,
   MoreVertical,
   Pencil,
+  Settings2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/feed")({
@@ -71,6 +78,8 @@ function FeedAdminPage() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [category, setCategory] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [optionsProduct, setOptionsProduct] = useState<Product | null>(null);
+  const [optionsDraft, setOptionsDraft] = useState<ProductOptionDraft[]>([]);
 
   const { data: products } = useQuery({
     queryKey: ["products", companyId],
@@ -123,6 +132,23 @@ function FeedAdminPage() {
     },
     onError: (err) => toast.error(`Erro ao excluir: ${(err as Error).message}`),
   });
+
+  const saveOptions = useMutation({
+    mutationFn: () => productRepository.setOptions(optionsProduct!.id, optionsDraft),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products", companyId] });
+      qc.invalidateQueries({ queryKey: ["catalogo", companyId] });
+      toast.success("Opções do produto salvas");
+      setOptionsProduct(null);
+      setOptionsDraft([]);
+    },
+    onError: (err) => toast.error(`Erro ao salvar opções: ${(err as Error).message}`),
+  });
+
+  const openOptionsFor = (p: Product) => {
+    setOptionsDraft((p.options ?? []).map(draftFromProductOption));
+    setOptionsProduct(p);
+  };
 
   const editPost = useMutation({
     mutationFn: ({
@@ -213,6 +239,31 @@ function FeedAdminPage() {
               );
             })}
           </div>
+          {selectedProducts.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {(products ?? [])
+                .filter((p) => selectedProducts.includes(p.id))
+                .map((p) => (
+                  <div key={p.id} className="flex items-center justify-between rounded-lg border bg-muted/40 px-2.5 py-1.5 text-xs">
+                    <span className="truncate font-medium">
+                      {p.name}
+                      {(p.options?.length ?? 0) > 0 && (
+                        <span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                          {p.options!.length} opção(ões)
+                        </span>
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openOptionsFor(p)}
+                      className="ml-2 flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-primary hover:bg-primary/10"
+                    >
+                      <Settings2 className="size-3" /> Opções
+                    </button>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
         <div>
           <div className="mb-2 text-sm font-medium">
@@ -306,6 +357,37 @@ function FeedAdminPage() {
               }}
               onDelete={() => setConfirmDelete(selectedPost.post)}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Opções do produto (compartilhadas com o Catálogo Inteligente) */}
+      <Dialog open={!!optionsProduct} onOpenChange={(o) => !o && setOptionsProduct(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Opções de {optionsProduct?.name ?? "produto"}
+            </DialogTitle>
+          </DialogHeader>
+          {optionsProduct && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Personalizações configuradas aqui valem para todo o produto — no
+                catálogo e nesta publicação.
+              </p>
+              <ProductOptionsEditor value={optionsDraft} onChange={setOptionsDraft} />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setOptionsProduct(null)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => saveOptions.mutate()}
+                  disabled={saveOptions.isPending}
+                >
+                  Salvar
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

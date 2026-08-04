@@ -99,7 +99,7 @@ function BagPage() {
           {cart.items.map((i) => {
             const freshMedia = mediaByProduct?.get(i.productId);
             return (
-            <div key={i.productId} className="rounded-xl border bg-card p-3">
+            <div key={i.key} className="rounded-xl border bg-card p-3">
               <div className="flex gap-3">
                 <ProductMediaGallery
                   imageUrl={i.imageUrl}
@@ -114,15 +114,42 @@ function BagPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{i.name}</div>
-                      <div className="text-xs text-muted-foreground">{formatBRL(i.price)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatBRL(i.basePrice ?? i.price)}
+                      </div>
+                      {i.options && i.options.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {i.options.map((o, idx) => {
+                            const label = o.freeText
+                              ? `${o.optionName}: "${o.freeText}"`
+                              : o.valueLabel
+                                ? `${o.optionName}: ${o.valueLabel}`
+                                : o.optionName;
+                            const plus =
+                              (o.priceAdjust ?? 0) * (o.quantity ?? 1) > 0
+                                ? ` +${formatBRL((o.priceAdjust ?? 0) * (o.quantity ?? 1))}`
+                                : "";
+                            return (
+                              <span
+                                key={idx}
+                                className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                              >
+                                {label}
+                                {o.quantity && o.quantity > 1 ? ` ×${o.quantity}` : ""}
+                                {plus}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => cart.remove(i.productId)}>
+                    <Button size="icon" variant="ghost" className="shrink-0" onClick={() => cart.remove(i.key)}>
                       <Trash2 className="size-3.5" />
                     </Button>
                   </div>
                   <Input
                     value={i.note ?? ""}
-                    onChange={(e) => cart.setNote(i.productId, e.target.value)}
+                    onChange={(e) => cart.setNote(i.key, e.target.value)}
                     placeholder="Observação"
                     className="mt-2 h-8 text-xs"
                   />
@@ -131,11 +158,11 @@ function BagPage() {
                       Subtotal: <span className="font-semibold text-foreground">{formatBRL(i.price * i.quantity)}</span>
                     </span>
                     <div className="flex items-center gap-1 rounded-full border">
-                      <Button size="icon" variant="ghost" className="size-7 rounded-full" onClick={() => cart.setQty(i.productId, i.quantity - 1)}>
+                      <Button size="icon" variant="ghost" className="size-7 rounded-full" onClick={() => cart.setQty(i.key, i.quantity - 1)}>
                         <Minus className="size-3" />
                       </Button>
                       <span className="w-5 text-center text-sm font-medium">{i.quantity}</span>
-                      <Button size="icon" variant="ghost" className="size-7 rounded-full" onClick={() => cart.setQty(i.productId, i.quantity + 1)}>
+                      <Button size="icon" variant="ghost" className="size-7 rounded-full" onClick={() => cart.setQty(i.key, i.quantity + 1)}>
                         <Plus className="size-3" />
                       </Button>
                     </div>

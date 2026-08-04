@@ -15,6 +15,7 @@ import { formatBRL } from "@/lib/format";
 import { CheckCircle2, Clock3 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { OrderItemOptions } from "@/components/product-options-selector";
 
 export const Route = createFileRoute("/c/$companySlug/confirmado")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -139,10 +140,13 @@ function OrderConfirmedPage() {
                   <dt className="text-sm text-muted-foreground">Itens</dt>
                   <div className="space-y-1">
                     {order.items.map((i) => (
-                      <div key={i.id} className="flex items-center justify-between text-sm">
-                        <span className="truncate pr-2">
-                          {i.productName} <span className="text-muted-foreground">× {i.quantity}</span>
-                        </span>
+                      <div key={i.id} className="flex items-center justify-between gap-2 text-sm">
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate">
+                            {i.productName} <span className="text-muted-foreground">× {i.quantity}</span>
+                          </span>
+                          <OrderItemOptions options={i.options} className="mt-0.5" />
+                        </div>
                         <span className="shrink-0 text-xs text-muted-foreground">
                           {formatBRL(i.quantity * i.unitPrice)}
                         </span>

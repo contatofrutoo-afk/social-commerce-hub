@@ -165,6 +165,7 @@ function PostCard({
   cart: ReturnType<typeof useCart>;
 }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [showComments, setShowComments] = useState(false);
   const [editingPost, setEditingPost] = useState(false);
   const [editText, setEditText] = useState(post.text ?? "");
@@ -348,6 +349,13 @@ function PostCard({
                 try {
                   if (post.products.length === 0) {
                     toast.info("Nenhum produto vinculado a esta publicação");
+                    return;
+                  }
+                  // Produto com opções abre a página de detalhes para escolher;
+                  // sem opções mantém o add rápido.
+                  const withOptions = post.products.find((p) => p.hasOptions);
+                  if (withOptions?.slug) {
+                    navigate({ to: "/p/$slug", params: { slug: withOptions.slug } });
                     return;
                   }
                   post.products.forEach((prod) => cart.add(prod));

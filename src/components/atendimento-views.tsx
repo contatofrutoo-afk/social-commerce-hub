@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { tableRepository, checkinRepository, crmRepository } from "@/repositories";
 import { relativeTime, formatBRL } from "@/lib/format";
 import { optimizedImageUrl } from "@/lib/image-url";
+import { OrderItemOptions } from "@/components/product-options-selector";
 import {
   User,
   Heart,
@@ -696,15 +697,18 @@ export function CustomerPanel({
                   {o.items.map((item) => {
                     const lineTotal = item.quantity * item.unitPrice;
                     return (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between bg-muted/50 rounded px-1.5 py-0.5"
-                      >
-                        <span className="truncate font-medium">{item.productName}</span>
-                        <span className="shrink-0 ml-2 text-muted-foreground">
-                          {item.quantity}× {formatBRL(item.unitPrice)} = {formatBRL(lineTotal)}
-                        </span>
-                      </div>
+                      <>
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between bg-muted/50 rounded px-1.5 py-0.5"
+                        >
+                          <span className="truncate font-medium">{item.productName}</span>
+                          <span className="shrink-0 ml-2 text-muted-foreground">
+                            {item.quantity}× {formatBRL(item.unitPrice)} = {formatBRL(lineTotal)}
+                          </span>
+                        </div>
+                        <OrderItemOptions options={item.options} className="mt-0.5" />
+                      </>
                     );
                   })}
                 </div>

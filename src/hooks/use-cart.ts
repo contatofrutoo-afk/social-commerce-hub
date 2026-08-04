@@ -1,16 +1,32 @@
 // Sacola no client — puramente UI state. Ao "Enviar Pedido", vira Order no Cloud.
 import { useCallback, useEffect, useState } from "react";
-import type { CartItem, Product } from "@/repositories/types";
+import type { CartItem, Product, SelectedOption } from "@/repositories/types";
 import { productRepository } from "@/repositories/product.repository";
 import { getSession } from "@/lib/session";
 
 const KEY_PREFIX = "weaze.cart.v1.";
 
+function normalizeItem(raw: any): CartItem {
+  return {
+    key: raw.key ?? raw.productId,
+    productId: raw.productId,
+    name: raw.name,
+    price: Number(raw.price),
+    basePrice: raw.basePrice != null ? Number(raw.basePrice) : undefined,
+    imageUrl: raw.imageUrl ?? null,
+    videoUrl: raw.videoUrl ?? null,
+    media: raw.media ?? undefined,
+    quantity: raw.quantity ?? 1,
+    note: raw.note ?? undefined,
+    options: raw.options ?? undefined,
+  };
+}
+
 function read(companyId: string): CartItem[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(KEY_PREFIX + companyId);
-    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+    return raw ? (JSON.parse(raw) as CartItem[]).map(normalizeItem) : [];
   } catch {
     return [];
   }
@@ -19,6 +35,30 @@ function write(companyId: string, items: CartItem[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY_PREFIX + companyId, JSON.stringify(items));
   window.dispatchEvent(new CustomEvent("weaze:cart", { detail: companyId }));
+}
+
+/** Identidade da linha: mesmo produto + mesma combinação de opções. */
+function buildKey(productId: string, options: SelectedOption[]): string {
+  if (!options || options.length === 0) return productId;
+  const norm = [...options]
+    .map((o) => ({
+      optionId: o.optionId ?? o.optionName,
+      valueId: o.valueId ?? null,
+      freeText: o.freeText ?? "",
+      quantity: o.quantity ?? 1,
+    }))
+    .sort((a, b) => String(a.optionId).localeCompare(String(b.optionId)))
+    .map((o) => `${o.optionId}::${o.valueId ?? ""}::${o.freeText ?? ""}::${o.quantity ?? 1}`);
+  return `${productId}::${JSON.stringify(norm)}`;
+}
+
+/** Preço unitário com as opções selecionadas (produto + ajustes). */
+export function unitPriceFor(product: Pick<Product, "price">, options: SelectedOption[]): number {
+  let price = product.price;
+  for (const o of options ?? []) {
+    price += (o.priceAdjust ?? 0) * (o.quantity ?? 1);
+  }
+  return price;
 }
 
 export function useCart(companyId: string | undefined) {
@@ -36,21 +76,25 @@ export function useCart(companyId: string | undefined) {
   }, [companyId]);
 
   const add = useCallback(
-    (product: Product, qty = 1) => {
+    (product: Product, qty = 1, options: SelectedOption[] = []) => {
       if (!companyId) return;
       const list = read(companyId);
-      const existing = list.find((i) => i.productId === product.id);
+      const key = buildKey(product.id, options);
+      const existing = list.find((i) => i.key === key);
+      const item: CartItem = {
+        key,
+        productId: product.id,
+        name: product.name,
+        price: unitPriceFor(product, options),
+        basePrice: product.price,
+        imageUrl: product.imageUrl,
+        videoUrl: product.videoUrl ?? null,
+        media: (product.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
+        quantity: qty,
+        options: options.length > 0 ? options : undefined,
+      };
       if (existing) existing.quantity += qty;
-      else
-        list.push({
-          productId: product.id,
-          name: product.name,
-          price: product.price,
-          imageUrl: product.imageUrl,
-          videoUrl: product.videoUrl ?? null,
-          media: (product.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
-          quantity: qty,
-        });
+      else list.push(item);
       write(companyId, list);
       // Métricas: registra cart_add para a Inteligência do Catálogo, independente
       // de onde o cliente adicionou (feed, sacola, catálogo, /p/:slug).
@@ -65,10 +109,10 @@ export function useCart(companyId: string | undefined) {
   );
 
   const setQty = useCallback(
-    (productId: string, qty: number) => {
+    (key: string, qty: number) => {
       if (!companyId) return;
       const list = read(companyId)
-        .map((i) => (i.productId === productId ? { ...i, quantity: qty } : i))
+        .map((i) => (i.key === key ? { ...i, quantity: qty } : i))
         .filter((i) => i.quantity > 0);
       write(companyId, list);
     },
@@ -76,11 +120,11 @@ export function useCart(companyId: string | undefined) {
   );
 
   const remove = useCallback(
-    (productId: string) => {
+    (key: string) => {
       if (!companyId) return;
       write(
         companyId,
-        read(companyId).filter((i) => i.productId !== productId),
+        read(companyId).filter((i) => i.key !== key),
       );
     },
     [companyId],
@@ -92,11 +136,11 @@ export function useCart(companyId: string | undefined) {
   }, [companyId]);
 
   const setNote = useCallback(
-    (productId: string, note: string) => {
+    (key: string, note: string) => {
       if (!companyId) return;
       write(
         companyId,
-        read(companyId).map((i) => (i.productId === productId ? { ...i, note } : i)),
+        read(companyId).map((i) => (i.key === key ? { ...i, note } : i)),
       );
     },
     [companyId],

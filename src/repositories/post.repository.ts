@@ -12,6 +12,8 @@ function mapProduct(r: any) {
     videoUrl: r.video_url ?? null,
     available: r.available,
     description: r.description,
+    slug: r.slug,
+    hasOptions: r.has_options === true || !!r.hasOptions,
   };
 }
 

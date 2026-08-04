@@ -2,7 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { productRepository } from "@/repositories";
-import { useCart } from "@/hooks/use-cart";
+import { useCart, unitPriceFor } from "@/hooks/use-cart";
+import {
+  ProductOptionsSelector,
+  defaultSelections,
+  optionsFromSelections,
+  hasRequiredMissing,
+  type SelectionMap,
+} from "@/components/product-options-selector";
 import { getSessionForCompany } from "@/lib/session";
 import { onboardViaQr } from "@/lib/qr-onboard";
 import { Button } from "@/components/ui/button";
@@ -17,6 +24,7 @@ export const Route = createFileRoute("/p/$slug")({
 function ProductPage() {
   const { slug } = Route.useParams();
   const [qty, setQty] = useState(1);
+  const [selections, setSelections] = useState<SelectionMap>({});
 
   const { data: product, isPending } = useQuery({
     queryKey: ["product-by-slug", slug],
@@ -62,6 +70,12 @@ function ProductPage() {
     }).catch(() => {});
   }, [product?.id]);
 
+  const productOptions = product?.options ?? [];
+
+  useEffect(() => {
+    if (product) setSelections(defaultSelections(productOptions));
+  }, [product?.id]);
+
   if (isPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -87,9 +101,12 @@ function ProductPage() {
     );
   }
 
+  const selectedOptions = optionsFromSelections(productOptions, selections);
+  const unitPrice = unitPriceFor(product, selectedOptions);
+  const missingRequired = hasRequiredMissing(productOptions, selections);
+
   function addToCart() {
-    if (!product) return;
-    cart.add(product, qty);
+    cart.add(product, qty, selectedOptions);
     const companySlug = product.companySlug ?? slug.split("-")[0];
     const session = getSessionForCompany(companySlug);
     productRepository.recordEvent(product.id, product.companyId, "cart_add", session?.customerId).catch(() => {});
@@ -147,6 +164,16 @@ function ProductPage() {
             <p className="text-sm text-muted-foreground">{product.description}</p>
           )}
 
+          {productOptions.length > 0 && (
+            <div className="pt-1">
+              <ProductOptionsSelector
+                options={productOptions}
+                selections={selections}
+                onChange={setSelections}
+              />
+            </div>
+          )}
+
           {product.stockQuantity !== null && (
             <p className="text-xs text-muted-foreground">
               Estoque: {product.stockQuantity} unidades
@@ -182,16 +209,25 @@ function ProductPage() {
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <div className="flex-1">
             <div className="text-sm text-muted-foreground">Total</div>
-            <div className="font-bold">{formatBRL(product.price * qty)}</div>
+            <div className="font-bold">{formatBRL(unitPrice * qty)}</div>
+            {selectedOptions.length > 0 && (
+              <div className="text-[10px] text-muted-foreground">
+                {formatBRL(product.price)} + {formatBRL(unitPrice - product.price)} em opções
+              </div>
+            )}
           </div>
           <Button
             className="flex-1"
             size="lg"
             onClick={addToCart}
-            disabled={!product.available}
+            disabled={!product.available || missingRequired}
           >
             <ShoppingCart className="mr-2 size-5" />
-            {product.available ? "Adicionar à Sacola" : "Indisponível"}
+            {!product.available
+              ? "Indisponível"
+              : missingRequired
+                ? "Complete as opções obrigatórias"
+                : "Adicionar à Sacola"}
           </Button>
         </div>
       </div>

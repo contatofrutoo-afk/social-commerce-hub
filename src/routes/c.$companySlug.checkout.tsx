@@ -8,6 +8,7 @@ import { CheckoutStepper } from "@/components/checkout-stepper";
 import { formatBRL } from "@/lib/format";
 import { readCheckoutDraft, saveCheckoutDraft } from "@/lib/checkout-draft";
 import { useState } from "react";
+import { OrderItemOptions } from "@/components/product-options-selector";
 
 export const Route = createFileRoute("/c/$companySlug/checkout")({
   component: CheckoutPage,
@@ -54,11 +55,14 @@ function CheckoutPage() {
               <h2 className="mb-3 text-sm font-semibold">Resumo do pedido</h2>
               <div className="space-y-2">
                 {cart.items.map((i) => (
-                  <div key={i.productId} className="flex items-center justify-between text-sm">
-                    <span>
-                      {i.name} <span className="text-muted-foreground">× {i.quantity}</span>
-                    </span>
-                    <span className="font-medium">{formatBRL(i.price * i.quantity)}</span>
+                  <div key={i.key} className="text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>
+                        {i.name} <span className="text-muted-foreground">× {i.quantity}</span>
+                      </span>
+                      <span className="font-medium">{formatBRL(i.price * i.quantity)}</span>
+                    </div>
+                    <OrderItemOptions options={i.options} className="mt-0.5" />
                   </div>
                 ))}
                 <div className="flex items-center justify-between border-t pt-2 text-sm font-bold">

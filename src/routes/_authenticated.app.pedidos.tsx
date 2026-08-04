@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { OrderItemOptions } from "@/components/product-options-selector";
 
 export const Route = createFileRoute("/_authenticated/app/pedidos")({
   component: OrdersPage,
@@ -339,6 +340,7 @@ function OrderCard({
                 <span className="text-muted-foreground">
                   {item.quantity}× {formatBRL(item.unitPrice)} = {formatBRL(lineTotal)}
                 </span>
+                <OrderItemOptions options={item.options} className="mt-1" />
               </div>
               {onRemoveItem && (
                 <button

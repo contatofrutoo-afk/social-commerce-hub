@@ -1,5 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Product, ProductMedia, ProductStatus } from "./types";
+import type {
+  Product,
+  ProductMedia,
+  ProductOption,
+  ProductOptionType,
+  ProductStatus,
+} from "./types";
 
 function mapMedia(r: any): ProductMedia {
   return {
@@ -10,7 +16,37 @@ function mapMedia(r: any): ProductMedia {
   };
 }
 
+function mapOption(r: any): ProductOption {
+  const values = (r.values ?? r.product_option_values ?? [])
+    .map((v: any) => ({
+      id: v.id,
+      label: v.label,
+      priceAdjust: Number(v.price_adjust ?? v.priceAdjust ?? 0),
+      available: v.available,
+      sortOrder: v.sort_order ?? v.sortOrder ?? 0,
+      imageUrl: v.image_url ?? v.imageUrl ?? null,
+    }))
+    .sort(
+      (a: ProductOption["values"][number], b: ProductOption["values"][number]) =>
+        a.sortOrder - b.sortOrder,
+    );
+  return {
+    id: r.id,
+    name: r.name,
+    optionType: (r.option_type ?? r.optionType) as ProductOptionType,
+    required: r.required ?? false,
+    minSelect: r.min_select ?? r.minSelect ?? null,
+    maxSelect: r.max_select ?? r.maxSelect ?? null,
+    priceAdjust: Number(r.price_adjust ?? r.priceAdjust ?? 0),
+    sortOrder: r.sort_order ?? r.sortOrder ?? 0,
+    values,
+  };
+}
+
 function map(r: any): Product {
+  const options = (r.options ?? r.product_options ?? [])
+    .map(mapOption)
+    .sort((a: ProductOption, b: ProductOption) => a.sortOrder - b.sortOrder);
   return {
     id: r.id,
     companyId: r.company_id,
@@ -34,6 +70,8 @@ function map(r: any): Product {
     revenue: Number(r.revenue ?? 0),
     uniqueCustomers: r.unique_customers ?? 0,
     media: r.media ? (r.media.map ? r.media.map(mapMedia) : []) : undefined,
+    options: options.length > 0 ? options : undefined,
+    hasOptions: options.length > 0 || r.has_options === true,
   };
 }
 
@@ -41,17 +79,25 @@ export const productRepository = {
   async listByCompany(companyId: string): Promise<Product[]> {
     const { data, error } = await (supabase as any)
       .from("products")
-      .select("*, product_media(*)")
+      .select("*, product_media(*), product_options(*, product_option_values(*))")
       .eq("company_id", companyId)
       .order("name");
     if (error) throw error;
-    return (data ?? []).map((r: any) => map({ ...r, media: r.product_media ?? [] }));
+    return (data ?? []).map((r: any) => ({
+      ...map({ ...r, media: r.product_media ?? [], options: r.product_options ?? [] }),
+    }));
   },
 
   async findById(id: string): Promise<Product | null> {
-    const { data, error } = await (supabase as any).from("products").select("*, product_media(*)").eq("id", id).maybeSingle();
+    const { data, error } = await (supabase as any)
+      .from("products")
+      .select("*, product_media(*), product_options(*, product_option_values(*))")
+      .eq("id", id)
+      .maybeSingle();
     if (error) throw error;
-    return data ? map({ ...data, media: data.product_media ?? [] }) : null;
+    return data
+      ? map({ ...data, media: data.product_media ?? [], options: data.product_options ?? [] })
+      : null;
   },
 
   async findBySlug(slug: string): Promise<Product | null> {
@@ -62,7 +108,22 @@ export const productRepository = {
 
   async create(
     companyId: string,
-    p: Omit<Product, "id" | "companyId" | "viewsCount" | "scanCount" | "cartAdditionsCount" | "orderCount" | "revenue" | "uniqueCustomers" | "slug" | "status" | "stockQuantity" | "sku" | "internalCode"> & {
+    p: Omit<
+      Product,
+      | "id"
+      | "companyId"
+      | "viewsCount"
+      | "scanCount"
+      | "cartAdditionsCount"
+      | "orderCount"
+      | "revenue"
+      | "uniqueCustomers"
+      | "slug"
+      | "status"
+      | "stockQuantity"
+      | "sku"
+      | "internalCode"
+    > & {
       slug?: string;
       status?: ProductStatus;
       stockQuantity?: number | null;
@@ -70,7 +131,12 @@ export const productRepository = {
       internalCode?: string | null;
     },
   ) {
-    const slug = p.slug ?? p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const slug =
+      p.slug ??
+      p.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
     const { data, error } = await (supabase as any)
       .from("products")
       .insert({
@@ -94,7 +160,22 @@ export const productRepository = {
     return map(data);
   },
 
-  async update(id: string, p: Partial<Omit<Product, "id" | "companyId" | "viewsCount" | "scanCount" | "cartAdditionsCount" | "orderCount" | "revenue" | "uniqueCustomers">>) {
+  async update(
+    id: string,
+    p: Partial<
+      Omit<
+        Product,
+        | "id"
+        | "companyId"
+        | "viewsCount"
+        | "scanCount"
+        | "cartAdditionsCount"
+        | "orderCount"
+        | "revenue"
+        | "uniqueCustomers"
+      >
+    >,
+  ) {
     const patch: Record<string, unknown> = {};
     if (p.name !== undefined) patch.name = p.name;
     if (p.slug !== undefined) patch.slug = p.slug;
@@ -159,10 +240,7 @@ export const productRepository = {
     return (data ?? []).map(mapMedia);
   },
 
-  async setMedia(
-    productId: string,
-    items: { url: string; type: "image" | "video" }[],
-  ) {
+  async setMedia(productId: string, items: { url: string; type: "image" | "video" }[]) {
     await (supabase as any).from("product_media").delete().eq("product_id", productId);
     if (items.length === 0) return;
     const { error } = await (supabase as any).from("product_media").insert(
@@ -174,6 +252,62 @@ export const productRepository = {
       })),
     );
     if (error) throw error;
+  },
+
+  /** Substitui todas as opções de um produto (editor do comerciante). */
+  async setOptions(
+    productId: string,
+    options: {
+      name: string;
+      optionType: ProductOptionType;
+      required: boolean;
+      minSelect: number | null;
+      maxSelect: number | null;
+      priceAdjust: number;
+      values: {
+        label: string;
+        priceAdjust: number;
+        available: boolean;
+        imageUrl?: string | null;
+      }[];
+    }[],
+  ) {
+    await (supabase as any).from("product_options").delete().eq("product_id", productId);
+    if (options.length === 0) return;
+    const { data, error } = await (supabase as any)
+      .from("product_options")
+      .insert(
+        options.map((o, i) => ({
+          product_id: productId,
+          name: o.name,
+          option_type: o.optionType,
+          required: o.optionType === "single" || o.optionType === "multiple" ? o.required : false,
+          min_select: o.optionType === "multiple" ? o.minSelect : null,
+          max_select: o.maxSelect,
+          price_adjust: o.priceAdjust,
+          sort_order: i,
+        })),
+      )
+      .select("id");
+    if (error) throw error;
+
+    const valueRows: Record<string, any>[] = [];
+    options.forEach((o, i) => {
+      const optionId = data[i].id;
+      (o.values ?? []).forEach((v, vi) => {
+        valueRows.push({
+          option_id: optionId,
+          label: v.label,
+          price_adjust: v.priceAdjust,
+          available: v.available,
+          image_url: v.imageUrl ?? null,
+          sort_order: vi,
+        });
+      });
+    });
+    if (valueRows.length === 0) return;
+    const { error: e2 } = await (supabase as any).from("product_option_values").insert(valueRows);
+    if (e2) throw e2;
   },
 
   async likeToggle(productId: string, customerId: string, token: string, liked: boolean) {

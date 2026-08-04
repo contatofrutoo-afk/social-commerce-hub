@@ -38,6 +38,13 @@ function mapOrder(r: any): Order {
       quantity: i.quantity,
       note: i.note,
       unitPrice: Number(i.unit_price),
+      options: (i.order_item_options ?? []).map((o: any) => ({
+        optionName: o.option_name,
+        valueLabel: o.value_label ?? null,
+        quantity: o.quantity ?? 1,
+        priceAdjust: o.price_adjust != null ? Number(o.price_adjust) : 0,
+        freeText: o.free_text ?? null,
+      })),
     })),
   };
 }
@@ -142,7 +149,7 @@ export const crmRepository = {
       supabase
         .from("orders")
         .select(
-          `id, total, status, created_at, updated_at, payment_status, payment_approved_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price))`,
+          `id, total, status, created_at, updated_at, payment_status, payment_approved_at, order_items(product_id, quantity, unit_price, product:products(name, category, image_url, price), order_item_options(*))`,
         )
         .eq("customer_id", customerId)
         .order("created_at", { ascending: false }),

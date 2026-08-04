@@ -34,6 +34,13 @@ function mapOrder(r: any): Order {
       quantity: i.quantity,
       note: i.note,
       unitPrice: Number(i.unit_price),
+      options: (i.order_item_options ?? []).map((o: any) => ({
+        optionName: o.option_name,
+        valueLabel: o.value_label ?? null,
+        quantity: o.quantity ?? 1,
+        priceAdjust: o.price_adjust != null ? Number(o.price_adjust) : 0,
+        freeText: o.free_text ?? null,
+      })),
     })),
   };
 }
@@ -44,7 +51,7 @@ export const orderRepository = {
       .from("orders")
       .select(
         `*, customer:customers(name), table:tables(label),
-         order_items(*, product:products(name))`,
+         order_items(*, product:products(name), order_item_options(*))`,
       )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false });
@@ -82,6 +89,14 @@ export const orderRepository = {
         quantity: i.quantity,
         price: i.price,
         note: i.note ?? null,
+        options: (i.options ?? []).map((o) => ({
+          optionId: o.optionId,
+          valueId: o.valueId ?? null,
+          valueLabel: o.valueLabel ?? null,
+          quantity: o.quantity ?? 1,
+          priceAdjust: o.priceAdjust ?? 0,
+          freeText: o.freeText ?? null,
+        })),
       })) as any,
       _table_id: input.tableId ?? null,
       _payment_method: input.paymentMethod ?? null,

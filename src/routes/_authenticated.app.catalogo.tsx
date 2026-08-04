@@ -29,6 +29,11 @@ import {
 import { formatBRL } from "@/lib/format";
 import { toast } from "sonner";
 import {
+  ProductOptionsEditor,
+  draftFromProductOption,
+  type ProductOptionDraft,
+} from "@/components/product-options-editor";
+import {
   Pencil,
   Trash2,
   Plus,
@@ -63,6 +68,7 @@ const empty = {
   sku: "",
   internalCode: "",
   mediaItems: [] as MediaItem[],
+  options: [] as ProductOptionDraft[],
 };
 
 function generateSlug(name: string): string {
@@ -141,6 +147,7 @@ function CatalogoPage() {
       sku: p.sku ?? "",
       internalCode: p.internalCode ?? "",
       mediaItems: (p.media ?? []).map((m) => ({ url: m.mediaUrl, type: m.mediaType })),
+      options: (p.options ?? []).map(draftFromProductOption),
     });
     setOpen(true);
   }
@@ -164,12 +171,14 @@ function CatalogoPage() {
       if (editing) {
         const updated = await productRepository.update(editing.id, payload);
         await productRepository.setMedia(editing.id, form.mediaItems);
+        await productRepository.setOptions(editing.id, form.options);
         return updated;
       }
       const created = await productRepository.create(companyId!, payload);
       if (form.mediaItems.length > 0) {
         await productRepository.setMedia(created.id, form.mediaItems);
       }
+      await productRepository.setOptions(created.id, form.options);
       return created;
     },
     onSuccess: () => {
@@ -363,6 +372,10 @@ function CatalogoPage() {
                     onCheckedChange={(v) => setForm({ ...form, available: v })}
                   />
                 </div>
+                <ProductOptionsEditor
+                  value={form.options}
+                  onChange={(options) => setForm({ ...form, options })}
+                />
                 <Button
                   onClick={() => save.mutate()}
                   disabled={save.isPending || !form.name}
