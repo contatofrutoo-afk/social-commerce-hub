@@ -292,41 +292,51 @@ function WeazeFinanceiroPlataforma() {
 
   const revenueSeries = useMemo(() => {
     const groupBy = period === "ano" ? "month" : "day";
-    const buckets = new Map<string, { label: string; mercadoPago: number; cashier: number }>();
+    const buckets = new Map<
+      string,
+      { sortKey: string; label: string; mercadoPago: number; cashier: number }
+    >();
     approved.forEach((p) => {
       const d = new Date(p.paid_at!);
-      const key =
+      const sortKey =
         groupBy === "month"
           ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
           : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const label =
         groupBy === "month"
-          ? d.toLocaleDateString("pt-BR", { month: "short" })
+          ? d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" })
           : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-      const bucket = buckets.get(key) ?? { label, mercadoPago: 0, cashier: 0 };
+      const bucket = buckets.get(sortKey) ?? { sortKey, label, mercadoPago: 0, cashier: 0 };
       if (p.payment_origin === "mercado_pago") bucket.mercadoPago += Number(p.gross_amount) || 0;
       else bucket.cashier += Number(p.gross_amount) || 0;
-      buckets.set(key, bucket);
+      buckets.set(sortKey, bucket);
     });
-    return Array.from(buckets.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, "pt-BR"),
-    );
+    return Array.from(buckets.values())
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map(({ sortKey: _sortKey, ...rest }) => rest);
   }, [approved, period]);
 
   const ordersSeries = useMemo(() => {
-    const buckets = new Map<string, { label: string; pedidos: number }>();
+    const groupBy = period === "ano" ? "month" : "day";
+    const buckets = new Map<string, { sortKey: string; label: string; pedidos: number }>();
     approved.forEach((p) => {
       const d = new Date(p.paid_at!);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const label = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-      const bucket = buckets.get(key) ?? { label, pedidos: 0 };
+      const sortKey =
+        groupBy === "month"
+          ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+          : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const label =
+        groupBy === "month"
+          ? d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" })
+          : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      const bucket = buckets.get(sortKey) ?? { sortKey, label, pedidos: 0 };
       bucket.pedidos += 1;
-      buckets.set(key, bucket);
+      buckets.set(sortKey, bucket);
     });
-    return Array.from(buckets.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, "pt-BR"),
-    );
-  }, [approved]);
+    return Array.from(buckets.values())
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map(({ sortKey: _sortKey, ...rest }) => rest);
+  }, [approved, period]);
 
   const methodData = useMemo(() => {
     const byMethod = new Map<string, number>();
@@ -562,7 +572,9 @@ function WeazeFinanceiroPlataforma() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-base">Pedidos por Dia</CardTitle>
+                <CardTitle className="font-display text-base">
+                  Pedidos {period === "ano" ? "por Mês" : "por Dia"}
+                </CardTitle>
                 <CardDescription>Quantidade de pedidos pagos</CardDescription>
               </CardHeader>
               <CardContent>

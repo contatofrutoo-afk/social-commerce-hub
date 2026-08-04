@@ -98,7 +98,9 @@ function WeazeLayout() {
         </div>
         <nav className="space-y-0.5 flex-1">
           {items.map(({ to, icon: Icon, label, exact }) => {
-            const active = exact ? location.pathname === to : location.pathname.startsWith(to);
+            const active = exact
+              ? location.pathname === to
+              : location.pathname === to || location.pathname.startsWith(to + "/");
             return (
               <Link
                 key={to}
@@ -129,7 +131,9 @@ function WeazeLayout() {
       <div className="flex-1 flex flex-col">
         <header className="md:hidden border-b border-border bg-card/85 backdrop-blur-xl px-4 h-14 flex items-center gap-2 overflow-x-auto scrollbar-hide">
           {items.map(({ to, label, exact }) => {
-            const active = exact ? location.pathname === to : location.pathname.startsWith(to);
+            const active = exact
+              ? location.pathname === to
+              : location.pathname === to || location.pathname.startsWith(to + "/");
             return (
               <Link
                 key={to}
