@@ -6,6 +6,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { loadSupabaseAdmin, logPaymentEvent, mpConfig } from "@/lib/mercadopago.server";
 import { decryptToken } from "@/lib/token-crypto.server";
+import { upsertPlatformPayment } from "@/lib/platform-payments.server";
 
 const MERCADO_PAGO_PAYMENTS_URL = "https://api.mercadopago.com/v1/payments";
 
@@ -34,9 +35,6 @@ interface MercadoPagoPayment {
   collector?: { id: number } | null;
 }
 
-type PlatformPaymentMethod = "pix" | "credit_card" | "debit_card" | "cash" | "other";
-type PlatformPaymentStatus = "approved" | "cancelled" | "refunded" | "pending";
-
 export async function handleMercadoPagoWebhook(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return json({ error: "method_not_allowed" }, 405);
@@ -58,16 +56,17 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Respon
 
   const supabaseAdmin = await loadSupabaseAdmin();
 
-  // Idempotência: se o pedido já foi processado para este payment, responde 200.
+  // Idempotência: se o pedido já foi processado para este payment, responde 200
+  // (mas ainda grava/atualiza o Financeiro da Plataforma — o checkout pode ter
+  // aprovado o pedido antes do webhook chegar, e sem esta gravação a venda não
+  // apareceria no painel admin).
   const { data: existing } = await supabaseAdmin
     .from("orders")
     .select("id, payment_status")
     .eq("payment_id", String(id))
     .maybeSingle();
 
-  if (existing && existing.payment_status !== "pending") {
-    return json({ ok: true, ignored: "already_processed" }, 200);
-  }
+  const alreadyProcessed = !!existing && existing.payment_status !== "pending";
 
   // 1) Tenta com o token da plataforma (MERCADO_PAGO_ACCESS_TOKEN).
   const { accessToken } = await mpConfig();
@@ -81,7 +80,9 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Respon
   }
 
   // 2) Sem acesso à plataforma, procura um pedido já vinculado a esse payment.
-  let merchantId: string | null = existing?.id ? await getMerchantIdForOrder(existing.id as string) : null;
+  let merchantId: string | null = existing?.id
+    ? await getMerchantIdForOrder(existing.id as string)
+    : null;
 
   // 3) Se conhecemos o collector, resolve o token do comerciante e refaz a
   //    busca de forma autoritativa com a própria conta.
@@ -114,6 +115,27 @@ export async function handleMercadoPagoWebhook(request: Request): Promise<Respon
     if (order) merchantId = order.merchant_id ?? merchantId;
   }
 
+  // Payment já processado (o checkout aprovou/cancelou antes do webhook):
+  // garante que o Financeiro da Plataforma reflita o valor real do MP.
+  if (alreadyProcessed) {
+    const order = orderId ? await getOrderById(orderId) : null;
+    const companyId = order?.company_id ?? merchantId;
+    if (companyId) {
+      await upsertPlatformPayment({
+        companyId,
+        paymentId: payment.id,
+        orderId,
+        grossAmount: payment.transaction_amount ?? 0,
+        netAmount: payment.net_received_amount ?? payment.transaction_amount ?? 0,
+        paymentMethodId: payment.payment_method?.id,
+        paymentMethodType: payment.payment_method?.type,
+        paymentStatus: payment.status,
+        dateApproved: payment.date_approved,
+      });
+    }
+    return json({ ok: true, ignored: "already_processed" }, 200);
+  }
+
   if (!orderId && !merchantId) {
     await logPaymentEvent("webhook", "Payment sem vínculo com pedido", {
       id: payment.id,
@@ -141,7 +163,13 @@ interface UpdateOrderInput {
   type?: string;
 }
 
-async function updateOrderFromPayment({ payment, orderId, merchantId, data, type }: UpdateOrderInput) {
+async function updateOrderFromPayment({
+  payment,
+  orderId,
+  merchantId,
+  data,
+  type,
+}: UpdateOrderInput) {
   const supabaseAdmin = await loadSupabaseAdmin();
   const now = new Date().toISOString();
 
@@ -209,7 +237,17 @@ async function updateOrderFromPayment({ payment, orderId, merchantId, data, type
   const order = orderId ? await getOrderById(orderId) : null;
   const companyId = order?.company_id ?? merchantId;
   if (companyId) {
-    await upsertPlatformPayment({ payment, companyId });
+    await upsertPlatformPayment({
+      companyId,
+      paymentId: payment.id,
+      orderId,
+      grossAmount: payment.transaction_amount ?? 0,
+      netAmount: payment.net_received_amount ?? payment.transaction_amount ?? 0,
+      paymentMethodId: payment.payment_method?.id,
+      paymentMethodType: payment.payment_method?.type,
+      paymentStatus: payment.status,
+      dateApproved: payment.date_approved,
+    });
   }
 
   await logPaymentEvent(merchantId ?? "webhook", "Payment processado", {
@@ -222,89 +260,6 @@ async function updateOrderFromPayment({ payment, orderId, merchantId, data, type
   });
 
   return { paymentId: payment.id, orderId, status: payment.status, updated };
-}
-
-async function upsertPlatformPayment({
-  payment,
-  companyId,
-}: {
-  payment: MercadoPagoPayment;
-  companyId: string;
-}) {
-  const supabaseAdmin = await loadSupabaseAdmin();
-
-  const { data: company } = await supabaseAdmin
-    .from("companies")
-    .select("name")
-    .eq("id", companyId)
-    .maybeSingle();
-
-  const gross = payment.transaction_amount ?? 0;
-  const net = payment.net_received_amount ?? gross;
-
-  const { error } = await supabaseAdmin
-    .from("platform_payments" as any)
-    .upsert(
-      {
-        company_id: companyId,
-        company_name: company?.name ?? null,
-        order_id: payment.external_reference ?? null,
-        payment_origin: "mercado_pago",
-        payment_method: mapPaymentMethod(payment),
-        payment_status: mapPaymentStatus(payment.status),
-        gross_amount: gross,
-        net_amount: net,
-        mercadopago_payment_id: String(payment.id),
-        paid_at:
-          payment.status === "approved"
-            ? payment.date_approved ?? new Date().toISOString()
-            : null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "mercadopago_payment_id" },
-    );
-
-  if (error) {
-    await logPaymentEvent(companyId, "Erro ao registrar pagamento na plataforma", {
-      paymentId: payment.id,
-      message: error.message,
-    });
-  }
-}
-
-function mapPaymentMethod(payment: MercadoPagoPayment): PlatformPaymentMethod {
-  const id = payment.payment_method?.id?.toLowerCase() ?? "";
-  const type = payment.payment_method?.type?.toLowerCase() ?? "";
-  if (id === "pix") return "pix";
-  if (type === "credit_card") return "credit_card";
-  if (type === "debit_card") return "debit_card";
-  if (id.startsWith("deb")) return "debit_card";
-  if (/visa|master|amex|elo|hipercard|hiper|naranja|nativa|maestro/.test(id)) {
-    return "credit_card";
-  }
-  return "other";
-}
-
-function mapPaymentStatus(status: MercadoPagoPaymentStatus): PlatformPaymentStatus {
-  switch (status) {
-    case "approved":
-      return "approved";
-    case "pending":
-    case "in_process":
-    case "authorized":
-    case "in_mediation":
-      return "pending";
-    case "rejected":
-    case "cancelled":
-    case "expired":
-      return "cancelled";
-    case "refunded":
-    case "charged_back":
-    case "partly_refunded":
-      return "refunded";
-    default:
-      return "pending";
-  }
 }
 
 async function fetchMercadoPagoPayment(
@@ -332,14 +287,12 @@ async function getOrderById(orderId: string) {
     .select("id, merchant_id, company_id, payment_status")
     .eq("id", orderId)
     .maybeSingle();
-  return data as
-    | {
-        id: string;
-        merchant_id: string | null;
-        company_id: string | null;
-        payment_status: string | null;
-      }
-    | null;
+  return data as {
+    id: string;
+    merchant_id: string | null;
+    company_id: string | null;
+    payment_status: string | null;
+  } | null;
 }
 
 async function getMerchantIdForOrder(orderId: string): Promise<string | null> {

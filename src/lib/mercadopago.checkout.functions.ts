@@ -30,7 +30,8 @@ interface MercadoPagoPayment {
   status?: string;
   date_approved?: string | null;
   transaction_amount?: number;
-  payment_method?: { id?: string };
+  net_received_amount?: number;
+  payment_method?: { id?: string; type?: string };
   external_reference?: string | null;
 }
 
@@ -369,7 +370,14 @@ export const processCardPayment = createServerFn({ method: "POST" })
           : { email: `card-${data.orderId.slice(0, 12)}@weaze.app` },
     };
 
-    let payment: { id?: number | string; status?: string } = {};
+    let payment: {
+      id?: number | string;
+      status?: string;
+      transaction_amount?: number;
+      net_received_amount?: number;
+      date_approved?: string | null;
+      payment_method?: { id?: string; type?: string } | null;
+    } = {};
     try {
       const res = await fetch(MERCADO_PAGO_PAYMENTS_URL, {
         method: "POST",
@@ -422,6 +430,24 @@ export const processCardPayment = createServerFn({ method: "POST" })
       })
       .eq("id", data.orderId);
 
+    // Financeiro da Plataforma: registra a venda real mesmo que o webhook do MP
+    // chegue depois (o checkout já marcou o pedido como pago). Se o webhook
+    // chegar antes, o upsert é idempotente e mantém o net_received_amount real.
+    if (approved) {
+      const { upsertPlatformPayment } = await import("@/lib/platform-payments.server");
+      await upsertPlatformPayment({
+        companyId: data.companyId,
+        paymentId,
+        orderId: data.orderId,
+        grossAmount: payment.transaction_amount ?? total,
+        netAmount: payment.net_received_amount ?? payment.transaction_amount ?? total,
+        paymentMethodId: payment.payment_method?.id,
+        paymentMethodType: payment.payment_method?.type,
+        paymentStatus: String(payment.status ?? "approved"),
+        dateApproved: payment.date_approved ?? now,
+      });
+    }
+
     await logPaymentEvent(data.companyId, "Cartão processado", {
       orderId: data.orderId,
       paymentId,
@@ -443,68 +469,85 @@ const PaymentStatusInput = z.object({
  */
 export const confirmOnlineOrder = createServerFn({ method: "POST" })
   .inputValidator((raw) => PaymentStatusInput.parse(raw))
-  .handler(async ({ data }): Promise<{ orderId: string; status: string; paymentStatus: PaymentStatus }> => {
-    const { logPaymentEvent } = await import("@/lib/mercadopago.server");
-    const supabaseAdmin = await loadAdmin();
+  .handler(
+    async ({
+      data,
+    }): Promise<{ orderId: string; status: string; paymentStatus: PaymentStatus }> => {
+      const { logPaymentEvent } = await import("@/lib/mercadopago.server");
+      const supabaseAdmin = await loadAdmin();
 
-    const { data: order } = await supabaseAdmin
-      .from("orders")
-      .select("id, status, payment_status, payment_id")
-      .eq("id", data.orderId)
-      .eq("company_id", data.companyId)
-      .maybeSingle();
-    if (!order) throw new Error("Pedido não encontrado.");
+      const { data: order } = await supabaseAdmin
+        .from("orders")
+        .select("id, status, payment_status, payment_id, total")
+        .eq("id", data.orderId)
+        .eq("company_id", data.companyId)
+        .maybeSingle();
+      if (!order) throw new Error("Pedido não encontrado.");
 
-    const paymentStatus = await fetchPayment(data.paymentId, data.companyId);
+      const paymentStatus = await fetchPayment(data.paymentId, data.companyId);
 
-    const now = new Date().toISOString();
-    let patch: Record<string, string | null> | null = null;
+      const now = new Date().toISOString();
+      let patch: Record<string, string | null> | null = null;
 
-    if (paymentStatus.status === "approved") {
-      if (order.payment_status !== "paid") {
+      if (paymentStatus.status === "approved") {
+        if (order.payment_status !== "paid") {
+          patch = {
+            payment_status: "paid",
+            status: "payment_approved",
+            payment_id: data.paymentId,
+            payment_approved_at: paymentStatus.dateApproved ?? now,
+            updated_at: now,
+          };
+        }
+
+        // Financeiro da Plataforma: registra a venda real mesmo se o webhook do MP
+        // chegar depois (o polling do checkout já marcou o pedido como pago). Se o
+        // webhook chegar antes, o upsert é idempotente e mantém o net real.
+        const { upsertPlatformPayment } = await import("@/lib/platform-payments.server");
+        await upsertPlatformPayment({
+          companyId: data.companyId,
+          paymentId: data.paymentId,
+          orderId: data.orderId,
+          grossAmount: paymentStatus.total ?? order.total ?? 0,
+          netAmount: paymentStatus.netReceivedAmount ?? paymentStatus.total ?? order.total ?? 0,
+          paymentMethodId: paymentStatus.paymentMethodId,
+          paymentMethodType: paymentStatus.paymentMethodType,
+          paymentStatus: "approved",
+          dateApproved: paymentStatus.dateApproved ?? now,
+        });
+      } else if (paymentStatus.status === "cancelled" || paymentStatus.status === "refunded") {
         patch = {
-          payment_status: "paid",
-          status: "payment_approved",
-          payment_id: data.paymentId,
-          payment_approved_at: paymentStatus.dateApproved ?? now,
+          payment_status: paymentStatus.paymentStatus,
           updated_at: now,
         };
       }
-    } else if (
-      paymentStatus.status === "cancelled" ||
-      paymentStatus.status === "refunded"
-    ) {
-      patch = {
-        payment_status: paymentStatus.paymentStatus,
-        updated_at: now,
-      };
-    }
 
-    if (patch) {
-      const { error } = await supabaseAdmin
-        .from("orders")
-        .update(patch as any)
-        .eq("id", data.orderId);
-      if (error) {
-        await logPaymentEvent(data.companyId, "Erro ao confirmar pedido", {
-          orderId: data.orderId,
-          message: error.message,
-        });
+      if (patch) {
+        const { error } = await supabaseAdmin
+          .from("orders")
+          .update(patch as any)
+          .eq("id", data.orderId);
+        if (error) {
+          await logPaymentEvent(data.companyId, "Erro ao confirmar pedido", {
+            orderId: data.orderId,
+            message: error.message,
+          });
+        }
       }
-    }
 
-    const { data: updated } = await supabaseAdmin
-      .from("orders")
-      .select("status, payment_status")
-      .eq("id", data.orderId)
-      .maybeSingle();
+      const { data: updated } = await supabaseAdmin
+        .from("orders")
+        .select("status, payment_status")
+        .eq("id", data.orderId)
+        .maybeSingle();
 
-    return {
-      orderId: data.orderId,
-      status: updated?.status ?? order.status,
-      paymentStatus: (updated?.payment_status as PaymentStatus) ?? "pending",
-    };
-  });
+      return {
+        orderId: data.orderId,
+        status: updated?.status ?? order.status,
+        paymentStatus: (updated?.payment_status as PaymentStatus) ?? "pending",
+      };
+    },
+  );
 
 export const getOnlinePaymentStatus = createServerFn({ method: "POST" })
   .inputValidator((raw) => PaymentStatusInput.parse(raw))
@@ -528,7 +571,9 @@ async function fetchPayment(
   paymentStatus: PaymentStatus;
   dateApproved: string | null;
   paymentMethodId: string | null;
+  paymentMethodType: string | null;
   total: number | null;
+  netReceivedAmount: number | null;
 }> {
   const accessToken = await resolveTokenForCompany(companyId);
   const res = await fetch(`${MERCADO_PAGO_PAYMENTS_URL}/${paymentId}`, {
@@ -546,16 +591,23 @@ function mapPayment(payment: MercadoPagoPayment): {
   paymentStatus: PaymentStatus;
   dateApproved: string | null;
   paymentMethodId: string | null;
+  paymentMethodType: string | null;
   total: number | null;
+  netReceivedAmount: number | null;
 } {
+  const paymentMethodId = payment.payment_method?.id ?? null;
+  const paymentMethodType = payment.payment_method?.type ?? null;
+  const netReceivedAmount = payment.net_received_amount ?? null;
   switch (payment.status) {
     case "approved":
       return {
         status: "approved",
         paymentStatus: "paid",
         dateApproved: payment.date_approved ?? null,
-        paymentMethodId: payment.payment_method?.id ?? null,
+        paymentMethodId,
+        paymentMethodType,
         total: payment.transaction_amount ?? null,
+        netReceivedAmount,
       };
     case "pending":
     case "in_process":
@@ -564,8 +616,10 @@ function mapPayment(payment: MercadoPagoPayment): {
         status: "pending",
         paymentStatus: "pending",
         dateApproved: null,
-        paymentMethodId: payment.payment_method?.id ?? null,
+        paymentMethodId,
+        paymentMethodType,
         total: payment.transaction_amount ?? null,
+        netReceivedAmount,
       };
     case "rejected":
     case "cancelled":
@@ -574,8 +628,10 @@ function mapPayment(payment: MercadoPagoPayment): {
         status: "cancelled",
         paymentStatus: "cancelled",
         dateApproved: null,
-        paymentMethodId: payment.payment_method?.id ?? null,
+        paymentMethodId,
+        paymentMethodType,
         total: payment.transaction_amount ?? null,
+        netReceivedAmount,
       };
     case "refunded":
     case "charged_back":
@@ -584,8 +640,10 @@ function mapPayment(payment: MercadoPagoPayment): {
         status: "refunded",
         paymentStatus: "refunded",
         dateApproved: payment.date_approved ?? null,
-        paymentMethodId: payment.payment_method?.id ?? null,
+        paymentMethodId,
+        paymentMethodType,
         total: payment.transaction_amount ?? null,
+        netReceivedAmount,
       };
     default:
       return {
@@ -593,7 +651,9 @@ function mapPayment(payment: MercadoPagoPayment): {
         paymentStatus: "pending",
         dateApproved: null,
         paymentMethodId: null,
+        paymentMethodType: null,
         total: payment.transaction_amount ?? null,
+        netReceivedAmount,
       };
   }
 }
