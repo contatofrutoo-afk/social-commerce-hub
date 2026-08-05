@@ -281,9 +281,9 @@ function Problem() {
                 <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
                   <div>
                     <div className="text-[10px] uppercase tracking-widest text-white/50">Sem weaze</div>
-                    <div className="font-display text-2xl font-semibold">Cliente invisível</div>
+                    <div className="font-display text-2xl font-semibold">Fila e pedido manual</div>
                   </div>
-                  <div className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300 backdrop-blur">-73% recorrência</div>
+                  <div className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300 backdrop-blur">Atendimento lento</div>
                 </div>
               </div>
             </div>
