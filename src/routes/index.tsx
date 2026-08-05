@@ -730,11 +730,11 @@ function FinalCTA() {
         <div className="relative overflow-hidden rounded-[2.5rem] weaze-gradient px-6 py-20 text-center shadow-glow sm:px-16">
           <div className="absolute inset-0 -z-0 opacity-30" style={{ backgroundImage: "radial-gradient(600px 300px at 20% 0%, rgba(255,255,255,0.25), transparent 60%)" }} />
           <h2 className="font-display relative mx-auto max-w-3xl text-4xl font-semibold tracking-tight text-primary-foreground sm:text-5xl">
-            Seu próximo cliente pode estar a poucos segundos de se tornar um{" "}
-            <span className="underline decoration-white/40 underline-offset-4">cliente fiel.</span>
+            Seu próximo cliente já está com o celular na mão. Agora falta transformar essa visita em uma{" "}
+            <span className="underline decoration-white/40 underline-offset-4">venda.</span>
           </h2>
           <p className="relative mx-auto mt-6 max-w-2xl text-lg text-primary-foreground/85">
-            Comece hoje e descubra como transformar relacionamento em vendas.
+            Leve o autoatendimento inteligente para o seu negócio e descubra uma nova forma de vender, atender e crescer.
           </p>
           <div className="relative mt-10">
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8 text-base shadow-elegant">
