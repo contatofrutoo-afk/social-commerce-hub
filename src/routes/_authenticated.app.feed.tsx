@@ -149,22 +149,19 @@ function FeedAdminPage() {
     (productId: string) => {
       setSelectedProducts((s) => {
         const isActive = s.includes(productId);
-        if (isActive) return s.filter((x) => x !== productId);
-        const next = [...s, productId];
-        if (next.length === 1) {
-          const p = products?.find((x) => x.id === productId);
-          if (p) {
-            if (p.videoUrl && !videoUrl) {
-              setVideoUrl(p.videoUrl);
-              setMediaType("video");
-            } else if (p.imageUrl && !imageUrl) {
-              setImageUrl(p.imageUrl);
-              setMediaType("image");
-            }
-            if (p.description && !text) setText(p.description);
+        if (isActive) return [];
+        const p = products?.find((x) => x.id === productId);
+        if (p) {
+          if (p.videoUrl && !videoUrl) {
+            setVideoUrl(p.videoUrl);
+            setMediaType("video");
+          } else if (p.imageUrl && !imageUrl) {
+            setImageUrl(p.imageUrl);
+            setMediaType("image");
           }
+          if (p.description && !text) setText(p.description);
         }
-        return next;
+        return [productId];
       });
     },
     [products, imageUrl, videoUrl, text],
@@ -243,7 +240,9 @@ function FeedAdminPage() {
           maxLength={500}
         />
         <div>
-          <div className="mb-2 text-sm font-medium">Marcar produtos</div>
+          <div className="mb-2 text-sm font-medium">
+            Marcar produtos <span className="text-muted-foreground">(apenas 1)</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {products?.map((p) => {
               const active = selectedProducts.includes(p.id);
