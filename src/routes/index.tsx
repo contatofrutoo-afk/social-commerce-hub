@@ -571,11 +571,11 @@ function DashboardShowcase() {
         <FadeIn>
           <Eyebrow>Dashboard</Eyebrow>
           <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Todas as métricas.{" "}
-            <span className="weaze-text-gradient">Em tempo real.</span>
+            Controle toda sua operação{" "}
+            <span className="weaze-text-gradient">em um único painel.</span>
           </h2>
           <p className="mt-5 max-w-md text-lg text-muted-foreground">
-            Um centro de comando único com tudo o que acontece no seu negócio — do check-in ao pedido concluído.
+            Acompanhe pedidos, pagamentos, clientes presentes, vendas, produtos, métricas e toda a operação do seu negócio em tempo real.
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4">
             {stats.map((s, i) => (
