@@ -462,8 +462,8 @@ function Benefits() {
             Benefícios
           </div>
           <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight sm:text-6xl">
-            Mais relacionamento. Mais fidelização.{" "}
-            <span className="bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">Mais vendas.</span>
+            Venda mais. Atenda mais rápido.{" "}
+            <span className="bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">Reduza filas.</span>
           </h2>
         </FadeIn>
         <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
