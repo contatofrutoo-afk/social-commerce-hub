@@ -631,10 +631,10 @@ function Pricing() {
       <FadeIn className="mx-auto max-w-2xl text-center">
         <Eyebrow>Planos</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Um único plano.{" "}
-          <span className="weaze-text-gradient">Sem surpresas.</span>
+          Tudo o que seu negócio precisa para{" "}
+          <span className="weaze-text-gradient">vender de forma inteligente.</span>
         </h2>
-        <p className="mt-4 text-lg text-muted-foreground">Sem taxas escondidas.</p>
+        <p className="mt-4 text-lg text-muted-foreground">Sem taxas escondidas. Sem fidelidade.</p>
       </FadeIn>
 
       <FadeIn className="mx-auto mt-14 max-w-4xl">
