@@ -160,7 +160,7 @@ function SettingsPage() {
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() ?? "png";
-      const filePath = `companies/${companyId}/logo.${ext}`;
+      const filePath = `${companyId}/logo.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("weaze-media")
         .upload(filePath, file, { upsert: true });
