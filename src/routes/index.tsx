@@ -42,19 +42,20 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "weaze — Transforme visitantes em clientes fiéis" },
+      { title: "weaze — Autoatendimento Inteligente para Negócios Locais" },
       {
         name: "description",
         content:
-          "Social Commerce, CRM Inteligente, Atendimento e Catálogo Inteligente em uma única plataforma para aumentar as vendas do seu negócio local.",
+          "Seus clientes descobrem produtos, pedem, personalizam e pagam pelo celular. Sua empresa recebe dados, métricas e inteligência para vender mais.",
       },
-      { property: "og:title", content: "weaze — Social Commerce para negócios locais" },
+      { property: "og:title", content: "weaze — Autoatendimento Inteligente para Negócios Locais" },
       {
         property: "og:description",
-        content: "Cada visita vira relacionamento, venda e recorrência. QR Code, Feed, CRM e Catálogo Inteligente.",
+        content: "Autoatendimento por QR Code: catálogo, pedidos, pagamento pelo celular e inteligência em tempo real para o seu negócio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+
     ],
   }),
 });
