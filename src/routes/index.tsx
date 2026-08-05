@@ -259,10 +259,10 @@ function Problem() {
               <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> O problema
             </div>
             <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Seu negócio perde clientes todos os dias… e talvez você{" "}
-              <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">nem perceba.</span>
+              Seu negócio ainda depende de atendimento para{" "}
+              <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">vender?</span>
             </h2>
-            <p className="mt-6 text-lg text-white/60">A maioria dos estabelecimentos não sabe:</p>
+            <p className="mt-6 text-lg text-white/60">Filas, espera, pedidos anotados manualmente, clientes desistindo e falta de informações sobre quem compra fazem parte da rotina de milhares de negócios locais. Enquanto isso, o consumidor já espera resolver tudo pelo próprio celular.</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
               {bullets.map((b, i) => (
                 <li key={b} className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm">
