@@ -446,11 +446,11 @@ function Features() {
 /* ============================== BENEFITS (dark stats) ============================== */
 function Benefits() {
   const items = [
-    { icon: Users, t: "Conheça seus clientes", n: "360°", d: "Perfil comportamental completo." },
-    { icon: TrendingUp, t: "Aumente a recorrência", n: "+42%", d: "Clientes que voltam mais vezes." },
-    { icon: Sparkles, t: "Venda personalizada", n: "1:1", d: "Ofertas certas para cada perfil." },
-    { icon: Bell, t: "Reduza abandono", n: "-38%", d: "Recupere quem quase comprou." },
-    { icon: Heart, t: "Melhore a experiência", n: "★ 4.9", d: "Interação fluida e memorável." },
+    { icon: TrendingUp, t: "Venda mais", n: "+ vendas", d: "Autoatendimento disponível o tempo todo." },
+    { icon: Zap, t: "Atenda mais rápido", n: "- espera", d: "Reduza filas e agilize cada pedido." },
+    { icon: ShoppingBag, t: "Automatize pedidos", n: "100%", d: "Pedidos digitais, sem anotação manual." },
+    { icon: Bell, t: "Receba pagamentos digitais", n: "Pix e cartão", d: "Pagamento direto pelo celular do cliente." },
+    { icon: Users, t: "Conheça seus clientes", n: "360°", d: "Comportamento registrado automaticamente." },
     { icon: BarChart3, t: "Decisões com dados", n: "Real-time", d: "Métricas ao vivo, sem achismo." },
   ];
   return (
