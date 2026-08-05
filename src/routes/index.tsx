@@ -758,7 +758,7 @@ function Footer() {
           <div>
             <Logo className="h-7" />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Social Commerce para negócios locais. Transforme visitantes em clientes fiéis.
+              Autoatendimento Inteligente para Negócios Locais. Transforme visitas em vendas, pagamentos e relacionamento.
             </p>
           </div>
           <FooterCol title="Produto" links={[["Recursos", "#recursos"], ["Planos", "#planos"], ["FAQ", "#faq"]]} />
