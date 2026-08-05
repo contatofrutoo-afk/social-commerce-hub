@@ -131,23 +131,22 @@ function Hero() {
         <motion.div initial="hidden" animate="show" variants={stagger}>
           <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
             <span className="inline-block size-1.5 rounded-full bg-primary animate-pulse" />
-            Nova era do Social Commerce presencial
+            Autoatendimento Inteligente para Negócios Locais
           </motion.div>
 
           <motion.h1
             variants={fadeUp}
             className="font-display mt-6 text-5xl font-semibold tracking-tight text-foreground sm:text-6xl lg:text-7xl"
           >
-            Seu cliente já está{" "}
-            <span className="weaze-text-gradient">no celular.</span>
-            <br />
-            Agora falta ele comprar de você.
+            Transforme seu negócio em um{" "}
+            <span className="weaze-text-gradient">autoatendimento inteligente.</span>
           </motion.h1>
 
           <motion.p variants={fadeUp} className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            A weaze transforma cada visita ao seu negócio em oportunidade de
-            relacionamento, venda e fidelização. Uma experiência simples com QR
-            Codes, Feed Social, CRM Inteligente e Catálogo Inteligente.
+            Com a weaze, seus clientes descobrem produtos, fazem pedidos, personalizam a
+            compra, pagam pelo celular e retiram tudo de forma simples, rápida e sem filas.
+            Enquanto isso, sua empresa recebe dados, métricas e inteligência para vender
+            cada vez mais.
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-9 flex flex-wrap gap-3">
@@ -164,8 +163,9 @@ function Hero() {
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Sem instalação</div>
             <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Sem fidelidade</div>
-            <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Ativo em 5 minutos</div>
+            <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Ativo em poucos minutos</div>
           </motion.div>
+
         </motion.div>
 
         <HeroMockup />
