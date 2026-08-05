@@ -615,11 +615,12 @@ function DashboardShowcase() {
 function Pricing() {
   const includes = [
     "Feed Social",
+    "Catálogo Inteligente",
+    "Pedidos digitais",
+    "Pagamentos pelo Mercado Pago",
+    "Dashboard em tempo real",
     "CRM Inteligente",
     "Atendimento Inteligente",
-    "Catálogo Inteligente",
-    "Pedidos",
-    "Dashboard",
     "QR Codes ilimitados",
     "Clientes ilimitados",
     "Produtos ilimitados",
