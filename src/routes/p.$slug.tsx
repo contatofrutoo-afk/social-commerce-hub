@@ -101,16 +101,17 @@ function ProductPage() {
     );
   }
 
+  const currentProduct = product;
   const selectedOptions = optionsFromSelections(productOptions, selections);
-  const unitPrice = unitPriceFor(product, selectedOptions);
+  const unitPrice = unitPriceFor(currentProduct, selectedOptions);
   const missingRequired = hasRequiredMissing(productOptions, selections);
 
   function addToCart() {
-    cart.add(product, qty, selectedOptions);
-    const companySlug = product.companySlug ?? slug.split("-")[0];
+    cart.add(currentProduct, qty, selectedOptions);
+    const companySlug = currentProduct.companySlug ?? slug.split("-")[0];
     const session = getSessionForCompany(companySlug);
-    productRepository.recordEvent(product.id, product.companyId, "cart_add", session?.customerId).catch(() => {});
-    productRepository.incrementCounter(product.id, "cart_additions_count").catch(() => {});
+    productRepository.recordEvent(currentProduct.id, currentProduct.companyId, "cart_add", session?.customerId).catch(() => {});
+    productRepository.incrementCounter(currentProduct.id, "cart_additions_count").catch(() => {});
   }
 
   return (
