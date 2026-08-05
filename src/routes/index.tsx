@@ -682,12 +682,12 @@ function Pricing() {
 function FAQ() {
   const faqs = [
     { q: "Preciso instalar aplicativo?", a: "Não. A weaze funciona 100% via QR Code e navegador. Nem você nem seus clientes precisam instalar nada." },
-    { q: "Funciona para qualquer negócio?", a: "Sim. Restaurantes, bares, cafés, lojas, barbearias, salões, clínicas, pet shops, academias e qualquer negócio local." },
+    { q: "Como meus clientes acessam?", a: "Basta escanear o QR Code do seu estabelecimento, mesa ou produto. Em segundos o cliente já está navegando pelo catálogo, sem cadastro obrigatório." },
+    { q: "Como funciona o QR Code?", a: "Você gera QR Codes ilimitados no painel: um geral da loja, um por mesa e um por produto. Cada leitura já identifica o contexto da visita." },
+    { q: "Como funciona o pagamento?", a: "O cliente paga diretamente pelo celular via Mercado Pago (Pix, cartão ou carteira) ou escolhe pagar no estabelecimento. A confirmação aparece automaticamente no painel." },
+    { q: "Preciso de leitor de QR Code?", a: "Não. Quem escaneia é o próprio cliente, usando a câmera do celular. Você só precisa exibir o QR impresso ou na tela." },
+    { q: "Posso usar sem Mercado Pago?", a: "Sim. Você pode operar apenas com pagamento no estabelecimento e ativar o pagamento online quando quiser." },
     { q: "Posso cancelar quando quiser?", a: "Sim. Sem fidelidade, sem multa. Cancele em um clique quando quiser." },
-    { q: "Como meus clientes entram?", a: "Basta escanear o QR Code do seu estabelecimento, mesa ou produto. Em 15 segundos ele está dentro da experiência." },
-    { q: "Como funciona o QR Code?", a: "Você gera QR Codes ilimitados no dashboard: um geral, um por mesa e um por produto. Cada leitura já identifica o contexto da visita." },
-    { q: "Existe limite de clientes?", a: "Não. Clientes ilimitados em todos os planos." },
-    { q: "Existe limite de produtos?", a: "Não. Produtos e categorias ilimitados." },
   ];
   return (
     <Section id="faq">
