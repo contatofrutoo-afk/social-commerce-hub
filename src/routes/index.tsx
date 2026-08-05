@@ -325,10 +325,10 @@ function Solution() {
 /* ============================== HOW IT WORKS (timeline) ============================== */
 function HowItWorks() {
   const steps = [
-    { n: "01", icon: QrCode, title: "Cliente faz o check-in", desc: "Basta escanear um QR Code para entrar na experiência da weaze." },
-    { n: "02", icon: Heart, title: "Interage naturalmente", desc: "Curte produtos, comenta, salva, adiciona à sacola e visualiza itens — tudo registrado automaticamente." },
-    { n: "03", icon: Sparkles, title: "A plataforma entende seu cliente", desc: "Cada ação constrói um perfil completo de comportamento. Sem formulários, sem pesquisas." },
-    { n: "04", icon: BarChart3, title: "Seu negócio recebe inteligência", desc: "Descubra quem compra mais, quem está prestes a voltar e quem merece uma oferta personalizada." },
+    { n: "01", icon: QrCode, title: "Cliente acessa pelo QR Code", desc: "Sem baixar aplicativo. Sem cadastro obrigatório." },
+    { n: "02", icon: Heart, title: "Explora o catálogo", desc: "Descobre produtos, visualiza promoções, interage e monta seu pedido." },
+    { n: "03", icon: Sparkles, title: "Finaliza a compra", desc: "Paga diretamente pelo Mercado Pago ou pelo estabelecimento e recebe confirmação automática." },
+    { n: "04", icon: BarChart3, title: "Retira ou recebe seu pedido", desc: "A empresa acompanha tudo em tempo real pelo Dashboard." },
   ];
   return (
     <Section id="como-funciona" className="bg-muted/30 border-y border-border/60">
