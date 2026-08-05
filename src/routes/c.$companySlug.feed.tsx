@@ -3,29 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { companyRepository, postRepository, commentRepository } from "@/repositories";
 import type { Post, ReactionType } from "@/repositories/types";
-import { supabase } from "@/integrations/supabase/client";
 import { getSessionForCompany, clearSession, clearLastProfile } from "@/lib/session";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/image-upload";
 import { useServerFn } from "@tanstack/react-start";
 import { uploadCustomerFile } from "@/lib/customer-uploads.functions";
@@ -40,9 +21,6 @@ import {
   Store,
   User as UserIcon,
   Send,
-  MoreVertical,
-  Pencil,
-  Trash2,
 } from "lucide-react";
 import { formatBRL, relativeTime } from "@/lib/format";
 import { getPostCategoryBadge } from "@/lib/post-categories";
@@ -62,25 +40,6 @@ function FeedPage() {
     queryKey: ["company", companySlug],
     queryFn: () => companyRepository.findBySlug(companySlug),
     staleTime: 30_000,
-  });
-
-  const { data: canManage } = useQuery({
-    queryKey: ["feed-manage", company?.id],
-    queryFn: async () => {
-      const {
-        data: { session: authSession },
-      } = await supabase.auth.getSession();
-      if (!authSession?.user) return false;
-      const { data: role } = await supabase
-        .from("user_roles")
-        .select("company_id")
-        .eq("company_id", company!.id)
-        .limit(1)
-        .maybeSingle();
-      return !!role;
-    },
-    enabled: !!company,
-    staleTime: 60_000,
   });
 
   const {
@@ -143,7 +102,6 @@ function FeedPage() {
           post={p}
           customerId={session.customerId}
           sessionToken={session.sessionToken}
-          canManage={!!canManage}
           cart={cart}
         />
       ))}
@@ -155,22 +113,16 @@ function PostCard({
   post,
   customerId,
   sessionToken,
-  canManage,
   cart,
 }: {
   post: Post;
   customerId: string;
   sessionToken: string;
-  canManage: boolean;
   cart: ReturnType<typeof useCart>;
 }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [showComments, setShowComments] = useState(false);
-  const [editingPost, setEditingPost] = useState(false);
-  const [editText, setEditText] = useState(post.text ?? "");
-  const [editImageUrl, setEditImageUrl] = useState<string | null>(post.imageUrl);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const react = useMutation({
     mutationFn: (t: ReactionType) =>
@@ -182,35 +134,6 @@ function PostCard({
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["feed"] }),
     onError: (err) => toast.error(`Erro ao reagir: ${(err as Error).message}`),
-  });
-
-  const canEdit = post.authorType === "business" && canManage;
-  const canDelete = post.authorType === "business" && canManage;
-
-  const editMutation = useMutation({
-    mutationFn: () =>
-      postRepository.update(post.id, {
-        text: editText.trim(),
-        imageUrl: editImageUrl,
-        videoUrl: post.videoUrl,
-        category: post.category,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["feed"] });
-      setEditingPost(false);
-      toast.success("Publicação atualizada");
-    },
-    onError: (err) => toast.error(`Erro ao editar: ${(err as Error).message}`),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () => postRepository.remove(post.id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["feed"] });
-      setConfirmDelete(false);
-      toast.success("Publicação removida");
-    },
-    onError: (err) => toast.error(`Erro ao excluir: ${(err as Error).message}`),
   });
 
   return (
@@ -247,36 +170,6 @@ function PostCard({
           <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-accent-foreground capitalize">
             {post.companions}
           </span>
-        )}
-        {(canEdit || canDelete) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full">
-                <MoreVertical className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {canEdit && (
-                <DropdownMenuItem
-                  onClick={() => {
-                    setEditText(post.text ?? "");
-                    setEditImageUrl(post.imageUrl);
-                    setEditingPost(true);
-                  }}
-                >
-                  <Pencil className="size-4" /> Editar
-                </DropdownMenuItem>
-              )}
-              {canDelete && (
-                <DropdownMenuItem
-                  onClick={() => setConfirmDelete(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="size-4" /> Excluir
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
         )}
       </header>
 
@@ -385,58 +278,6 @@ function PostCard({
       {showComments && (
         <CommentsSection postId={post.id} customerId={customerId} sessionToken={sessionToken} />
       )}
-
-      <Dialog open={editingPost} onOpenChange={setEditingPost}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar publicação</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Textarea
-              placeholder="Texto"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-              maxLength={500}
-            />
-            <ImageUpload
-              value={editImageUrl}
-              onChange={setEditImageUrl}
-              folder={`${post.companyId}/feed`}
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setEditingPost(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => editMutation.mutate()}
-              disabled={editMutation.isPending || (!editText.trim() && !editImageUrl)}
-            >
-              Salvar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir publicação?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. A publicação será removida permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteMutation.mutate()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </article>
   );
 }
