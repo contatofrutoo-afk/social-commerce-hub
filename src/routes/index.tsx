@@ -372,7 +372,7 @@ function Features() {
         <FadeIn className="mx-auto max-w-2xl text-center">
           <Eyebrow>Recursos</Eyebrow>
           <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Tudo que seu negócio precisa em uma{" "}
+            Tudo para vender no autoatendimento em uma{" "}
             <span className="weaze-text-gradient">única plataforma.</span>
           </h2>
         </FadeIn>
