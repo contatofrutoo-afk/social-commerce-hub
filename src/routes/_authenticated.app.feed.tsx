@@ -152,19 +152,24 @@ function FeedAdminPage() {
         if (isActive) return [];
         const p = products?.find((x) => x.id === productId);
         if (p) {
-          if (p.videoUrl && !videoUrl) {
+          if (p.videoUrl) {
             setVideoUrl(p.videoUrl);
+            setImageUrl("");
             setMediaType("video");
-          } else if (p.imageUrl && !imageUrl) {
+          } else if (p.imageUrl) {
             setImageUrl(p.imageUrl);
+            setVideoUrl("");
             setMediaType("image");
+          } else {
+            setImageUrl("");
+            setVideoUrl("");
           }
-          if (p.description && !text) setText(p.description);
+          if (p.description) setText(p.description);
         }
         return [productId];
       });
     },
-    [products, imageUrl, videoUrl, text],
+    [products],
   );
 
   const openOptionsFor = (p: Product) => {
