@@ -221,11 +221,11 @@ function AppLayout() {
                 key={n.to}
                 to={n.to}
                 className={cn(
-                  "flex min-w-[72px] shrink-0 flex-col items-center gap-0.5 px-2 py-2 text-[10px] transition-colors",
+                  "flex min-w-[76px] shrink-0 flex-col items-center gap-1 px-2 py-3 text-xs transition-colors",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <n.icon className="size-4" />
+                <n.icon className="size-5" />
                 {n.label}
               </Link>
             );
