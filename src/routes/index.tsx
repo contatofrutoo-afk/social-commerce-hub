@@ -310,11 +310,11 @@ function Solution() {
         <FadeIn>
           <Eyebrow>A solução</Eyebrow>
           <h2 className="font-display mt-6 text-5xl font-semibold tracking-tight sm:text-7xl lg:text-8xl">
-            Conheça a <span className="weaze-text-gradient italic">weaze</span>
+            A <span className="weaze-text-gradient italic">weaze</span> automatiza toda a experiência de compra.
           </h2>
           <p className="mx-auto mt-8 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-            Enquanto seu cliente navega, interage, comenta e faz pedidos, a weaze aprende automaticamente seu comportamento e entrega{" "}
-            <span className="text-foreground font-medium">inteligência para o seu negócio vender mais.</span>
+            Seu cliente acessa o catálogo pelo QR Code, escolhe produtos, personaliza o pedido, paga diretamente pelo celular e acompanha todo o processo. Enquanto isso, a weaze registra automaticamente cada interação e{" "}
+            <span className="text-foreground font-medium">transforma tudo em inteligência para o seu negócio.</span>
           </p>
         </FadeIn>
       </div>
