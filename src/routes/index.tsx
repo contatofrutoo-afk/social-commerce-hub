@@ -505,8 +505,8 @@ function ForWho() {
       <FadeIn className="mx-auto max-w-2xl text-center">
         <Eyebrow>Para quem é</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Feito para todo negócio{" "}
-          <span className="weaze-text-gradient">que respira local.</span>
+          Ideal para qualquer negócio local que queira vender mais através do{" "}
+          <span className="weaze-text-gradient">autoatendimento.</span>
         </h2>
       </FadeIn>
 
