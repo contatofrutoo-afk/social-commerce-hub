@@ -336,7 +336,7 @@ function HowItWorks() {
         <Eyebrow>Como funciona</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
           Simples para o cliente. <br className="hidden sm:block" />
-          <span className="weaze-text-gradient">Poderoso para o seu negócio.</span>
+          <span className="weaze-text-gradient">Automático para o seu negócio.</span>
         </h2>
       </FadeIn>
       <div className="relative mt-20">
