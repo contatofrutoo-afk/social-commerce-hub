@@ -242,11 +242,11 @@ function HeroMockup() {
 /* ============================== PROBLEM (dark, warning) ============================== */
 function Problem() {
   const bullets = [
-    "Quem visitou hoje.",
-    "Quem voltou pela segunda vez.",
-    "Quem quase comprou.",
-    "Quem nunca mais voltou.",
-    "Quem são seus melhores clientes.",
+    "Clientes aguardando atendimento.",
+    "Filas desnecessárias.",
+    "Pedidos manuais.",
+    "Baixa produtividade.",
+    "Pouco conhecimento sobre o comportamento do cliente.",
   ];
   return (
     <section className="relative overflow-hidden bg-[#0b0b12] py-28 text-white sm:py-36">
