@@ -66,9 +66,6 @@ function ClientLayout() {
               <div className="truncate font-poppins text-sm font-bold" translate="no">
                 {company?.name || "\u00A0"}
               </div>
-              <div className="font-poppins text-[10px] uppercase tracking-widest text-muted-foreground" translate="no">
-                by WEAZE
-              </div>
             </div>
           </Link>
           <Link to="/c/$companySlug/perfil" params={{ companySlug }}>
