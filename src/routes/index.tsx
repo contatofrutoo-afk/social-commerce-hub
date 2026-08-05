@@ -392,50 +392,50 @@ function Features() {
                 <Sparkles className="size-6" />
               </div>
               <h3 className="font-display mt-6 text-3xl font-semibold">Feed Social</h3>
-              <p className="mt-3 max-w-md text-base text-muted-foreground">Transforme seu negócio em uma rede social própria. Publicações, curtidas, comentários e interações que geram vendas.</p>
+              <p className="mt-3 max-w-md text-base text-muted-foreground">Transforme seu catálogo em uma experiência interativa.</p>
             </div>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <MessageSquareHeart className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">CRM Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Conheça profundamente cada cliente.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Conheça automaticamente o comportamento dos seus clientes.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Users className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Atendimento Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Saiba exatamente como atender cada pessoa.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Saiba exatamente quem está presente e como oferecer uma experiência melhor.</p>
           </motion.div>
 
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Layers className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Catálogo Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Produtos com QR e pedidos instantâneos.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Produtos inteligentes com QR Codes individuais.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <ShoppingBag className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Pedidos</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Receba pedidos direto pelo dashboard.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Pedidos digitais sem complicação.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="relative overflow-hidden rounded-3xl border border-primary/30 bg-primary p-6 text-primary-foreground md:col-span-2">
             <BarChart3 className="size-6" />
             <h3 className="font-display mt-4 text-lg font-semibold">Dashboard</h3>
-            <p className="mt-2 text-sm text-primary-foreground/80">Todas as métricas em tempo real.</p>
+            <p className="mt-2 text-sm text-primary-foreground/80">Acompanhe toda a operação em tempo real.</p>
           </motion.div>
 
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <QrCode className="size-6 text-primary" />
-            <h3 className="font-display mt-4 text-lg font-semibold">QR das Mesas</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Experiência digital para bares e restaurantes.</p>
+            <h3 className="font-display mt-4 text-lg font-semibold">QR Codes</h3>
+            <p className="mt-2 text-sm text-muted-foreground">QR para mesas, para loja e para produtos. Tudo integrado.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Package className="size-6 text-primary" />
-            <h3 className="font-display mt-4 text-lg font-semibold">QR de Produtos</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Ideal para lojas físicas.</p>
+            <h3 className="font-display mt-4 text-lg font-semibold">Pagamentos</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Receba pagamentos diretamente pelo Mercado Pago.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Store className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Perfil Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Histórico completo de cada cliente.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Histórico completo de cada cliente, sem esforço.</p>
           </motion.div>
         </motion.div>
       </div>
