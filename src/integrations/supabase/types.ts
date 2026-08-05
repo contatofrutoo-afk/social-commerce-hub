@@ -607,6 +607,67 @@ export type Database = {
           },
         ]
       }
+      order_item_options: {
+        Row: {
+          free_text: string | null
+          id: string
+          option_id: string | null
+          option_name: string
+          order_item_id: string
+          price_adjust: number
+          quantity: number
+          sort_order: number
+          value_id: string | null
+          value_label: string
+        }
+        Insert: {
+          free_text?: string | null
+          id?: string
+          option_id?: string | null
+          option_name: string
+          order_item_id: string
+          price_adjust?: number
+          quantity?: number
+          sort_order?: number
+          value_id?: string | null
+          value_label?: string
+        }
+        Update: {
+          free_text?: string | null
+          id?: string
+          option_id?: string | null
+          option_name?: string
+          order_item_id?: string
+          price_adjust?: number
+          quantity?: number
+          sort_order?: number
+          value_id?: string | null
+          value_label?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_item_options_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "product_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_options_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_item_options_value_id_fkey"
+            columns: ["value_id"]
+            isOneToOne: false
+            referencedRelation: "product_option_values"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           id: string
@@ -997,6 +1058,69 @@ export type Database = {
           },
         ]
       }
+      platform_payments: {
+        Row: {
+          company_id: string
+          company_name: string | null
+          created_at: string
+          gross_amount: number
+          id: string
+          mercadopago_payment_id: string | null
+          net_amount: number
+          order_id: string | null
+          paid_at: string | null
+          payment_method: string
+          payment_origin: string
+          payment_status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          company_name?: string | null
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          mercadopago_payment_id?: string | null
+          net_amount?: number
+          order_id?: string | null
+          paid_at?: string | null
+          payment_method: string
+          payment_origin: string
+          payment_status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          company_name?: string | null
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          mercadopago_payment_id?: string | null
+          net_amount?: number
+          order_id?: string | null
+          paid_at?: string | null
+          payment_method?: string
+          payment_origin?: string
+          payment_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           id: number
@@ -1269,6 +1393,94 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_option_values: {
+        Row: {
+          available: boolean
+          created_at: string
+          id: string
+          image_url: string | null
+          label: string
+          option_id: string
+          price_adjust: number
+          sort_order: number
+        }
+        Insert: {
+          available?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          label: string
+          option_id: string
+          price_adjust?: number
+          sort_order?: number
+        }
+        Update: {
+          available?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          label?: string
+          option_id?: string
+          price_adjust?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_option_values_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "product_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_options: {
+        Row: {
+          created_at: string
+          id: string
+          max_select: number | null
+          min_select: number | null
+          name: string
+          option_type: string
+          price_adjust: number
+          product_id: string
+          required: boolean
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_select?: number | null
+          min_select?: number | null
+          name: string
+          option_type: string
+          price_adjust?: number
+          product_id: string
+          required?: boolean
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_select?: number | null
+          min_select?: number | null
+          name?: string
+          option_type?: string
+          price_adjust?: number
+          product_id?: string
+          required?: boolean
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_options_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -1851,10 +2063,8 @@ export type Database = {
       }
       update_customer_self: {
         Args: {
-          _age_range?: string
           _avatar_url: string
           _customer_id: string
-          _gender?: string
           _ip_address?: string
           _name: string
           _token: string
@@ -1867,9 +2077,7 @@ export type Database = {
       }
       upsert_customer_visit: {
         Args: {
-          _age_range?: string
           _company_id: string
-          _gender?: string
           _ip_address?: string
           _name: string
           _whatsapp: string

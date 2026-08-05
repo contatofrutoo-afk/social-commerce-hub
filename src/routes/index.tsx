@@ -42,19 +42,20 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
   head: () => ({
     meta: [
-      { title: "weaze — Transforme visitantes em clientes fiéis" },
+      { title: "weaze — Autoatendimento Inteligente para Negócios Locais" },
       {
         name: "description",
         content:
-          "Social Commerce, CRM Inteligente, Atendimento e Catálogo Inteligente em uma única plataforma para aumentar as vendas do seu negócio local.",
+          "Seus clientes descobrem produtos, pedem, personalizam e pagam pelo celular. Sua empresa recebe dados, métricas e inteligência para vender mais.",
       },
-      { property: "og:title", content: "weaze — Social Commerce para negócios locais" },
+      { property: "og:title", content: "weaze — Autoatendimento Inteligente para Negócios Locais" },
       {
         property: "og:description",
-        content: "Cada visita vira relacionamento, venda e recorrência. QR Code, Feed, CRM e Catálogo Inteligente.",
+        content: "Autoatendimento por QR Code: catálogo, pedidos, pagamento pelo celular e inteligência em tempo real para o seu negócio.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+
     ],
   }),
 });
@@ -130,23 +131,22 @@ function Hero() {
         <motion.div initial="hidden" animate="show" variants={stagger}>
           <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/80 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
             <span className="inline-block size-1.5 rounded-full bg-primary animate-pulse" />
-            Nova era do Social Commerce presencial
+            Autoatendimento Inteligente para Negócios Locais
           </motion.div>
 
           <motion.h1
             variants={fadeUp}
             className="font-display mt-6 text-5xl font-semibold tracking-tight text-foreground sm:text-6xl lg:text-7xl"
           >
-            Seu cliente já está{" "}
-            <span className="weaze-text-gradient">no celular.</span>
-            <br />
-            Agora falta ele comprar de você.
+            Transforme seu negócio em um{" "}
+            <span className="weaze-text-gradient">autoatendimento inteligente.</span>
           </motion.h1>
 
           <motion.p variants={fadeUp} className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            A weaze transforma cada visita ao seu negócio em oportunidade de
-            relacionamento, venda e fidelização. Uma experiência simples com QR
-            Codes, Feed Social, CRM Inteligente e Catálogo Inteligente.
+            Com a weaze, seus clientes descobrem produtos, fazem pedidos, personalizam a
+            compra, pagam pelo celular e retiram tudo de forma simples, rápida e sem filas.
+            Enquanto isso, sua empresa recebe dados, métricas e inteligência para vender
+            cada vez mais.
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-9 flex flex-wrap gap-3">
@@ -163,8 +163,9 @@ function Hero() {
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Sem instalação</div>
             <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Sem fidelidade</div>
-            <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Ativo em 5 minutos</div>
+            <div className="flex items-center gap-2"><Check className="size-4 text-primary" /> Ativo em poucos minutos</div>
           </motion.div>
+
         </motion.div>
 
         <HeroMockup />
@@ -241,11 +242,11 @@ function HeroMockup() {
 /* ============================== PROBLEM (dark, warning) ============================== */
 function Problem() {
   const bullets = [
-    "Quem visitou hoje.",
-    "Quem voltou pela segunda vez.",
-    "Quem quase comprou.",
-    "Quem nunca mais voltou.",
-    "Quem são seus melhores clientes.",
+    "Clientes aguardando atendimento.",
+    "Filas desnecessárias.",
+    "Pedidos manuais.",
+    "Baixa produtividade.",
+    "Pouco conhecimento sobre o comportamento do cliente.",
   ];
   return (
     <section className="relative overflow-hidden bg-[#0b0b12] py-28 text-white sm:py-36">
@@ -258,10 +259,10 @@ function Problem() {
               <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> O problema
             </div>
             <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Seu negócio perde clientes todos os dias… e talvez você{" "}
-              <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">nem perceba.</span>
+              Seu negócio ainda depende de atendimento para{" "}
+              <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">vender?</span>
             </h2>
-            <p className="mt-6 text-lg text-white/60">A maioria dos estabelecimentos não sabe:</p>
+            <p className="mt-6 text-lg text-white/60">Filas, espera, pedidos anotados manualmente, clientes desistindo e falta de informações sobre quem compra fazem parte da rotina de milhares de negócios locais. Enquanto isso, o consumidor já espera resolver tudo pelo próprio celular.</p>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
               {bullets.map((b, i) => (
                 <li key={b} className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-sm">
@@ -280,9 +281,9 @@ function Problem() {
                 <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between">
                   <div>
                     <div className="text-[10px] uppercase tracking-widest text-white/50">Sem weaze</div>
-                    <div className="font-display text-2xl font-semibold">Cliente invisível</div>
+                    <div className="font-display text-2xl font-semibold">Fila e pedido manual</div>
                   </div>
-                  <div className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300 backdrop-blur">-73% recorrência</div>
+                  <div className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300 backdrop-blur">Atendimento lento</div>
                 </div>
               </div>
             </div>
@@ -309,11 +310,11 @@ function Solution() {
         <FadeIn>
           <Eyebrow>A solução</Eyebrow>
           <h2 className="font-display mt-6 text-5xl font-semibold tracking-tight sm:text-7xl lg:text-8xl">
-            Conheça a <span className="weaze-text-gradient italic">weaze</span>
+            A <span className="weaze-text-gradient italic">weaze</span> automatiza toda a experiência de compra.
           </h2>
           <p className="mx-auto mt-8 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-            Enquanto seu cliente navega, interage, comenta e faz pedidos, a weaze aprende automaticamente seu comportamento e entrega{" "}
-            <span className="text-foreground font-medium">inteligência para o seu negócio vender mais.</span>
+            Seu cliente acessa o catálogo pelo QR Code, escolhe produtos, personaliza o pedido, paga diretamente pelo celular e acompanha todo o processo. Enquanto isso, a weaze registra automaticamente cada interação e{" "}
+            <span className="text-foreground font-medium">transforma tudo em inteligência para o seu negócio.</span>
           </p>
         </FadeIn>
       </div>
@@ -324,10 +325,10 @@ function Solution() {
 /* ============================== HOW IT WORKS (timeline) ============================== */
 function HowItWorks() {
   const steps = [
-    { n: "01", icon: QrCode, title: "Cliente faz o check-in", desc: "Basta escanear um QR Code para entrar na experiência da weaze." },
-    { n: "02", icon: Heart, title: "Interage naturalmente", desc: "Curte produtos, comenta, salva, adiciona à sacola e visualiza itens — tudo registrado automaticamente." },
-    { n: "03", icon: Sparkles, title: "A plataforma entende seu cliente", desc: "Cada ação constrói um perfil completo de comportamento. Sem formulários, sem pesquisas." },
-    { n: "04", icon: BarChart3, title: "Seu negócio recebe inteligência", desc: "Descubra quem compra mais, quem está prestes a voltar e quem merece uma oferta personalizada." },
+    { n: "01", icon: QrCode, title: "Cliente acessa pelo QR Code", desc: "Sem baixar aplicativo. Sem cadastro obrigatório." },
+    { n: "02", icon: Heart, title: "Explora o catálogo", desc: "Descobre produtos, visualiza promoções, interage e monta seu pedido." },
+    { n: "03", icon: Sparkles, title: "Finaliza a compra", desc: "Paga diretamente pelo Mercado Pago ou pelo estabelecimento e recebe confirmação automática." },
+    { n: "04", icon: BarChart3, title: "Retira ou recebe seu pedido", desc: "A empresa acompanha tudo em tempo real pelo Dashboard." },
   ];
   return (
     <Section id="como-funciona" className="bg-muted/30 border-y border-border/60">
@@ -335,7 +336,7 @@ function HowItWorks() {
         <Eyebrow>Como funciona</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
           Simples para o cliente. <br className="hidden sm:block" />
-          <span className="weaze-text-gradient">Poderoso para o seu negócio.</span>
+          <span className="weaze-text-gradient">Automático para o seu negócio.</span>
         </h2>
       </FadeIn>
       <div className="relative mt-20">
@@ -371,7 +372,7 @@ function Features() {
         <FadeIn className="mx-auto max-w-2xl text-center">
           <Eyebrow>Recursos</Eyebrow>
           <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Tudo que seu negócio precisa em uma{" "}
+            Tudo para vender no autoatendimento em uma{" "}
             <span className="weaze-text-gradient">única plataforma.</span>
           </h2>
         </FadeIn>
@@ -391,50 +392,50 @@ function Features() {
                 <Sparkles className="size-6" />
               </div>
               <h3 className="font-display mt-6 text-3xl font-semibold">Feed Social</h3>
-              <p className="mt-3 max-w-md text-base text-muted-foreground">Transforme seu negócio em uma rede social própria. Publicações, curtidas, comentários e interações que geram vendas.</p>
+              <p className="mt-3 max-w-md text-base text-muted-foreground">Transforme seu catálogo em uma experiência interativa.</p>
             </div>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <MessageSquareHeart className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">CRM Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Conheça profundamente cada cliente.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Conheça automaticamente o comportamento dos seus clientes.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Users className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Atendimento Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Saiba exatamente como atender cada pessoa.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Saiba exatamente quem está presente e como oferecer uma experiência melhor.</p>
           </motion.div>
 
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Layers className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Catálogo Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Produtos com QR e pedidos instantâneos.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Produtos inteligentes com QR Codes individuais.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <ShoppingBag className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Pedidos</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Receba pedidos direto pelo dashboard.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Pedidos digitais sem complicação.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="relative overflow-hidden rounded-3xl border border-primary/30 bg-primary p-6 text-primary-foreground md:col-span-2">
             <BarChart3 className="size-6" />
             <h3 className="font-display mt-4 text-lg font-semibold">Dashboard</h3>
-            <p className="mt-2 text-sm text-primary-foreground/80">Todas as métricas em tempo real.</p>
+            <p className="mt-2 text-sm text-primary-foreground/80">Acompanhe toda a operação em tempo real.</p>
           </motion.div>
 
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <QrCode className="size-6 text-primary" />
-            <h3 className="font-display mt-4 text-lg font-semibold">QR das Mesas</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Experiência digital para bares e restaurantes.</p>
+            <h3 className="font-display mt-4 text-lg font-semibold">QR Codes</h3>
+            <p className="mt-2 text-sm text-muted-foreground">QR para mesas, para loja e para produtos. Tudo integrado.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Package className="size-6 text-primary" />
-            <h3 className="font-display mt-4 text-lg font-semibold">QR de Produtos</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Ideal para lojas físicas.</p>
+            <h3 className="font-display mt-4 text-lg font-semibold">Pagamentos</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Receba pagamentos diretamente pelo Mercado Pago.</p>
           </motion.div>
           <motion.div variants={fadeUp} className="rounded-3xl border border-border/60 bg-card p-6 md:col-span-2">
             <Store className="size-6 text-primary" />
             <h3 className="font-display mt-4 text-lg font-semibold">Perfil Inteligente</h3>
-            <p className="mt-2 text-sm text-muted-foreground">Histórico completo de cada cliente.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Histórico completo de cada cliente, sem esforço.</p>
           </motion.div>
         </motion.div>
       </div>
@@ -445,11 +446,11 @@ function Features() {
 /* ============================== BENEFITS (dark stats) ============================== */
 function Benefits() {
   const items = [
-    { icon: Users, t: "Conheça seus clientes", n: "360°", d: "Perfil comportamental completo." },
-    { icon: TrendingUp, t: "Aumente a recorrência", n: "+42%", d: "Clientes que voltam mais vezes." },
-    { icon: Sparkles, t: "Venda personalizada", n: "1:1", d: "Ofertas certas para cada perfil." },
-    { icon: Bell, t: "Reduza abandono", n: "-38%", d: "Recupere quem quase comprou." },
-    { icon: Heart, t: "Melhore a experiência", n: "★ 4.9", d: "Interação fluida e memorável." },
+    { icon: TrendingUp, t: "Venda mais", n: "+ vendas", d: "Autoatendimento disponível o tempo todo." },
+    { icon: Zap, t: "Atenda mais rápido", n: "- espera", d: "Reduza filas e agilize cada pedido." },
+    { icon: ShoppingBag, t: "Automatize pedidos", n: "100%", d: "Pedidos digitais, sem anotação manual." },
+    { icon: Bell, t: "Receba pagamentos digitais", n: "Pix e cartão", d: "Pagamento direto pelo celular do cliente." },
+    { icon: Users, t: "Conheça seus clientes", n: "360°", d: "Comportamento registrado automaticamente." },
     { icon: BarChart3, t: "Decisões com dados", n: "Real-time", d: "Métricas ao vivo, sem achismo." },
   ];
   return (
@@ -461,8 +462,8 @@ function Benefits() {
             Benefícios
           </div>
           <h2 className="font-display mt-5 text-4xl font-semibold tracking-tight sm:text-6xl">
-            Mais relacionamento. Mais fidelização.{" "}
-            <span className="bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">Mais vendas.</span>
+            Venda mais. Atenda mais rápido.{" "}
+            <span className="bg-gradient-to-r from-white to-primary bg-clip-text text-transparent">Reduza filas.</span>
           </h2>
         </FadeIn>
         <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-16 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-3">
@@ -504,8 +505,8 @@ function ForWho() {
       <FadeIn className="mx-auto max-w-2xl text-center">
         <Eyebrow>Para quem é</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Feito para todo negócio{" "}
-          <span className="weaze-text-gradient">que respira local.</span>
+          Ideal para qualquer negócio local que queira vender mais através do{" "}
+          <span className="weaze-text-gradient">autoatendimento.</span>
         </h2>
       </FadeIn>
 
@@ -570,11 +571,11 @@ function DashboardShowcase() {
         <FadeIn>
           <Eyebrow>Dashboard</Eyebrow>
           <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Todas as métricas.{" "}
-            <span className="weaze-text-gradient">Em tempo real.</span>
+            Controle toda sua operação{" "}
+            <span className="weaze-text-gradient">em um único painel.</span>
           </h2>
           <p className="mt-5 max-w-md text-lg text-muted-foreground">
-            Um centro de comando único com tudo o que acontece no seu negócio — do check-in ao pedido concluído.
+            Acompanhe pedidos, pagamentos, clientes presentes, vendas, produtos, métricas e toda a operação do seu negócio em tempo real.
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4">
             {stats.map((s, i) => (
@@ -614,11 +615,12 @@ function DashboardShowcase() {
 function Pricing() {
   const includes = [
     "Feed Social",
+    "Catálogo Inteligente",
+    "Pedidos digitais",
+    "Pagamentos pelo Mercado Pago",
+    "Dashboard em tempo real",
     "CRM Inteligente",
     "Atendimento Inteligente",
-    "Catálogo Inteligente",
-    "Pedidos",
-    "Dashboard",
     "QR Codes ilimitados",
     "Clientes ilimitados",
     "Produtos ilimitados",
@@ -630,10 +632,10 @@ function Pricing() {
       <FadeIn className="mx-auto max-w-2xl text-center">
         <Eyebrow>Planos</Eyebrow>
         <h2 className="font-display mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Um único plano.{" "}
-          <span className="weaze-text-gradient">Sem surpresas.</span>
+          Tudo o que seu negócio precisa para{" "}
+          <span className="weaze-text-gradient">vender de forma inteligente.</span>
         </h2>
-        <p className="mt-4 text-lg text-muted-foreground">Sem taxas escondidas.</p>
+        <p className="mt-4 text-lg text-muted-foreground">Sem taxas escondidas. Sem fidelidade.</p>
       </FadeIn>
 
       <FadeIn className="mx-auto mt-14 max-w-4xl">
@@ -681,12 +683,12 @@ function Pricing() {
 function FAQ() {
   const faqs = [
     { q: "Preciso instalar aplicativo?", a: "Não. A weaze funciona 100% via QR Code e navegador. Nem você nem seus clientes precisam instalar nada." },
-    { q: "Funciona para qualquer negócio?", a: "Sim. Restaurantes, bares, cafés, lojas, barbearias, salões, clínicas, pet shops, academias e qualquer negócio local." },
+    { q: "Como meus clientes acessam?", a: "Basta escanear o QR Code do seu estabelecimento, mesa ou produto. Em segundos o cliente já está navegando pelo catálogo, sem cadastro obrigatório." },
+    { q: "Como funciona o QR Code?", a: "Você gera QR Codes ilimitados no painel: um geral da loja, um por mesa e um por produto. Cada leitura já identifica o contexto da visita." },
+    { q: "Como funciona o pagamento?", a: "O cliente paga diretamente pelo celular via Mercado Pago (Pix, cartão ou carteira) ou escolhe pagar no estabelecimento. A confirmação aparece automaticamente no painel." },
+    { q: "Preciso de leitor de QR Code?", a: "Não. Quem escaneia é o próprio cliente, usando a câmera do celular. Você só precisa exibir o QR impresso ou na tela." },
+    { q: "Posso usar sem Mercado Pago?", a: "Sim. Você pode operar apenas com pagamento no estabelecimento e ativar o pagamento online quando quiser." },
     { q: "Posso cancelar quando quiser?", a: "Sim. Sem fidelidade, sem multa. Cancele em um clique quando quiser." },
-    { q: "Como meus clientes entram?", a: "Basta escanear o QR Code do seu estabelecimento, mesa ou produto. Em 15 segundos ele está dentro da experiência." },
-    { q: "Como funciona o QR Code?", a: "Você gera QR Codes ilimitados no dashboard: um geral, um por mesa e um por produto. Cada leitura já identifica o contexto da visita." },
-    { q: "Existe limite de clientes?", a: "Não. Clientes ilimitados em todos os planos." },
-    { q: "Existe limite de produtos?", a: "Não. Produtos e categorias ilimitados." },
   ];
   return (
     <Section id="faq">
@@ -729,11 +731,11 @@ function FinalCTA() {
         <div className="relative overflow-hidden rounded-[2.5rem] weaze-gradient px-6 py-20 text-center shadow-glow sm:px-16">
           <div className="absolute inset-0 -z-0 opacity-30" style={{ backgroundImage: "radial-gradient(600px 300px at 20% 0%, rgba(255,255,255,0.25), transparent 60%)" }} />
           <h2 className="font-display relative mx-auto max-w-3xl text-4xl font-semibold tracking-tight text-primary-foreground sm:text-5xl">
-            Seu próximo cliente pode estar a poucos segundos de se tornar um{" "}
-            <span className="underline decoration-white/40 underline-offset-4">cliente fiel.</span>
+            Seu próximo cliente já está com o celular na mão. Agora falta transformar essa visita em uma{" "}
+            <span className="underline decoration-white/40 underline-offset-4">venda.</span>
           </h2>
           <p className="relative mx-auto mt-6 max-w-2xl text-lg text-primary-foreground/85">
-            Comece hoje e descubra como transformar relacionamento em vendas.
+            Leve o autoatendimento inteligente para o seu negócio e descubra uma nova forma de vender, atender e crescer.
           </p>
           <div className="relative mt-10">
             <Button asChild size="lg" variant="secondary" className="rounded-full px-8 text-base shadow-elegant">
@@ -757,7 +759,7 @@ function Footer() {
           <div>
             <Logo className="h-7" />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Social Commerce para negócios locais. Transforme visitantes em clientes fiéis.
+              Autoatendimento Inteligente para Negócios Locais. Transforme visitas em vendas, pagamentos e relacionamento.
             </p>
           </div>
           <FooterCol title="Produto" links={[["Recursos", "#recursos"], ["Planos", "#planos"], ["FAQ", "#faq"]]} />
