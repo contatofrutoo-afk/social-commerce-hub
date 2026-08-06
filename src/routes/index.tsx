@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import { usePwaInstall } from "@/lib/pwa";
 import {
   Accordion,
   AccordionContent,
@@ -32,6 +33,7 @@ import {
   Zap,
   Bell,
   Package,
+  Download,
 } from "lucide-react";
 import heroDashboard from "@/assets/hero-dashboard.jpg";
 import sceneCafe from "@/assets/scene-cafe.jpg";
@@ -121,6 +123,7 @@ function Nav() {
 
 /* ============================== HERO ============================== */
 function Hero() {
+  const { canInstall, install } = usePwaInstall();
   return (
     <section className="relative overflow-hidden">
       {/* soft gradient background */}
@@ -158,6 +161,19 @@ function Hero() {
             <Button asChild size="lg" variant="outline" className="rounded-full px-7 text-base">
               <a href="#como-funciona">Agendar demonstração</a>
             </Button>
+            {canInstall && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full px-7 text-base"
+                onClick={() => {
+                  install();
+                }}
+              >
+                <Download className="mr-2 size-4" />
+                Baixar aplicativo
+              </Button>
+            )}
           </motion.div>
 
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
