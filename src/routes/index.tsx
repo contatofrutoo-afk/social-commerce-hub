@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
+import { InstallCenter } from "@/components/install-center";
 import { usePwaInstall } from "@/lib/pwa";
 import {
   Accordion,
@@ -123,7 +125,8 @@ function Nav() {
 
 /* ============================== HERO ============================== */
 function Hero() {
-  const { canInstall, installing, install } = usePwaInstall();
+  const { canInstall } = usePwaInstall();
+  const [installOpen, setInstallOpen] = useState(false);
   return (
     <section className="relative overflow-hidden">
       {/* soft gradient background */}
@@ -166,13 +169,10 @@ function Hero() {
                 size="lg"
                 variant="outline"
                 className="rounded-full px-7 text-base"
-                disabled={installing}
-                onClick={() => {
-                  void install();
-                }}
+                onClick={() => setInstallOpen(true)}
               >
                 <Download className="mr-2 size-4" />
-                {installing ? "Instalando..." : "Baixar aplicativo"}
+                Baixar aplicativo
               </Button>
             )}
           </motion.div>
@@ -188,6 +188,7 @@ function Hero() {
         <HeroMockup />
       </div>
 
+      <InstallCenter open={installOpen} onOpenChange={setInstallOpen} />
     </section>
   );
 }

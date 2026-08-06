@@ -71,6 +71,58 @@ function detectStandalone(): boolean {
   return "standalone" in navigator && Boolean((navigator as { standalone?: boolean }).standalone);
 }
 
+export type DevicePlatform = "android" | "ios" | "windows" | "macos" | "linux" | "unknown";
+
+export type DeviceBrowser =
+  | "chrome"
+  | "edge"
+  | "samsung-internet"
+  | "safari"
+  | "firefox"
+  | "opera"
+  | "other";
+
+export interface InstallCapability {
+  platform: DevicePlatform;
+  browser: DeviceBrowser;
+  /** Navegador capaz de instalação PWA nativa via beforeinstallprompt. */
+  nativeSupported: boolean;
+  /** Já aberto como aplicativo instalado (display-mode: standalone). */
+  standalone: boolean;
+}
+
+/**
+ * Detecta automaticamente sistema operacional, navegador e suporte a
+ * instalação PWA — nunca pergunta ao usuário. Usada pela Central de Instalação.
+ */
+export function detectInstallCapability(): InstallCapability {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const standalone = detectStandalone();
+
+  let platform: DevicePlatform = "unknown";
+  if (/android/i.test(ua)) platform = "android";
+  else if (/iphone|ipad|ipod/i.test(ua)) platform = "ios";
+  else if (/windows/i.test(ua)) platform = "windows";
+  else if (/mac os|macintosh/i.test(ua)) platform = "macos";
+  else if (/linux/i.test(ua)) platform = "linux";
+
+  let browser: DeviceBrowser = "other";
+  if (/edg\//i.test(ua)) browser = "edge";
+  else if (/opr\/|opera/i.test(ua)) browser = "opera";
+  else if (/samsungbrowser/i.test(ua)) browser = "samsung-internet";
+  else if (/crios|chrome\//i.test(ua)) browser = "chrome";
+  else if (/fxios|firefox/i.test(ua)) browser = "firefox";
+  else if (/safari/i.test(ua)) browser = "safari";
+
+  const nativeSupported =
+    browser === "chrome" ||
+    browser === "edge" ||
+    browser === "samsung-internet" ||
+    browser === "opera";
+
+  return { platform, browser, nativeSupported, standalone };
+}
+
 export type InstallResult = "installed" | "dismissed" | "manual";
 
 /**
