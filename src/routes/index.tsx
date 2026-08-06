@@ -205,6 +205,13 @@ function Hero() {
 
 function InstallGuideDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const steps = getInstallSteps();
+  const inIframe = typeof window !== "undefined" && window.self !== window.top;
+  const allSteps = inIframe
+    ? [
+        "Abra o site em uma aba nova do navegador: https://weazesocial.lovable.app/ (a instalação é bloqueada em visualizações incorporadas, como o preview do Lovable).",
+        ...steps,
+      ]
+    : steps;
   return (
     <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <AlertDialogContent>
@@ -215,7 +222,7 @@ function InstallGuideDialog({ open, onClose }: { open: boolean; onClose: () => v
               Siga os passos abaixo para instalar o WEAZE no seu celular ou computador:
             </p>
             <ol className="list-decimal space-y-1.5 pl-5 text-left text-sm text-muted-foreground">
-              {steps.map((s) => (
+              {allSteps.map((s) => (
                 <li key={s}>{s}</li>
               ))}
             </ol>
@@ -249,8 +256,9 @@ function getInstallSteps(): string[] {
   }
   if (isChrome || isEdge) {
     return [
-      "Procure o ícone de instalação (monitor com seta) na barra de endereço ou no menu (⋮ / ⋯).",
-      "Toque em \u201cInstalar\u201d ou \u201cInstalar WEAZE\u201d.",
+      "No Chrome, o aviso \u201cInstalar WEAZE\u201d pode aparecer automaticamente na barra inferior ou no canto superior direito — clique em \u201cInstalar\u201d.",
+      "Se não aparecer, clique no ícone de instalação (monitor com seta para baixo) no fim da barra de endereço.",
+      "Confirme clicando em \u201cInstalar\u201d na janela que abrir.",
     ];
   }
   return [
