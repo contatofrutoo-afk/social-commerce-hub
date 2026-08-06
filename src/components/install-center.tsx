@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { CheckCircle2, Download, Smartphone } from "lucide-react";
@@ -63,11 +69,11 @@ export function InstallCenter({
           </div>
           <DialogHeader>
             <DialogTitle className="text-xl">Instalar WEAZE</DialogTitle>
+            <DialogDescription className="mx-auto max-w-xs">
+              Leve a WEAZE para sua tela inicial e acesse sua plataforma como um aplicativo, com
+              apenas um toque.
+            </DialogDescription>
           </DialogHeader>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Leve a WEAZE para sua tela inicial e acesse sua plataforma como um aplicativo, com
-            apenas um toque.
-          </p>
         </div>
 
         <div className="px-6 pb-6">
