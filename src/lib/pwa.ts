@@ -108,7 +108,7 @@ export function usePwaInstall(): {
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
-    const sync = () => setCanInstall(installable && !detectStandalone());
+    const sync = () => setCanInstall(!detectStandalone());
     sync();
     window.addEventListener(INSTALLABLE_EVENT, sync);
     const mq = window.matchMedia("(display-mode: standalone)");
@@ -122,7 +122,7 @@ export function usePwaInstall(): {
   const install = useCallback(async (): Promise<InstallResult> => {
     setInstalling(true);
     try {
-      const prompt = deferredPrompt ?? (await waitForInstallPrompt(1500));
+      const prompt = deferredPrompt ?? (await waitForInstallPrompt(3000));
       if (prompt) {
         deferredPrompt = prompt;
         await deferredPrompt.prompt();
