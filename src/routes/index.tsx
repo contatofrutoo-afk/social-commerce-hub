@@ -11,6 +11,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ArrowRight,
   Check,
   QrCode,
@@ -124,6 +132,7 @@ function Nav() {
 /* ============================== HERO ============================== */
 function Hero() {
   const { canInstall, install } = usePwaInstall();
+  const [showGuide, setShowGuide] = useState(false);
   return (
     <section className="relative overflow-hidden">
       {/* soft gradient background */}
@@ -166,8 +175,9 @@ function Hero() {
                 size="lg"
                 variant="outline"
                 className="rounded-full px-7 text-base"
-                onClick={() => {
-                  install();
+                onClick={async () => {
+                  const result = await install();
+                  if (result === "manual") setShowGuide(true);
                 }}
               >
                 <Download className="mr-2 size-4" />
@@ -186,8 +196,66 @@ function Hero() {
 
         <HeroMockup />
       </div>
+
+      <InstallGuideDialog open={showGuide} onClose={() => setShowGuide(false)} />
     </section>
   );
+}
+
+function InstallGuideDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const steps = getInstallSteps();
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Instalar o aplicativo WEAZE</AlertDialogTitle>
+          <AlertDialogDescription>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Siga os passos abaixo para instalar o WEAZE no seu celular ou computador:
+            </p>
+            <ol className="list-decimal space-y-1.5 pl-5 text-left text-sm text-muted-foreground">
+              {steps.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ol>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogAction onClick={onClose}>Entendi</AlertDialogAction>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function getInstallSteps(): string[] {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iphone|ipad|ipod/i.test(ua);
+  const isAndroid = /android/i.test(ua);
+  const isChrome = /chrome/i.test(ua);
+  const isEdge = /edg/i.test(ua);
+
+  if (isIOS) {
+    return [
+      "Toque no botão Compartilhar (quadrado com seta para cima) na barra do navegador.",
+      "Role para baixo e toque em \u201cAdicionar à Tela de Início\u201d.",
+      "Toque em \u201cAdicionar\u201d para confirmar.",
+    ];
+  }
+  if (isAndroid) {
+    return [
+      "Toque no menu do navegador (⋮ ou ⋯).",
+      "Toque em \u201cAdicionar à tela inicial\u201d ou \u201cInstalar aplicativo\u201d.",
+    ];
+  }
+  if (isChrome || isEdge) {
+    return [
+      "Procure o ícone de instalação (monitor com seta) na barra de endereço ou no menu (⋮ / ⋯).",
+      "Toque em \u201cInstalar\u201d ou \u201cInstalar WEAZE\u201d.",
+    ];
+  }
+  return [
+    "Use o navegador Chrome, Edge ou Safari para instalar o WEAZE como aplicativo.",
+    "Depois de abrir em um desses navegadores, clique em \u201cBaixar aplicativo\u201d novamente.",
+  ];
 }
 
 function HeroMockup() {

@@ -39,28 +39,46 @@ export function registerPwa(): void {
   });
 }
 
-/** Botão "Baixar aplicativo": visível apenas quando o navegador suporta instalação. */
+function detectStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  return "standalone" in navigator && Boolean((navigator as { standalone?: boolean }).standalone);
+}
+
+export type InstallResult = "installed" | "dismissed" | "manual";
+
+/**
+ * Botão "Baixar aplicativo": fica visível em qualquer navegador, oculto apenas
+ * quando o WEAZE já está aberto como aplicativo instalado.
+ */
 export function usePwaInstall(): {
   canInstall: boolean;
-  install: () => Promise<boolean>;
+  install: () => Promise<InstallResult>;
 } {
-  const [canInstall, setCanInstall] = useState(installable);
+  const [canInstall, setCanInstall] = useState(false);
 
   useEffect(() => {
-    const sync = () => setCanInstall(installable);
+    const sync = () => setCanInstall(!detectStandalone());
     sync();
     window.addEventListener(INSTALLABLE_EVENT, sync);
-    return () => window.removeEventListener(INSTALLABLE_EVENT, sync);
+    const mq = window.matchMedia("(display-mode: standalone)");
+    mq.addEventListener?.("change", sync);
+    return () => {
+      window.removeEventListener(INSTALLABLE_EVENT, sync);
+      mq.removeEventListener?.("change", sync);
+    };
   }, []);
 
-  const install = useCallback(async () => {
-    if (!deferredPrompt) return false;
-    await deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    installable = false;
-    deferredPrompt = null;
-    window.dispatchEvent(new Event(INSTALLABLE_EVENT));
-    return choice.outcome === "accepted";
+  const install = useCallback(async (): Promise<InstallResult> => {
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installable = false;
+      window.dispatchEvent(new Event(INSTALLABLE_EVENT));
+      return choice.outcome === "accepted" ? "installed" : "dismissed";
+    }
+    return "manual";
   }, []);
 
   return { canInstall, install };
