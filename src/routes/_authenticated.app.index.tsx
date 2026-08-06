@@ -729,7 +729,7 @@ function DashboardPage() {
             Pagamentos aguardando conferência
           </h3>
           {awaitingPayments && awaitingPayments.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {awaitingPayments.map((p) => (
                 <PaymentCard
                   key={p.id}
@@ -1174,7 +1174,7 @@ function PaymentCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border p-4 transition-shadow",
+        "relative overflow-hidden rounded-xl border p-3 transition-shadow",
         pulsing
           ? "animate-pulse border-green-500/40 bg-green-500/5"
           : "border-green-500/20 bg-green-500/[0.03]",
@@ -1182,28 +1182,25 @@ function PaymentCard({
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-green-500/10 text-green-600">
-            <CheckCircle2 className="size-4" />
+          <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-green-500/10 text-green-600">
+            <CheckCircle2 className="size-3.5" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-green-700">
-              Novo pagamento recebido
-            </p>
             <p className="truncate text-sm font-semibold">{payment.customerName ?? "Cliente"}</p>
             {payment.customerPhone && (
-              <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              <p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground">
                 <Phone className="size-3 shrink-0" />
                 <span className="truncate">{payment.customerPhone}</span>
               </p>
             )}
           </div>
         </div>
-        <span className="shrink-0 rounded-full bg-green-600/10 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+        <span className="shrink-0 rounded-full bg-green-600/10 px-2 py-0.5 text-[11px] font-semibold text-green-700">
           {paymentMethodLabel(payment.paymentMethod)}
         </span>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+      <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1 text-xs sm:grid-cols-4">
         <div>
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Pedido</div>
           <div className="font-semibold">#{payment.id.slice(0, 6).toUpperCase()}</div>
@@ -1225,11 +1222,11 @@ function PaymentCard({
       </div>
 
       {payment.items.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {payment.items.slice(0, 6).map((i) => (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {payment.items.slice(0, 3).map((i) => (
             <span
               key={i.id}
-              className="rounded-full border bg-card/60 px-2.5 py-0.5 text-xs text-muted-foreground"
+              className="max-w-full truncate rounded-full border bg-card/60 px-2 py-0.5 text-[11px] text-muted-foreground"
             >
               {i.productName}
               {i.quantity > 1 ? ` ×${i.quantity}` : ""}
@@ -1238,27 +1235,21 @@ function PaymentCard({
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700">
+      <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+        <Link
+          to="/app/pedidos"
+          className="inline-flex items-center justify-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors hover:border-primary/30 hover:bg-muted/50"
+        >
+          <Eye className="size-3.5" />
+          Ver Pedido
+        </Link>
+        <button
+          onClick={onConfirm}
+          className="inline-flex items-center justify-center gap-1 rounded-lg bg-green-600 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-green-700"
+        >
           <CheckCircle2 className="size-3.5" />
-          Pagamento Confirmado
-        </span>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/app/pedidos"
-            className="inline-flex items-center justify-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors hover:border-primary/30 hover:bg-muted/50"
-          >
-            <Eye className="size-3.5" />
-            Ver Pedido
-          </Link>
-          <button
-            onClick={onConfirm}
-            className="inline-flex items-center justify-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700"
-          >
-            <CheckCircle2 className="size-3.5" />
-            Confirmar Recebimento
-          </button>
-        </div>
+          Confirmar
+        </button>
       </div>
     </div>
   );
