@@ -131,7 +131,7 @@ function Nav() {
 
 /* ============================== HERO ============================== */
 function Hero() {
-  const { canInstall, install } = usePwaInstall();
+  const { canInstall, installing, install } = usePwaInstall();
   const [showGuide, setShowGuide] = useState(false);
   return (
     <section className="relative overflow-hidden">
@@ -175,13 +175,14 @@ function Hero() {
                 size="lg"
                 variant="outline"
                 className="rounded-full px-7 text-base"
+                disabled={installing}
                 onClick={async () => {
                   const result = await install();
                   if (result === "manual") setShowGuide(true);
                 }}
               >
                 <Download className="mr-2 size-4" />
-                Baixar aplicativo
+                {installing ? "Preparando instalação..." : "Baixar aplicativo"}
               </Button>
             )}
           </motion.div>

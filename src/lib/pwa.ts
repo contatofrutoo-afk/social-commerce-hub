@@ -48,14 +48,38 @@ function detectStandalone(): boolean {
 export type InstallResult = "installed" | "dismissed" | "manual";
 
 /**
+ * Aguarda o navegador disparar `beforeinstallprompt`. O Chrome só emite esse
+ * evento após o primeiro gesto do usuário na página — o clique no botão é esse
+ * gesto. Assim, sem um prompt já capturado, o clique aguarda alguns segundos
+ * para disparar o diálogo nativo em vez de cair direto no guia manual.
+ */
+function waitForInstallPrompt(timeoutMs: number): Promise<BeforeInstallPromptEvent | null> {
+  if (deferredPrompt) return Promise.resolve(deferredPrompt);
+  return new Promise((resolve) => {
+    const cleanup = (prompt: BeforeInstallPromptEvent | null) => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("beforeinstallprompt", onEvent);
+      resolve(prompt ?? deferredPrompt);
+    };
+    const timeout = window.setTimeout(() => cleanup(null), timeoutMs);
+    function onEvent(e: Event) {
+      cleanup(e as BeforeInstallPromptEvent);
+    }
+    window.addEventListener("beforeinstallprompt", onEvent);
+  });
+}
+
+/**
  * Botão "Baixar aplicativo": fica visível em qualquer navegador, oculto apenas
  * quando o WEAZE já está aberto como aplicativo instalado.
  */
 export function usePwaInstall(): {
   canInstall: boolean;
+  installing: boolean;
   install: () => Promise<InstallResult>;
 } {
   const [canInstall, setCanInstall] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     const sync = () => setCanInstall(!detectStandalone());
@@ -70,16 +94,23 @@ export function usePwaInstall(): {
   }, []);
 
   const install = useCallback(async (): Promise<InstallResult> => {
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const choice = await deferredPrompt.userChoice;
-      deferredPrompt = null;
-      installable = false;
-      window.dispatchEvent(new Event(INSTALLABLE_EVENT));
-      return choice.outcome === "accepted" ? "installed" : "dismissed";
+    setInstalling(true);
+    try {
+      const prompt = deferredPrompt ?? (await waitForInstallPrompt(3000));
+      if (prompt) {
+        deferredPrompt = prompt;
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installable = false;
+        window.dispatchEvent(new Event(INSTALLABLE_EVENT));
+        return choice.outcome === "accepted" ? "installed" : "dismissed";
+      }
+      return "manual";
+    } finally {
+      setInstalling(false);
     }
-    return "manual";
   }, []);
 
-  return { canInstall, install };
+  return { canInstall, installing, install };
 }
