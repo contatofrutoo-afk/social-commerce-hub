@@ -40,16 +40,16 @@ async function unregisterAppSw(): Promise<void> {
 export function registerPwa(): void {
   if (typeof window === "undefined") return;
 
-  if (!("serviceWorker" in navigator)) {
-    // segue para os listeners de instalação abaixo
-  } else if (!swAllowed()) {
+  if ("serviceWorker" in navigator && swAllowed()) {
+    // Registra na hora. Esperar o evento `load` falha em produção: no deploy o
+    // `load` dispara antes da hidratação do React, o listener nunca roda e o
+    // SW nunca é registrado — sem SW ativo a página não é instalável.
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .catch((err) => console.warn("[PWA] Falha ao registrar SW:", err));
+  } else if ("serviceWorker" in navigator) {
     void unregisterAppSw();
-  } else {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
-    });
   }
-
 
   window.addEventListener("beforeinstallprompt", (e: Event) => {
     e.preventDefault();
@@ -125,12 +125,18 @@ export function usePwaInstall(): {
       const prompt = deferredPrompt ?? (await waitForInstallPrompt(3000));
       if (prompt) {
         deferredPrompt = prompt;
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
+        // Se o diálogo nativo não abrir (ex.: navegador sem suporte ou página
+        // ainda não controlada pelo SW), não deixa o botão travado para sempre.
+        const outcome = await Promise.race([
+          prompt.prompt().then(() => prompt.userChoice),
+          new Promise<{ outcome: "dismissed" }>((resolve) =>
+            window.setTimeout(() => resolve({ outcome: "dismissed" }), 8000),
+          ),
+        ]);
         deferredPrompt = null;
         installable = false;
         window.dispatchEvent(new Event(INSTALLABLE_EVENT));
-        return choice.outcome === "accepted" ? "installed" : "dismissed";
+        return outcome.outcome === "accepted" ? "installed" : "dismissed";
       }
       return "manual";
     } finally {
