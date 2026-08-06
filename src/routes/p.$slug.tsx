@@ -122,7 +122,7 @@ function ProductPage() {
             <ArrowLeft className="size-4" />
             Voltar
           </Link>
-          <Link to={`/c/${product.companySlug ?? slug.split("-")[0]}/sacola`} className="relative">
+          <Link to="/c/$companySlug/sacola" params={{ companySlug: product.companySlug ?? slug.split("-")[0] }} className="relative">
             <ShoppingCart className="size-5" />
             {cart.count > 0 && (
               <span className="absolute -right-2 -top-2 grid size-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
