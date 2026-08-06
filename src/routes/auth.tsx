@@ -10,14 +10,12 @@ import { toast } from "sonner";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect:
-      typeof search.redirect === "string" &&
-      search.redirect.startsWith("/") &&
-      !search.redirect.startsWith("//")
-        ? search.redirect
-        : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => {
+    const raw = search.redirect;
+    const valid =
+      typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : undefined;
+    return valid ? { redirect: valid } : {};
+  },
   component: AuthPage,
   head: () => ({
     meta: [

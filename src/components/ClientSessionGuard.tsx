@@ -33,7 +33,8 @@ function formatTimeRemaining(ms: number): string {
 }
 
 export default function ClientSessionGuard() {
-  const { companySlug } = useParams({ strict: false });
+  const { companySlug: companySlugParam } = useParams({ strict: false });
+  const companySlug = companySlugParam ?? "";
   const navigate = useNavigate();
   const [showWarning, setShowWarning] = useState(false);
   const [expired, setExpired] = useState(false);
