@@ -172,29 +172,12 @@ function AuthPage() {
           throw error;
         }
         if (!data.session) {
-          // Supabase com "Confirm email" ligado: auto-confirma a conta recém-criada
-          // via service role (acesso direto no cadastro B2B) e abre a sessão.
-          try {
-            const { confirmSignupEmail } = await import("@/lib/auth-auto-confirm.functions");
-            await confirmSignupEmail({ data: { userId: data.user?.id ?? "" } });
-          } catch {
-            /* se a auto-confirmação falhar, mantém o fluxo de reenvio abaixo */
-          }
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          if (!signInError && signInData.session) {
-            data.session = signInData.session;
-          }
-          if (!data.session) {
-            // Auto-confirmação falhou: guarda o email para permitir reenvio.
-            setPendingSignupEmail(email);
-            toast.info(
-              "Conta criada! Enviamos um link de confirmação para o seu email. Confira a caixa de entrada e também o spam.",
-            );
-            return;
-          }
+          // Confirmação de email obrigatória: guarda o email para permitir reenvio.
+          setPendingSignupEmail(email);
+          toast.info(
+            "Conta criada! Enviamos um link de confirmação para o seu email. Confira a caixa de entrada e também o spam.",
+          );
+          return;
         }
         setPendingSignupEmail(null);
         // Registro dos aceites legais (data, hora, versão e usuário).
