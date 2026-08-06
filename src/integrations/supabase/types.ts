@@ -728,9 +728,6 @@ export type Database = {
           payment_method: string | null
           payment_provider: string | null
           payment_status: string
-          payment_verification_status: string | null
-          payment_verified_at: string | null
-          payment_verified_by: string | null
           status: Database["public"]["Enums"]["order_status"]
           subtotal: number | null
           table_id: string | null
@@ -751,9 +748,6 @@ export type Database = {
           payment_method?: string | null
           payment_provider?: string | null
           payment_status?: string
-          payment_verification_status?: string | null
-          payment_verified_at?: string | null
-          payment_verified_by?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number | null
           table_id?: string | null
@@ -774,9 +768,6 @@ export type Database = {
           payment_method?: string | null
           payment_provider?: string | null
           payment_status?: string
-          payment_verification_status?: string | null
-          payment_verified_at?: string | null
-          payment_verified_by?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           subtotal?: number | null
           table_id?: string | null
