@@ -10,20 +10,46 @@ const INSTALLABLE_EVENT = "weaze:pwa-installable";
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 let installable = false;
 
+/** Contextos onde o Service Worker nunca deve rodar (preview/dev/iframe). */
+function swAllowed(): boolean {
+  if (typeof window === "undefined") return false;
+  if (!import.meta.env.PROD) return false;
+  if (window.self !== window.top) return false;
+  const h = window.location.hostname;
+  if (h.startsWith("id-preview--") || h.startsWith("preview--")) return false;
+  if (/(^|\.)lovableproject(-dev)?\.com$/.test(h)) return false;
+  if (/(^|\.)beta\.lovable\.dev$/.test(h)) return false;
+  if (new URLSearchParams(window.location.search).get("sw") === "off") return false;
+  return true;
+}
+
+async function unregisterAppSw(): Promise<void> {
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.allSettled(
+      regs
+        .filter((r) => (r.active?.scriptURL ?? r.installing?.scriptURL ?? "").endsWith("/sw.js"))
+        .map((r) => r.unregister()),
+    );
+  } catch {
+    /* noop */
+  }
+}
+
 /** Registra o Service Worker e captura o evento nativo de instalação do PWA. */
 export function registerPwa(): void {
   if (typeof window === "undefined") return;
-  if (!("serviceWorker" in navigator)) return;
 
-  const isSecure =
-    window.location.protocol === "https:" ||
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-  if (!isSecure) return;
+  if (!("serviceWorker" in navigator)) {
+    // segue para os listeners de instalação abaixo
+  } else if (!swAllowed()) {
+    void unregisterAppSw();
+  } else {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
+    });
+  }
 
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
-  });
 
   window.addEventListener("beforeinstallprompt", (e: Event) => {
     e.preventDefault();
