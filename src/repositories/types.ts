@@ -14,6 +14,7 @@ export type OrderStatus =
 export type PaymentMethod = "pix" | "card" | "counter";
 export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled" | "refunded";
 export type PaymentProvider = "mercadopago" | "counter";
+export type PaymentVerificationStatus = "awaiting" | "verified";
 export type PostAuthorType = "business" | "customer";
 
 export interface Company {
@@ -175,12 +176,28 @@ export interface Order {
   paymentStatus: PaymentStatus | null;
   paymentProvider: PaymentProvider | null;
   paymentId: string | null;
+  paymentVerificationStatus?: PaymentVerificationStatus | null;
+  paymentVerifiedAt?: string | null;
+  paymentVerifiedBy?: string | null;
   subtotal: number | null;
   discount: number | null;
   total: number;
   note: string | null;
   createdAt: string;
   items: OrderItem[];
+}
+
+/** Card da Central de Pagamentos em Tempo Real (consulta leve, sem joins pesados). */
+export interface PaymentVerificationOrder {
+  id: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  total: number;
+  paymentMethod: PaymentMethod | null;
+  paymentApprovedAt: string | null;
+  verificationStatus: PaymentVerificationStatus | null;
+  verifiedAt: string | null;
+  items: { id: string; productName: string; quantity: number }[];
 }
 
 export interface OrderItem {

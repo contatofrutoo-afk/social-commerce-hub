@@ -5,6 +5,8 @@ import type {
   OrderStatus,
   PaymentMethod,
   PaymentProvider,
+  PaymentVerificationOrder,
+  PaymentVerificationStatus,
 } from "./types";
 import { productRepository } from "./product.repository";
 
@@ -45,6 +47,35 @@ function mapOrder(r: any): Order {
   };
 }
 
+interface VerificationOrderRow {
+  id: string;
+  total: number | null;
+  payment_method: string | null;
+  payment_approved_at: string | null;
+  payment_verification_status: string | null;
+  payment_verified_at: string | null;
+  customer: { name: string; whatsapp: string | null } | null;
+  order_items: { id: string; quantity: number; product: { name: string } | null }[] | null;
+}
+
+function mapVerificationOrder(r: VerificationOrderRow): PaymentVerificationOrder {
+  return {
+    id: r.id,
+    customerName: r.customer?.name ?? null,
+    customerPhone: r.customer?.whatsapp ?? null,
+    total: Number(r.total),
+    paymentMethod: (r.payment_method as PaymentMethod) ?? null,
+    paymentApprovedAt: r.payment_approved_at ?? null,
+    verificationStatus: (r.payment_verification_status as PaymentVerificationStatus) ?? null,
+    verifiedAt: r.payment_verified_at ?? null,
+    items: (r.order_items ?? []).map((i) => ({
+      id: i.id,
+      productName: i.product?.name ?? "Item",
+      quantity: i.quantity,
+    })),
+  };
+}
+
 export const orderRepository = {
   async listByCompany(companyId: string): Promise<Order[]> {
     const { data, error } = await supabase
@@ -57,6 +88,43 @@ export const orderRepository = {
       .order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []).map(mapOrder);
+  },
+
+  /** Central de Pagamentos em Tempo Real — pagamentos aguardando conferência. */
+  async listAwaitingVerification(companyId: string): Promise<PaymentVerificationOrder[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(
+        `id, total, payment_method, payment_approved_at, payment_verification_status, payment_verified_at,
+         customer:customers(name, whatsapp),
+         order_items(id, quantity, product:products(name))`,
+      )
+      .eq("company_id", companyId)
+      .eq("payment_provider", "mercadopago")
+      .eq("payment_status", "paid")
+      .eq("payment_verification_status", "awaiting")
+      .order("payment_approved_at", { ascending: false, nullsFirst: false });
+    if (error) throw error;
+    return (data ?? []).map(mapVerificationOrder);
+  },
+
+  /** Central de Pagamentos em Tempo Real — conferidos do dia (histórico). */
+  async listVerifiedToday(companyId: string, fromISO: string): Promise<PaymentVerificationOrder[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select(
+        `id, total, payment_method, payment_approved_at, payment_verification_status, payment_verified_at,
+         customer:customers(name, whatsapp),
+         order_items(id, quantity, product:products(name))`,
+      )
+      .eq("company_id", companyId)
+      .eq("payment_provider", "mercadopago")
+      .eq("payment_status", "paid")
+      .eq("payment_verification_status", "verified")
+      .gte("payment_verified_at", fromISO)
+      .order("payment_verified_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map(mapVerificationOrder);
   },
 
   async listByCustomer(customerId: string, token: string): Promise<Order[]> {
