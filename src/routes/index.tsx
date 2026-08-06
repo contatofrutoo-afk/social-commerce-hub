@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
@@ -10,14 +10,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   ArrowRight,
   Check,
@@ -132,7 +124,6 @@ function Nav() {
 /* ============================== HERO ============================== */
 function Hero() {
   const { canInstall, installing, install } = usePwaInstall();
-  const [showGuide, setShowGuide] = useState(false);
   return (
     <section className="relative overflow-hidden">
       {/* soft gradient background */}
@@ -176,13 +167,12 @@ function Hero() {
                 variant="outline"
                 className="rounded-full px-7 text-base"
                 disabled={installing}
-                onClick={async () => {
-                  const result = await install();
-                  if (result === "manual") setShowGuide(true);
+                onClick={() => {
+                  void install();
                 }}
               >
                 <Download className="mr-2 size-4" />
-                {installing ? "Preparando instalação..." : "Baixar aplicativo"}
+                {installing ? "Instalando..." : "Baixar aplicativo"}
               </Button>
             )}
           </motion.div>
@@ -198,73 +188,8 @@ function Hero() {
         <HeroMockup />
       </div>
 
-      <InstallGuideDialog open={showGuide} onClose={() => setShowGuide(false)} />
     </section>
   );
-}
-
-function InstallGuideDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const steps = getInstallSteps();
-  const inIframe = typeof window !== "undefined" && window.self !== window.top;
-  const allSteps = inIframe
-    ? [
-        "Abra o site em uma aba nova do navegador: https://weazesocial.lovable.app/ (a instalação é bloqueada em visualizações incorporadas, como o preview do Lovable).",
-        ...steps,
-      ]
-    : steps;
-  return (
-    <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Instalar o aplicativo WEAZE</AlertDialogTitle>
-          <AlertDialogDescription>
-            <p className="mb-3 text-sm text-muted-foreground">
-              Siga os passos abaixo para instalar o WEAZE no seu celular ou computador:
-            </p>
-            <ol className="list-decimal space-y-1.5 pl-5 text-left text-sm text-muted-foreground">
-              {allSteps.map((s) => (
-                <li key={s}>{s}</li>
-              ))}
-            </ol>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogAction onClick={onClose}>Entendi</AlertDialogAction>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-function getInstallSteps(): string[] {
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
-  const isIOS = /iphone|ipad|ipod/i.test(ua);
-  const isAndroid = /android/i.test(ua);
-  const isChrome = /chrome/i.test(ua);
-  const isEdge = /edg/i.test(ua);
-
-  if (isIOS) {
-    return [
-      "Toque no botão Compartilhar (quadrado com seta para cima) na barra do navegador.",
-      "Role para baixo e toque em \u201cAdicionar à Tela de Início\u201d.",
-      "Toque em \u201cAdicionar\u201d para confirmar.",
-    ];
-  }
-  if (isAndroid) {
-    return [
-      "Toque no menu do navegador (⋮ ou ⋯).",
-      "Toque em \u201cAdicionar à tela inicial\u201d ou \u201cInstalar aplicativo\u201d.",
-    ];
-  }
-  if (isChrome || isEdge) {
-    return [
-      "No Chrome, o aviso \u201cInstalar WEAZE\u201d pode aparecer automaticamente na barra inferior ou no canto superior direito — clique em \u201cInstalar\u201d.",
-      "Se não aparecer, clique no ícone de instalação (monitor com seta para baixo) no fim da barra de endereço.",
-      "Confirme clicando em \u201cInstalar\u201d na janela que abrir.",
-    ];
-  }
-  return [
-    "Use o navegador Chrome, Edge ou Safari para instalar o WEAZE como aplicativo.",
-    "Depois de abrir em um desses navegadores, clique em \u201cBaixar aplicativo\u201d novamente.",
-  ];
 }
 
 function HeroMockup() {
