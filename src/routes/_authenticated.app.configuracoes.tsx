@@ -155,30 +155,49 @@ function SettingsPage() {
       qc.invalidateQueries({ queryKey: ["company-full"] });
       qc.invalidateQueries({ queryKey: ["my-role"] });
     },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar"),
   });
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !companyId) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 5MB.");
+      return;
+    }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
-      const filePath = `${companyId}/logo.${ext}`;
+      const ext = (file.name.split(".").pop() ?? "png").toLowerCase();
+      // Nome único evita cache antigo do CDN após trocar a foto.
+      const filePath = `${companyId}/logo-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("weaze-media")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage
         .from("weaze-media")
         .getPublicUrl(filePath);
-      setLogoUrl(urlData.publicUrl);
-      toast.success("Foto atualizada! Salve as alterações.");
+      const publicUrl = urlData.publicUrl;
+      // Persiste imediatamente: a leitura pública do bucket só libera arquivos
+      // já referenciados em `companies.logo_url`.
+      await companyRepository.update(companyId, {
+        name,
+        welcomeMessage: welcome,
+        logoUrl: publicUrl,
+      });
+      setLogoUrl(publicUrl);
+      await qc.invalidateQueries({ queryKey: ["my-role"] });
+      qc.invalidateQueries({ queryKey: ["company-full"] });
+      qc.invalidateQueries({ queryKey: ["company"] });
+      toast.success("Foto atualizada!");
     } catch (err: any) {
-      toast.error(err.message ?? "Erro ao enviar foto");
+      toast.error(err?.message ?? "Erro ao enviar foto");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
+
 
   const addTable = useMutation({
     mutationFn: () => tableRepository.create(companyId!, tableLabel, tableSlug),
