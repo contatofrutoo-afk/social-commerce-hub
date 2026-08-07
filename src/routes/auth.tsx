@@ -73,10 +73,20 @@ function AuthPage() {
           throw error;
         }
         if (!data.session) {
-          toast.success("Conta criada! Verifique seu email para confirmar.");
-          setLoading(false);
-          return;
+          // Com auto-confirm ativo a sessão normalmente já vem; se não vier,
+          // fazemos login imediatamente com as mesmas credenciais.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (signInError) {
+            toast.success("Conta criada! Faça login para continuar.");
+            setMode("signin");
+            setLoading(false);
+            return;
+          }
         }
+
         // Registro dos aceites legais (data, hora, versão e usuário).
         try {
           if (data.user) await recordLegalConsents(data.user.id);
