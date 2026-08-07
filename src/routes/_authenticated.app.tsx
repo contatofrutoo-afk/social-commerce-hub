@@ -201,16 +201,26 @@ function AppLayout() {
       </aside>
 
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between border-b bg-card/85 backdrop-blur-xl px-4 py-3 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-10 flex items-center justify-between gap-2 border-b bg-card/85 backdrop-blur-xl px-4 py-3 md:hidden">
         <span className="truncate text-sm font-semibold">{role?.company?.name ?? ""}</span>
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            navigate({ to: "/auth" });
+          }}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          aria-label="Sair"
+        >
+          <LogOut className="size-4" /> Sair
+        </button>
       </div>
 
-      <main className="flex-1 overflow-x-hidden p-6 pt-20 md:pt-6">
+      <main className="flex-1 overflow-x-hidden p-6 pt-20 pb-[calc(9rem+env(safe-area-inset-bottom))] md:pt-6 md:pb-6">
         <Outlet />
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card/95 backdrop-blur-xl md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
         <div className="flex overflow-x-auto px-1">
           {nav.map((n) => {
             const active = n.exact
