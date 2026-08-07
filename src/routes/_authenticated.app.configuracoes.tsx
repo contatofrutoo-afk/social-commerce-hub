@@ -479,6 +479,8 @@ function SettingsPage() {
         </div>
       </div>
 
+      <PasswordSection />
+
       {/* Privacidade e documentos legais */}
       <div className="dash-card p-5">
         <h2 className="font-display text-lg font-bold">Privacidade</h2>
