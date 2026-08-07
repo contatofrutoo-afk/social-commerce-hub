@@ -129,13 +129,16 @@ function SettingsPage() {
   const [editLabel, setEditLabel] = useState("");
   const [editSlug, setEditSlug] = useState("");
 
+  // `company` é recriado a cada render; usar valores primitivos como deps evita
+  // que o efeito sobrescreva o que o usuário acabou de alterar (ex.: nova foto).
+  const companyName = company?.name;
+  const companyWelcome = company?.welcomeMessage;
+  const companyLogo = company?.logoUrl ?? null;
   useEffect(() => {
-    if (company) {
-      setName(company.name);
-      setWelcome(company.welcomeMessage);
-      setLogoUrl(company.logoUrl);
-    }
-  }, [company]);
+    if (companyName !== undefined) setName(companyName);
+    if (companyWelcome !== undefined) setWelcome(companyWelcome);
+    setLogoUrl(companyLogo);
+  }, [companyId, companyName, companyWelcome, companyLogo]);
 
   const baseUrl = getBaseUrl();
   const generalLink = company ? `${baseUrl}/c/${company.slug}` : "";
@@ -152,30 +155,49 @@ function SettingsPage() {
       qc.invalidateQueries({ queryKey: ["company-full"] });
       qc.invalidateQueries({ queryKey: ["my-role"] });
     },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar"),
   });
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !companyId) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 5MB.");
+      return;
+    }
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
-      const filePath = `${companyId}/logo.${ext}`;
+      const ext = (file.name.split(".").pop() ?? "png").toLowerCase();
+      // Nome único evita cache antigo do CDN após trocar a foto.
+      const filePath = `${companyId}/logo-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("weaze-media")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage
         .from("weaze-media")
         .getPublicUrl(filePath);
-      setLogoUrl(urlData.publicUrl);
-      toast.success("Foto atualizada! Salve as alterações.");
+      const publicUrl = urlData.publicUrl;
+      // Persiste imediatamente: a leitura pública do bucket só libera arquivos
+      // já referenciados em `companies.logo_url`.
+      await companyRepository.update(companyId, {
+        name,
+        welcomeMessage: welcome,
+        logoUrl: publicUrl,
+      });
+      setLogoUrl(publicUrl);
+      await qc.invalidateQueries({ queryKey: ["my-role"] });
+      qc.invalidateQueries({ queryKey: ["company-full"] });
+      qc.invalidateQueries({ queryKey: ["company"] });
+      toast.success("Foto atualizada!");
     } catch (err: any) {
-      toast.error(err.message ?? "Erro ao enviar foto");
+      toast.error(err?.message ?? "Erro ao enviar foto");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
+
 
   const addTable = useMutation({
     mutationFn: () => tableRepository.create(companyId!, tableLabel, tableSlug),
@@ -479,6 +501,8 @@ function SettingsPage() {
         </div>
       </div>
 
+      <PasswordSection />
+
       {/* Privacidade e documentos legais */}
       <div className="dash-card p-5">
         <h2 className="font-display text-lg font-bold">Privacidade</h2>
@@ -502,6 +526,86 @@ function SettingsPage() {
       </div>
     </div>
 
+  );
+}
+
+function PasswordSection() {
+  const [showForm, setShowForm] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const changePassword = useMutation({
+    mutationFn: async () => {
+      if (password.length < 8) throw new Error("A senha deve ter no mínimo 8 caracteres.");
+      if (password !== confirm) throw new Error("As senhas não conferem.");
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Senha alterada! Use a nova senha no próximo acesso.");
+      setPassword("");
+      setConfirm("");
+      setShowForm(false);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao alterar a senha"),
+  });
+
+  return (
+    <div className="dash-card p-5">
+      <h2 className="font-display text-lg font-bold">Segurança</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Altere a senha de acesso ao painel do seu negócio.
+      </p>
+
+      {!showForm ? (
+        <Button className="mt-4" variant="secondary" size="sm" onClick={() => setShowForm(true)}>
+          Trocar senha
+        </Button>
+      ) : (
+        <div className="mt-4 max-w-sm space-y-3">
+          <div>
+            <Label>Nova senha</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+            />
+          </div>
+          <div>
+            <Label>Confirmar nova senha</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Repita a nova senha"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => changePassword.mutate()}
+              disabled={changePassword.isPending || !password || !confirm}
+            >
+              {changePassword.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setShowForm(false);
+                setPassword("");
+                setConfirm("");
+              }}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
