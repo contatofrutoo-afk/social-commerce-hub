@@ -129,13 +129,16 @@ function SettingsPage() {
   const [editLabel, setEditLabel] = useState("");
   const [editSlug, setEditSlug] = useState("");
 
+  // `company` é recriado a cada render; usar valores primitivos como deps evita
+  // que o efeito sobrescreva o que o usuário acabou de alterar (ex.: nova foto).
+  const companyName = company?.name;
+  const companyWelcome = company?.welcomeMessage;
+  const companyLogo = company?.logoUrl ?? null;
   useEffect(() => {
-    if (company) {
-      setName(company.name);
-      setWelcome(company.welcomeMessage);
-      setLogoUrl(company.logoUrl);
-    }
-  }, [company]);
+    if (companyName !== undefined) setName(companyName);
+    if (companyWelcome !== undefined) setWelcome(companyWelcome);
+    setLogoUrl(companyLogo);
+  }, [companyId, companyName, companyWelcome, companyLogo]);
 
   const baseUrl = getBaseUrl();
   const generalLink = company ? `${baseUrl}/c/${company.slug}` : "";
