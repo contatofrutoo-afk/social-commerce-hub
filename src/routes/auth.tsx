@@ -58,13 +58,17 @@ function AuthPage() {
         });
         if (error) {
           const msg = (error.message || "").toLowerCase();
-          if (
+          const code = (error as any).code;
+          const alreadyRegistered =
             error.status === 422 ||
-            (error as any).code === "user_already_exists" ||
+            code === "user_already_exists" ||
+            code === "invalid_credentials" ||
             msg.includes("already registered") ||
             msg.includes("already been registered") ||
-            msg.includes("user already")
-          ) {
+            msg.includes("user already") ||
+            msg.includes("invalid login credentials") ||
+            msg.includes("invalid credentials");
+          if (alreadyRegistered) {
             toast.error("Este email já está cadastrado. Faça login para continuar.");
             setMode("signin");
             setLoading(false);
@@ -73,13 +77,19 @@ function AuthPage() {
           throw error;
         }
         if (!data.session) {
-          // Com auto-confirm ativo a sessão normalmente já vem; se não vier,
-          // fazemos login imediatamente com as mesmas credenciais.
-          const { error: signInError } = await supabase.auth.signInWithPassword({
+          // Supabase com "Confirm email" ligado: auto-confirma a conta recém-criada
+          // via service role (acesso direto, como na web) e abre a sessão.
+          try {
+            const { confirmSignupEmail } = await import("@/lib/auth-auto-confirm.functions");
+            await confirmSignupEmail({ data: { userId: data.user?.id ?? "" } });
+          } catch {
+            /* se a auto-confirmação falhar, segue para o login direto */
+          }
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
-          if (signInError) {
+          if (signInError || !signInData.session) {
             toast.success("Conta criada! Faça login para continuar.");
             setMode("signin");
             setLoading(false);
@@ -104,7 +114,25 @@ function AuthPage() {
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          const code = error.code;
+          const msg = (error.message || "").toLowerCase();
+          if (code === "email_not_confirmed" || msg.includes("email not confirmed")) {
+            toast.error(
+              "Seu email ainda não foi confirmado. Reenvie o link de confirmação e clique nele para ativar sua conta.",
+            );
+            setLoading(false);
+            return;
+          }
+          if (code === "invalid_credentials" || msg.includes("invalid login credentials")) {
+            toast.error(
+              "Email ou senha incorretos. Se acabou de criar a conta, entre novamente com as mesmas credenciais.",
+            );
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
       }
       // Auto-promoção do super admin (admin@weaze.com.br)
       try {
