@@ -25,6 +25,17 @@ export const Route = createFileRoute("/auth")({
   }),
 });
 
+function isInvalidCredentialsError(err: { code?: string; message?: string } | null): boolean {
+  if (!err) return false;
+  const code = err.code;
+  const msg = (err.message || "").toLowerCase();
+  return (
+    code === "invalid_credentials" ||
+    msg.includes("invalid login credentials") ||
+    msg.includes("invalid credentials")
+  );
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -52,7 +63,7 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: { emailRedirectTo: window.location.origin + destination },
         });
@@ -62,12 +73,10 @@ function AuthPage() {
           const alreadyRegistered =
             error.status === 422 ||
             code === "user_already_exists" ||
-            code === "invalid_credentials" ||
+            isInvalidCredentialsError(error as any) ||
             msg.includes("already registered") ||
             msg.includes("already been registered") ||
-            msg.includes("user already") ||
-            msg.includes("invalid login credentials") ||
-            msg.includes("invalid credentials");
+            msg.includes("user already");
           if (alreadyRegistered) {
             toast.error("Este email já está cadastrado. Faça login para continuar.");
             setMode("signin");
@@ -86,7 +95,7 @@ function AuthPage() {
             /* se a auto-confirmação falhar, segue para o login direto */
           }
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
+            email: email.trim(),
             password,
           });
           if (signInError || !signInData.session) {
@@ -113,7 +122,19 @@ function AuthPage() {
         navigate({ to: "/payment" });
         return;
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        // Autofills e teclados móveis às vezes anexam um espaço invisível no
+        // fim do email/senha. Com isso o Supabase devolve "invalid_credentials"
+        // mesmo com a senha correta (causa de "hora entra, hora não entra").
+        // 1ª tentativa como digitado; se falhar por credenciais, limpa os
+        // espaços das pontas e tenta de novo antes de mostrar erro.
+        let result = await supabase.auth.signInWithPassword({ email, password });
+        if (result.error && isInvalidCredentialsError(result.error)) {
+          result = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password: password.trim(),
+          });
+        }
+        const { error } = result;
         if (error) {
           const code = error.code;
           const msg = (error.message || "").toLowerCase();
@@ -124,7 +145,7 @@ function AuthPage() {
             setLoading(false);
             return;
           }
-          if (code === "invalid_credentials" || msg.includes("invalid login credentials")) {
+          if (isInvalidCredentialsError(error)) {
             toast.error(
               "Email ou senha incorretos. Se acabou de criar a conta, entre novamente com as mesmas credenciais.",
             );
