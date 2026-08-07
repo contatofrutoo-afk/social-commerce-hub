@@ -479,6 +479,8 @@ function SettingsPage() {
         </div>
       </div>
 
+      <PasswordSection />
+
       {/* Privacidade e documentos legais */}
       <div className="dash-card p-5">
         <h2 className="font-display text-lg font-bold">Privacidade</h2>
@@ -502,6 +504,86 @@ function SettingsPage() {
       </div>
     </div>
 
+  );
+}
+
+function PasswordSection() {
+  const [showForm, setShowForm] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+
+  const changePassword = useMutation({
+    mutationFn: async () => {
+      if (password.length < 8) throw new Error("A senha deve ter no mínimo 8 caracteres.");
+      if (password !== confirm) throw new Error("As senhas não conferem.");
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Senha alterada! Use a nova senha no próximo acesso.");
+      setPassword("");
+      setConfirm("");
+      setShowForm(false);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao alterar a senha"),
+  });
+
+  return (
+    <div className="dash-card p-5">
+      <h2 className="font-display text-lg font-bold">Segurança</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Altere a senha de acesso ao painel do seu negócio.
+      </p>
+
+      {!showForm ? (
+        <Button className="mt-4" variant="secondary" size="sm" onClick={() => setShowForm(true)}>
+          Trocar senha
+        </Button>
+      ) : (
+        <div className="mt-4 max-w-sm space-y-3">
+          <div>
+            <Label>Nova senha</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+            />
+          </div>
+          <div>
+            <Label>Confirmar nova senha</Label>
+            <Input
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Repita a nova senha"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => changePassword.mutate()}
+              disabled={changePassword.isPending || !password || !confirm}
+            >
+              {changePassword.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setShowForm(false);
+                setPassword("");
+                setConfirm("");
+              }}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
