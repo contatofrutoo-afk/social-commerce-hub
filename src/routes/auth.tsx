@@ -122,16 +122,23 @@ function AuthPage() {
         navigate({ to: "/payment" });
         return;
       } else {
-        // Autofills e teclados móveis às vezes anexam um espaço invisível no
-        // fim do email/senha. Com isso o Supabase devolve "invalid_credentials"
-        // mesmo com a senha correta (causa de "hora entra, hora não entra").
-        // 1ª tentativa como digitado; se falhar por credenciais, limpa os
-        // espaços das pontas e tenta de novo antes de mostrar erro.
+        // Autofills/teclados móveis podem anexar um espaço invisível no fim do
+        // email/senha. E mais: se a conta foi cadastrada com a senha já contendo
+        // um espaço no fim (ex.: preenchimento automático no momento do cadastro),
+        // digitar a senha "limpa" sempre falha com invalid_credentials — o que
+        // causa "hora entra (autofill usa o valor salvo), hora não entra (digitação)".
+        // Fazemos até 3 tentativas cobrindo os dois sentidos antes de mostrar o erro.
         let result = await supabase.auth.signInWithPassword({ email, password });
         if (result.error && isInvalidCredentialsError(result.error)) {
           result = await supabase.auth.signInWithPassword({
             email: email.trim(),
             password: password.trim(),
+          });
+        }
+        if (result.error && isInvalidCredentialsError(result.error)) {
+          result = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password: password + " ",
           });
         }
         const { error } = result;
@@ -147,7 +154,7 @@ function AuthPage() {
           }
           if (isInvalidCredentialsError(error)) {
             toast.error(
-              "Email ou senha incorretos. Se acabou de criar a conta, entre novamente com as mesmas credenciais.",
+              "Email ou senha incorretos. Dica: confira se não há um espaço sobrando no fim do email ou da senha.",
             );
             setLoading(false);
             return;
