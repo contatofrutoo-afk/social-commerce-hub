@@ -225,7 +225,7 @@ function CustomersPage() {
                     }
                   }}
                   disabled={checkoutMutation.isPending}
-                  className="ml-1 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100 disabled:opacity-50"
+                  className="ml-1 rounded-lg p-1.5 text-muted-foreground opacity-100 sm:opacity-0 transition-all hover:bg-primary/10 hover:text-primary sm:group-hover:opacity-100 disabled:opacity-50"
                   title="Checkout — desconectar cliente"
                 >
                   <LogOut className="size-4" />
@@ -234,7 +234,7 @@ function CustomersPage() {
               <button
                 onClick={(e) => handleDelete(e, c.id, c.name)}
                 disabled={deletingId === c.id}
-                className="ml-2 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 disabled:opacity-50"
+                className="ml-2 rounded-lg p-1.5 text-muted-foreground opacity-100 sm:opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive sm:group-hover:opacity-100 disabled:opacity-50"
                 title="Excluir cliente"
               >
                 <Trash2 className="size-4" />
