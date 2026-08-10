@@ -36,6 +36,20 @@ function isInvalidCredentialsError(err: { code?: string; message?: string } | nu
   );
 }
 
+/**
+ * Aguarda a sessão estar de fato persistida antes de navegar. No PWA instalado
+ * a gravação pode terminar depois da resposta do login.
+ */
+async function waitForPersistedSession(timeoutMs = 3000): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    if (data.session) return true;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
