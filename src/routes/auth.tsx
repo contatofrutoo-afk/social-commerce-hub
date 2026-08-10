@@ -36,6 +36,20 @@ function isInvalidCredentialsError(err: { code?: string; message?: string } | nu
   );
 }
 
+/**
+ * Aguarda a sessão estar de fato persistida antes de navegar. No PWA instalado
+ * a gravação pode terminar depois da resposta do login.
+ */
+async function waitForPersistedSession(timeoutMs = 3000): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+    if (data.session) return true;
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return false;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
@@ -106,6 +120,9 @@ function AuthPage() {
           }
         }
 
+        // Garante que a sessão já esteja persistida (essencial no PWA instalado).
+        await waitForPersistedSession();
+
         // Registro dos aceites legais (data, hora, versão e usuário).
         try {
           if (data.user) await recordLegalConsents(data.user.id);
@@ -119,7 +136,7 @@ function AuthPage() {
           const { ensureUserRole } = await import("@/lib/auth.functions");
           await ensureUserRole();
         } catch { /* silencioso */ }
-        navigate({ to: "/payment" });
+        navigate({ to: "/payment", replace: true });
         return;
       } else {
         // Autofills/teclados móveis podem anexar um espaço invisível no fim do
@@ -162,17 +179,22 @@ function AuthPage() {
           throw error;
         }
       }
+      // No app instalado (PWA standalone) a gravação da sessão pode terminar
+      // depois do retorno do login; navegar antes disso derrubava o usuário
+      // de volta para /auth. Aguardamos a sessão estar realmente disponível.
+      await waitForPersistedSession();
+
       // Auto-promoção do super admin (admin@weaze.com.br)
       try {
         const { data: isAdmin } = await (supabase as any).rpc("ensure_super_admin");
         if (isAdmin) {
-          navigate({ to: "/admin" });
+          navigate({ to: "/admin", replace: true });
           return;
         }
       } catch {
         // silencioso — usuário comum
       }
-      navigate({ to: destination as never });
+      navigate({ to: destination as never, replace: true });
     } catch (err: any) {
       toast.error(err.message ?? "Erro");
     } finally {
