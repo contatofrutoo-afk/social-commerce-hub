@@ -292,7 +292,19 @@ function AuthPage() {
               />
             </div>
             <div>
-              <Label htmlFor="pass">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="pass">Senha</Label>
+                {mode === "signin" && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
+              </div>
               <Input
                 id="pass"
                 type="password"
@@ -304,6 +316,7 @@ function AuthPage() {
                 placeholder="Mínimo 6 caracteres"
               />
             </div>
+
 
             {mode === "signup" && (
               <div className="space-y-2.5 rounded-xl border border-border/60 bg-muted/30 p-3.5">
