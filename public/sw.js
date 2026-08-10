@@ -9,7 +9,7 @@
  * controle imediatamente (skipWaiting + clientsClaim) — sem reinstalação.
  */
 
-const CACHE = "weaze-static-v2";
+const CACHE = "weaze-static-v3";
 
 const PRECACHE = [
   "/manifest.webmanifest",
