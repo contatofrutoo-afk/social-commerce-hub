@@ -162,17 +162,22 @@ function AuthPage() {
           throw error;
         }
       }
+      // No app instalado (PWA standalone) a gravação da sessão pode terminar
+      // depois do retorno do login; navegar antes disso derrubava o usuário
+      // de volta para /auth. Aguardamos a sessão estar realmente disponível.
+      await waitForPersistedSession();
+
       // Auto-promoção do super admin (admin@weaze.com.br)
       try {
         const { data: isAdmin } = await (supabase as any).rpc("ensure_super_admin");
         if (isAdmin) {
-          navigate({ to: "/admin" });
+          navigate({ to: "/admin", replace: true });
           return;
         }
       } catch {
         // silencioso — usuário comum
       }
-      navigate({ to: destination as never });
+      navigate({ to: destination as never, replace: true });
     } catch (err: any) {
       toast.error(err.message ?? "Erro");
     } finally {
