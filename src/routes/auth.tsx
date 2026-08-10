@@ -120,6 +120,9 @@ function AuthPage() {
           }
         }
 
+        // Garante que a sessão já esteja persistida (essencial no PWA instalado).
+        await waitForPersistedSession();
+
         // Registro dos aceites legais (data, hora, versão e usuário).
         try {
           if (data.user) await recordLegalConsents(data.user.id);
@@ -133,7 +136,7 @@ function AuthPage() {
           const { ensureUserRole } = await import("@/lib/auth.functions");
           await ensureUserRole();
         } catch { /* silencioso */ }
-        navigate({ to: "/payment" });
+        navigate({ to: "/payment", replace: true });
         return;
       } else {
         // Autofills/teclados móveis podem anexar um espaço invisível no fim do
