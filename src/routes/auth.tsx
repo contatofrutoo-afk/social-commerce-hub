@@ -171,11 +171,12 @@ function AuthPage() {
           }
           if (isInvalidCredentialsError(error)) {
             toast.error(
-              "Email ou senha incorretos. Dica: confira se não há um espaço sobrando no fim do email ou da senha.",
+              "Email ou senha incorretos. Se você não lembra a senha, use \"Esqueci minha senha\" para receber um link de redefinição.",
             );
             setLoading(false);
             return;
           }
+
           throw error;
         }
       }
@@ -201,6 +202,30 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
+  async function handleForgotPassword() {
+    const target = email.trim();
+    if (!target) {
+      toast.error("Digite seu email acima para receber o link de redefinição.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(
+        (error as any).code === "over_email_send_rate_limit"
+          ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+          : (error.message ?? "Não foi possível enviar o email."),
+      );
+      return;
+    }
+    toast.success("Enviamos um link de redefinição para " + target + ". Confira também o spam.");
+  }
+
+
 
 
   return (
@@ -268,7 +293,19 @@ function AuthPage() {
               />
             </div>
             <div>
-              <Label htmlFor="pass">Senha</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="pass">Senha</Label>
+                {mode === "signin" && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={loading}
+                    className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
+              </div>
               <Input
                 id="pass"
                 type="password"
@@ -280,6 +317,7 @@ function AuthPage() {
                 placeholder="Mínimo 6 caracteres"
               />
             </div>
+
 
             {mode === "signup" && (
               <div className="space-y-2.5 rounded-xl border border-border/60 bg-muted/30 p-3.5">
