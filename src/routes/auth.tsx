@@ -171,11 +171,12 @@ function AuthPage() {
           }
           if (isInvalidCredentialsError(error)) {
             toast.error(
-              "Email ou senha incorretos. Dica: confira se não há um espaço sobrando no fim do email ou da senha.",
+              "Email ou senha incorretos. Se você não lembra a senha, use \"Esqueci minha senha\" para receber um link de redefinição.",
             );
             setLoading(false);
             return;
           }
+
           throw error;
         }
       }
