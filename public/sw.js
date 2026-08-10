@@ -46,46 +46,42 @@ self.addEventListener("message", (event) => {
   }
 });
 
-const STATIC_DEST = new Set(["script", "style", "image", "font", "manifest"]);
-
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
 
-  // Navegação (HTML/SSR) e dados dinâmicos: nunca em cache.
-  if (req.destination === "document" || req.destination === "navigate") return;
+  // Só o mesmo domínio. Supabase, APIs externas e fontes: sempre rede direta,
+  // para que login/cadastro nunca dependam de nada em cache.
+  if (url.origin !== self.location.origin) return;
 
-  // Server functions / APIs / auth: nunca tocar.
+  // Navegação (HTML/SSR), server functions, APIs, auth e bundles hasheados
+  // nunca passam pelo cache — no app instalado isso causaria versões antigas
+  // do JS (quebrando acesso e criação de contas B2B após um novo deploy).
+  if (req.destination === "document" || req.destination === "navigate") return;
   if (
-    url.pathname.includes("_server_fn") ||
+    url.pathname.includes("_server") ||
     url.pathname.includes("/api/") ||
-    url.pathname.startsWith("/auth")
+    url.pathname.startsWith("/auth") ||
+    url.pathname.startsWith("/assets/")
   ) {
     return;
   }
 
-  // Cross-origin: apenas fontes públicas do Google (com CORS). Nada mais.
-  if (url.origin !== self.location.origin) {
-    if (url.hostname !== "fonts.googleapis.com" && url.hostname !== "fonts.gstatic.com") {
-      return;
-    }
-  }
+  // Apenas ícones e manifest ficam em cache (offline-friendly, sem risco).
+  const cacheable =
+    url.pathname.startsWith("/icons/") ||
+    PRECACHE.includes(url.pathname) ||
+    req.destination === "manifest";
 
-  const isStatic =
-    STATIC_DEST.has(req.destination) ||
-    url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/icons/");
-
-  if (!isStatic) return;
+  if (!cacheable) return;
 
   event.respondWith(
     caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
+      const network = fetch(req)
         .then((res) => {
-          if (res && res.ok && !res.headers.get("set-cookie")) {
+          if (res && res.ok) {
             const copy = res.clone();
             caches
               .open(CACHE)
@@ -95,6 +91,8 @@ self.addEventListener("fetch", (event) => {
           return res;
         })
         .catch(() => cached);
+      return cached || network;
     }),
   );
 });
+
