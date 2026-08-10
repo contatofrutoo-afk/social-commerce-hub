@@ -202,6 +202,30 @@ function AuthPage() {
     }
   }
 
+  async function handleForgotPassword() {
+    const target = email.trim();
+    if (!target) {
+      toast.error("Digite seu email acima para receber o link de redefinição.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(target, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(
+        (error as any).code === "over_email_send_rate_limit"
+          ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+          : (error.message ?? "Não foi possível enviar o email."),
+      );
+      return;
+    }
+    toast.success("Enviamos um link de redefinição para " + target + ". Confira também o spam.");
+  }
+
+
+
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
