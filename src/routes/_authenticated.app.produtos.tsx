@@ -82,6 +82,7 @@ function ProductsPage() {
       setForm(empty);
       setEditing(null);
     },
+    onError: (e: any) => toast.error(e?.message ?? "Erro ao salvar produto"),
   });
   const remove = useMutation({
     mutationFn: (id: string) => productRepository.remove(id),
