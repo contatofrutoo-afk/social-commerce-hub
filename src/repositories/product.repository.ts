@@ -131,12 +131,25 @@ export const productRepository = {
       internalCode?: string | null;
     },
   ) {
-    const slug =
-      p.slug ??
-      p.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-|-$/g, "");
+    const base =
+      (p.slug ??
+        p.name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")) || "produto";
+    // slug é único por empresa: garante um sufixo livre para permitir
+    // cadastrar quantos produtos forem necessários, mesmo com nomes iguais
+    const { data: taken } = await (supabase as any)
+      .from("products")
+      .select("slug")
+      .eq("company_id", companyId)
+      .like("slug", `${base}%`);
+    const used = new Set<string>((taken ?? []).map((r: any) => r.slug));
+    let slug = base;
+    let n = 2;
+    while (used.has(slug)) slug = `${base}-${n++}`;
     const { data, error } = await (supabase as any)
       .from("products")
       .insert({
