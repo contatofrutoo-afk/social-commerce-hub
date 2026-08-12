@@ -17,15 +17,20 @@ export const Route = createFileRoute("/oauth/mercadopago/callback")({
   head: () => ({ meta: [{ title: "Conectando — WEAZE" }] }),
 });
 
-type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavailable";
+type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavailable" | "no_session";
 
 function CallbackPage() {
   const { code, state, error } = Route.useSearch();
   const [phase, setPhase] = useState<Phase>(error || !code ? "cancelled" : "processing");
   const [reason, setReason] = useState<string | null>(null);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     if (error || !code) return;
+    // Evita disparar a troca duas vezes (StrictMode): o state é de uso único e
+    // a segunda chamada falharia com "invalid_state".
+    if (startedRef.current) return;
+    startedRef.current = true;
 
     let active = true;
     (async () => {
@@ -40,9 +45,12 @@ function CallbackPage() {
             if ("reason" in result && result.reason) setReason(result.reason);
             setPhase("unavailable");
             break;
+          case "unauthorized":
+            if ("reason" in result && result.reason) setReason(result.reason);
+            setPhase("no_session");
+            break;
           case "invalid_state":
           case "invalid_token":
-          case "unauthorized":
           default:
             if ("reason" in result && result.reason) setReason(result.reason);
             setPhase("invalid_token");
@@ -50,8 +58,9 @@ function CallbackPage() {
         }
       } catch (err) {
         if (active) {
-          setReason(err instanceof Error ? err.message : String(err));
-          setPhase("invalid_token");
+          const message = err instanceof Error ? err.message : String(err);
+          setReason(message);
+          setPhase(message.includes("Sessão expirada") ? "no_session" : "invalid_token");
         }
       }
     })();
@@ -60,6 +69,7 @@ function CallbackPage() {
       active = false;
     };
   }, [code, state, error]);
+
 
   const content: Record<Phase, { icon: React.ReactNode; title: string; description: string }> = {
     processing: {
