@@ -55,26 +55,45 @@ function CallbackPage() {
 
 
     let active = true;
+    const clearResume = () => {
+      try {
+        sessionStorage.removeItem(RESUME_KEY);
+      } catch {
+        // sessionStorage indisponível: ignora
+      }
+    };
+    const keepResume = () => {
+      try {
+        sessionStorage.setItem(RESUME_KEY, JSON.stringify({ code, state: state ?? "" }));
+      } catch {
+        // sessionStorage indisponível: ignora
+      }
+    };
+
     (async () => {
       try {
         const result = await paymentService.exchangeCode(code, state ?? "");
         if (!active) return;
         switch (result.status) {
           case "success":
+            clearResume();
             setPhase("success");
             break;
           case "unavailable":
             if ("reason" in result && result.reason) setReason(result.reason);
+            keepResume();
             setPhase("unavailable");
             break;
           case "unauthorized":
             if ("reason" in result && result.reason) setReason(result.reason);
+            keepResume();
             setPhase("no_session");
             break;
           case "invalid_state":
           case "invalid_token":
           default:
             if ("reason" in result && result.reason) setReason(result.reason);
+            clearResume();
             setPhase("invalid_token");
             break;
         }
@@ -82,10 +101,17 @@ function CallbackPage() {
         if (active) {
           const message = err instanceof Error ? err.message : String(err);
           setReason(message);
-          setPhase(message.includes("Sessão expirada") ? "no_session" : "invalid_token");
+          if (message.includes("Sessão expirada")) {
+            keepResume();
+            setPhase("no_session");
+          } else {
+            clearResume();
+            setPhase("invalid_token");
+          }
         }
       }
     })();
+
 
     return () => {
       active = false;
