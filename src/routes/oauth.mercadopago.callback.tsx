@@ -176,10 +176,15 @@ function CallbackPage() {
             <Button className="mt-2" asChild>
               <Link
                 to={phase === "no_session" ? "/auth" : "/app/financeiro"}
-                search={phase === "no_session" ? ({ redirect: "/app/financeiro" } as never) : undefined}
+                search={
+                  phase === "no_session"
+                    ? ({ redirect: "/oauth/mercadopago/callback" } as never)
+                    : undefined
+                }
               >
-                {phase === "no_session" ? "Fazer login novamente" : "Voltar ao Financeiro"}
+                {phase === "no_session" ? "Fazer login e concluir" : "Voltar ao Financeiro"}
               </Link>
+
             </Button>
           )}
 
