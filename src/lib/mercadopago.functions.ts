@@ -16,7 +16,7 @@ import type { PaymentAccountPublic } from "@/services/payment/types";
 const MERCADO_PAGO_AUTH_URL = "https://auth.mercadopago.com.br/authorization";
 const MERCADO_PAGO_TOKEN_URL = "https://api.mercadopago.com/oauth/token";
 const MERCADO_PAGO_USERS_ME_URL = "https://api.mercadopago.com/users/me";
-const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+const OAUTH_STATE_TTL_MS = 30 * 60 * 1000;
 
 export type MercadoPagoStartResult =
   | { status: "success"; url: string; redirectUri: string }
