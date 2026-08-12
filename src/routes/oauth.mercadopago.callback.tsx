@@ -19,8 +19,29 @@ export const Route = createFileRoute("/oauth/mercadopago/callback")({
 
 type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavailable" | "no_session";
 
+const RESUME_KEY = "mp_oauth_resume";
+
+type ResumePayload = { code: string; state: string };
+
+function readResume(): ResumePayload | null {
+  try {
+    const raw = sessionStorage.getItem(RESUME_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ResumePayload>;
+    return parsed.code ? { code: parsed.code, state: parsed.state ?? "" } : null;
+  } catch {
+    return null;
+  }
+}
+
 function CallbackPage() {
-  const { code, state, error } = Route.useSearch();
+  const search = Route.useSearch();
+  const { error } = search;
+  // Após um relogin o MP não devolve os parâmetros de novo: recuperamos o
+  // código guardado antes de mandar o usuário para /auth.
+  const resumed = typeof window !== "undefined" && !search.code ? readResume() : null;
+  const code = search.code ?? resumed?.code;
+  const state = search.state ?? resumed?.state;
   const [phase, setPhase] = useState<Phase>(error || !code ? "cancelled" : "processing");
   const [reason, setReason] = useState<string | null>(null);
   const startedRef = useRef(false);
@@ -32,27 +53,47 @@ function CallbackPage() {
     if (startedRef.current) return;
     startedRef.current = true;
 
+
     let active = true;
+    const clearResume = () => {
+      try {
+        sessionStorage.removeItem(RESUME_KEY);
+      } catch {
+        // sessionStorage indisponível: ignora
+      }
+    };
+    const keepResume = () => {
+      try {
+        sessionStorage.setItem(RESUME_KEY, JSON.stringify({ code, state: state ?? "" }));
+      } catch {
+        // sessionStorage indisponível: ignora
+      }
+    };
+
     (async () => {
       try {
         const result = await paymentService.exchangeCode(code, state ?? "");
         if (!active) return;
         switch (result.status) {
           case "success":
+            clearResume();
             setPhase("success");
             break;
           case "unavailable":
             if ("reason" in result && result.reason) setReason(result.reason);
+            keepResume();
             setPhase("unavailable");
             break;
           case "unauthorized":
             if ("reason" in result && result.reason) setReason(result.reason);
+            keepResume();
             setPhase("no_session");
             break;
           case "invalid_state":
           case "invalid_token":
           default:
             if ("reason" in result && result.reason) setReason(result.reason);
+            clearResume();
             setPhase("invalid_token");
             break;
         }
@@ -60,10 +101,17 @@ function CallbackPage() {
         if (active) {
           const message = err instanceof Error ? err.message : String(err);
           setReason(message);
-          setPhase(message.includes("Sessão expirada") ? "no_session" : "invalid_token");
+          if (message.includes("Sessão expirada")) {
+            keepResume();
+            setPhase("no_session");
+          } else {
+            clearResume();
+            setPhase("invalid_token");
+          }
         }
       }
     })();
+
 
     return () => {
       active = false;
@@ -103,10 +151,11 @@ function CallbackPage() {
     },
     no_session: {
       icon: <XCircle className="size-8 text-destructive" />,
-      title: "Sua sessão do painel expirou durante a autorização.",
+      title: "Faça login para concluir a conexão.",
       description:
-        "Faça login novamente e clique em Conectar Mercado Pago — a autorização leva menos de um minuto.",
+        "Sua sessão do painel não estava ativa neste endereço. Entre novamente que retomamos a autorização automaticamente.",
     },
+
   };
 
 
@@ -127,10 +176,15 @@ function CallbackPage() {
             <Button className="mt-2" asChild>
               <Link
                 to={phase === "no_session" ? "/auth" : "/app/financeiro"}
-                search={phase === "no_session" ? ({ redirect: "/app/financeiro" } as never) : undefined}
+                search={
+                  phase === "no_session"
+                    ? ({ redirect: "/oauth/mercadopago/callback" } as never)
+                    : undefined
+                }
               >
-                {phase === "no_session" ? "Fazer login novamente" : "Voltar ao Financeiro"}
+                {phase === "no_session" ? "Fazer login e concluir" : "Voltar ao Financeiro"}
               </Link>
+
             </Button>
           )}
 
