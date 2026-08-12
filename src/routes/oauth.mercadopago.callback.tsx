@@ -125,9 +125,15 @@ function CallbackPage() {
           <p className="text-sm text-muted-foreground">{description}</p>
           {phase !== "processing" && (
             <Button className="mt-2" asChild>
-              <Link to="/app/financeiro">Voltar ao Financeiro</Link>
+              <Link
+                to={phase === "no_session" ? "/auth" : "/app/financeiro"}
+                search={phase === "no_session" ? ({ redirect: "/app/financeiro" } as never) : undefined}
+              >
+                {phase === "no_session" ? "Fazer login novamente" : "Voltar ao Financeiro"}
+              </Link>
             </Button>
           )}
+
         </CardContent>
       </Card>
     </main>
