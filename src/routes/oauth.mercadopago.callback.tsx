@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { paymentService } from "@/services/payment";
+
 
 export const Route = createFileRoute("/oauth/mercadopago/callback")({
   ssr: false,
@@ -16,15 +17,20 @@ export const Route = createFileRoute("/oauth/mercadopago/callback")({
   head: () => ({ meta: [{ title: "Conectando — WEAZE" }] }),
 });
 
-type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavailable";
+type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavailable" | "no_session";
 
 function CallbackPage() {
   const { code, state, error } = Route.useSearch();
   const [phase, setPhase] = useState<Phase>(error || !code ? "cancelled" : "processing");
   const [reason, setReason] = useState<string | null>(null);
+  const startedRef = useRef(false);
 
   useEffect(() => {
     if (error || !code) return;
+    // Evita disparar a troca duas vezes (StrictMode): o state é de uso único e
+    // a segunda chamada falharia com "invalid_state".
+    if (startedRef.current) return;
+    startedRef.current = true;
 
     let active = true;
     (async () => {
@@ -39,9 +45,12 @@ function CallbackPage() {
             if ("reason" in result && result.reason) setReason(result.reason);
             setPhase("unavailable");
             break;
+          case "unauthorized":
+            if ("reason" in result && result.reason) setReason(result.reason);
+            setPhase("no_session");
+            break;
           case "invalid_state":
           case "invalid_token":
-          case "unauthorized":
           default:
             if ("reason" in result && result.reason) setReason(result.reason);
             setPhase("invalid_token");
@@ -49,8 +58,9 @@ function CallbackPage() {
         }
       } catch (err) {
         if (active) {
-          setReason(err instanceof Error ? err.message : String(err));
-          setPhase("invalid_token");
+          const message = err instanceof Error ? err.message : String(err);
+          setReason(message);
+          setPhase(message.includes("Sessão expirada") ? "no_session" : "invalid_token");
         }
       }
     })();
@@ -59,6 +69,7 @@ function CallbackPage() {
       active = false;
     };
   }, [code, state, error]);
+
 
   const content: Record<Phase, { icon: React.ReactNode; title: string; description: string }> = {
     processing: {
@@ -90,7 +101,14 @@ function CallbackPage() {
         ? `Detalhe: ${reason}.`
         : "Não foi possível concluir a conexão agora. Tente novamente em alguns instantes.",
     },
+    no_session: {
+      icon: <XCircle className="size-8 text-destructive" />,
+      title: "Sua sessão do painel expirou durante a autorização.",
+      description:
+        "Faça login novamente e clique em Conectar Mercado Pago — a autorização leva menos de um minuto.",
+    },
   };
+
 
   const { icon, title, description } = content[phase];
 
@@ -107,9 +125,15 @@ function CallbackPage() {
           <p className="text-sm text-muted-foreground">{description}</p>
           {phase !== "processing" && (
             <Button className="mt-2" asChild>
-              <Link to="/app/financeiro">Voltar ao Financeiro</Link>
+              <Link
+                to={phase === "no_session" ? "/auth" : "/app/financeiro"}
+                search={phase === "no_session" ? ({ redirect: "/app/financeiro" } as never) : undefined}
+              >
+                {phase === "no_session" ? "Fazer login novamente" : "Voltar ao Financeiro"}
+              </Link>
             </Button>
           )}
+
         </CardContent>
       </Card>
     </main>
