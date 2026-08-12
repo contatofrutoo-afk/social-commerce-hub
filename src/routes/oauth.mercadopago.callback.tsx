@@ -19,8 +19,29 @@ export const Route = createFileRoute("/oauth/mercadopago/callback")({
 
 type Phase = "processing" | "success" | "cancelled" | "invalid_token" | "unavailable" | "no_session";
 
+const RESUME_KEY = "mp_oauth_resume";
+
+type ResumePayload = { code: string; state: string };
+
+function readResume(): ResumePayload | null {
+  try {
+    const raw = sessionStorage.getItem(RESUME_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<ResumePayload>;
+    return parsed.code ? { code: parsed.code, state: parsed.state ?? "" } : null;
+  } catch {
+    return null;
+  }
+}
+
 function CallbackPage() {
-  const { code, state, error } = Route.useSearch();
+  const search = Route.useSearch();
+  const { error } = search;
+  // Após um relogin o MP não devolve os parâmetros de novo: recuperamos o
+  // código guardado antes de mandar o usuário para /auth.
+  const resumed = typeof window !== "undefined" && !search.code ? readResume() : null;
+  const code = search.code ?? resumed?.code;
+  const state = search.state ?? resumed?.state;
   const [phase, setPhase] = useState<Phase>(error || !code ? "cancelled" : "processing");
   const [reason, setReason] = useState<string | null>(null);
   const startedRef = useRef(false);
@@ -31,6 +52,7 @@ function CallbackPage() {
     // a segunda chamada falharia com "invalid_state".
     if (startedRef.current) return;
     startedRef.current = true;
+
 
     let active = true;
     (async () => {
