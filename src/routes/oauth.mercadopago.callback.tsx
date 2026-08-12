@@ -151,10 +151,11 @@ function CallbackPage() {
     },
     no_session: {
       icon: <XCircle className="size-8 text-destructive" />,
-      title: "Sua sessão do painel expirou durante a autorização.",
+      title: "Faça login para concluir a conexão.",
       description:
-        "Faça login novamente e clique em Conectar Mercado Pago — a autorização leva menos de um minuto.",
+        "Sua sessão do painel não estava ativa neste endereço. Entre novamente que retomamos a autorização automaticamente.",
     },
+
   };
 
 
