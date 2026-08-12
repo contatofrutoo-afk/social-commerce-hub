@@ -41,25 +41,25 @@ export type {
 } from "@/lib/mercadopago.checkout.functions";
 
 async function getPanelJwt(): Promise<string> {
-  // Garante um token fresco: o fluxo OAuth leva o usuário ao Mercado Pago,
-  // então o access_token pode ter expirado ao voltar ao callback.
-  try {
-    const { data: session } = await supabase.auth.getSession();
-    const now = Date.now();
-    const expiresAt = session.session?.expires_at ? session.session.expires_at * 1000 : 0;
-    if (!session.session || (expiresAt && expiresAt <= now + 30_000)) {
-      const { data: refreshed } = await supabase.auth.refreshSession();
-      const token = refreshed.session?.access_token;
-      if (token) return token;
+  // Ao voltar do Mercado Pago a página recarrega inteira: espera a sessão ser
+  // restaurada do storage antes de desistir, e renova se estiver por expirar.
+  const { waitForSupabaseSession } = await import("@/lib/supabase-session");
+  const session = await waitForSupabaseSession();
+  if (session) {
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    if (expiresAt && expiresAt <= Date.now() + 30_000) {
+      try {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (refreshed.session?.access_token) return refreshed.session.access_token;
+      } catch {
+        // segue com o token atual
+      }
     }
-  } catch {
-    // segue para o caminho normal abaixo
+    if (session.access_token) return session.access_token;
   }
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("Sessão expirada. Faça login novamente.");
-  return token;
+  throw new Error("Sessão expirada. Faça login novamente.");
 }
+
 
 // Gateway real de checkout via Mercado Pago (Etapa 4).
 const mercadopagoGateway: PaymentGateway = {
