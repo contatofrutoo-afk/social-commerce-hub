@@ -101,7 +101,14 @@ function CallbackPage() {
         ? `Detalhe: ${reason}.`
         : "Não foi possível concluir a conexão agora. Tente novamente em alguns instantes.",
     },
+    no_session: {
+      icon: <XCircle className="size-8 text-destructive" />,
+      title: "Sua sessão do painel expirou durante a autorização.",
+      description:
+        "Faça login novamente e clique em Conectar Mercado Pago — a autorização leva menos de um minuto.",
+    },
   };
+
 
   const { icon, title, description } = content[phase];
 
