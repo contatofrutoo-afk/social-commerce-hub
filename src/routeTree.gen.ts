@@ -52,6 +52,7 @@ import { Route as AuthenticatedAdminEmpresasRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated.admin.configuracoes'
 import { Route as AuthenticatedAdminAprovacoesRouteImport } from './routes/_authenticated.admin.aprovacoes'
 import { Route as CCompanySlugMTableSlugRouteImport } from './routes/c.$companySlug.m.$tableSlug'
+import { Route as ApiPublicOgSlugRouteImport } from './routes/api/public/og.$slug'
 import { Route as AuthenticatedAdminEmpresasIdRouteImport } from './routes/_authenticated.admin.empresas.$id'
 
 const TermosRoute = TermosRouteImport.update({
@@ -283,6 +284,11 @@ const CCompanySlugMTableSlugRoute = CCompanySlugMTableSlugRouteImport.update({
   path: '/m/$tableSlug',
   getParentRoute: () => CCompanySlugRoute,
 } as any)
+const ApiPublicOgSlugRoute = ApiPublicOgSlugRouteImport.update({
+  id: '/api/public/og/$slug',
+  path: '/api/public/og/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminEmpresasIdRoute =
   AuthenticatedAdminEmpresasIdRouteImport.update({
     id: '/$id',
@@ -333,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
   '/admin/empresas/$id': typeof AuthenticatedAdminEmpresasIdRoute
+  '/api/public/og/$slug': typeof ApiPublicOgSlugRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesByTo {
@@ -375,6 +382,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug': typeof CCompanySlugIndexRoute
   '/admin/empresas/$id': typeof AuthenticatedAdminEmpresasIdRoute
+  '/api/public/og/$slug': typeof ApiPublicOgSlugRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRoutesById {
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/c/$companySlug/': typeof CCompanySlugIndexRoute
   '/_authenticated/admin/empresas/$id': typeof AuthenticatedAdminEmpresasIdRoute
+  '/api/public/og/$slug': typeof ApiPublicOgSlugRoute
   '/c/$companySlug/m/$tableSlug': typeof CCompanySlugMTableSlugRoute
 }
 export interface FileRouteTypes {
@@ -469,6 +478,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/c/$companySlug/'
     | '/admin/empresas/$id'
+    | '/api/public/og/$slug'
     | '/c/$companySlug/m/$tableSlug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -511,6 +521,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/c/$companySlug'
     | '/admin/empresas/$id'
+    | '/api/public/og/$slug'
     | '/c/$companySlug/m/$tableSlug'
   id:
     | '__root__'
@@ -557,6 +568,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/c/$companySlug/'
     | '/_authenticated/admin/empresas/$id'
+    | '/api/public/og/$slug'
     | '/c/$companySlug/m/$tableSlug'
   fileRoutesById: FileRoutesById
 }
@@ -571,6 +583,7 @@ export interface RootRouteChildren {
   CCompanySlugRoute: typeof CCompanySlugRouteWithChildren
   PSlugRoute: typeof PSlugRoute
   OauthMercadopagoCallbackRoute: typeof OauthMercadopagoCallbackRoute
+  ApiPublicOgSlugRoute: typeof ApiPublicOgSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -876,6 +889,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCompanySlugMTableSlugRouteImport
       parentRoute: typeof CCompanySlugRoute
     }
+    '/api/public/og/$slug': {
+      id: '/api/public/og/$slug'
+      path: '/api/public/og/$slug'
+      fullPath: '/api/public/og/$slug'
+      preLoaderRoute: typeof ApiPublicOgSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/empresas/$id': {
       id: '/_authenticated/admin/empresas/$id'
       path: '/$id'
@@ -1016,6 +1036,7 @@ const rootRouteChildren: RootRouteChildren = {
   CCompanySlugRoute: CCompanySlugRouteWithChildren,
   PSlugRoute: PSlugRoute,
   OauthMercadopagoCallbackRoute: OauthMercadopagoCallbackRoute,
+  ApiPublicOgSlugRoute: ApiPublicOgSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
