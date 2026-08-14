@@ -18,7 +18,7 @@ export const Route = createFileRoute("/c/$companySlug/")({
       return null;
     }
   },
-  head: ({ loaderData, params }) => {
+  head: ({ loaderData }) => {
     const company = loaderData ?? null;
     const name = company?.name ?? "Cardápio digital";
     const title = `${name} — Peça pelo celular`;
