@@ -29,7 +29,12 @@ export const Route = createFileRoute("/c/$companySlug/")({
     const hasLogo = typeof logo === "string" && logo.startsWith("https://");
     // Imagem 1200x630 gerada com o logotipo — logos pequenos são ignorados
     // pelos crawlers do WhatsApp/Facebook/X e o link aparece só com texto.
-    const ogImage = `https://weazesocial.lovable.app/api/public/og/${params.companySlug}`;
+    // A versão força WhatsApp/Facebook a baixar novamente a imagem quando o
+    // logotipo ou a cor do estabelecimento mudam, em vez de reutilizar o cache.
+    const previewVersion = encodeURIComponent(
+      `v2-${company?.logoUrl ?? "sem-logo"}-${company?.primaryColor ?? "sem-cor"}`,
+    );
+    const ogImage = `https://weazesocial.lovable.app/api/public/og/${params.companySlug}?v=${previewVersion}`;
     const pageUrl = `https://weazesocial.lovable.app/c/${params.companySlug}`;
 
     return {
@@ -42,9 +47,12 @@ export const Route = createFileRoute("/c/$companySlug/")({
         { property: "og:url", content: pageUrl },
         { property: "og:site_name", content: name },
         { name: "twitter:card", content: hasLogo ? "summary_large_image" : "summary" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
         ...(hasLogo
           ? [
               { property: "og:image", content: ogImage },
+              { property: "og:image:url", content: ogImage },
               { property: "og:image:secure_url", content: ogImage },
               { property: "og:image:type", content: "image/png" },
               { property: "og:image:width", content: "1200" },
