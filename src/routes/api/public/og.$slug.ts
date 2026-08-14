@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/public/og/$slug")({
           const png = buildOgPng(bytes, row?.primary_color || "#ffffff");
           if (!png) {
             // Formato não suportado: devolve o arquivo original.
-            return new Response(bytes, {
+            return new Response(bytes.buffer as ArrayBuffer, {
               headers: {
                 "content-type": res.headers.get("content-type") ?? "image/png",
                 "cache-control": "public, max-age=3600",
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/og/$slug")({
             });
           }
 
-          return new Response(png, {
+          return new Response(png.buffer as ArrayBuffer, {
             headers: {
               "content-type": "image/png",
               "cache-control": "public, max-age=3600",
