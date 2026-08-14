@@ -18,15 +18,19 @@ export const Route = createFileRoute("/c/$companySlug/")({
       return null;
     }
   },
-  head: ({ loaderData }) => {
+  head: ({ params, loaderData }) => {
     const company = loaderData ?? null;
     const name = company?.name ?? "Cardápio digital";
     const title = `${name} — Peça pelo celular`;
     const description =
       company?.welcomeMessage ??
       `Acesse o catálogo de ${name}, faça seu pedido pelo celular e acompanhe tudo em tempo real.`;
-    const image = company?.logoUrl;
-    const isAbsolute = typeof image === "string" && image.startsWith("https://");
+    const logo = company?.logoUrl;
+    const hasLogo = typeof logo === "string" && logo.startsWith("https://");
+    // Imagem 1200x630 gerada com o logotipo — logos pequenos são ignorados
+    // pelos crawlers do WhatsApp/Facebook/X e o link aparece só com texto.
+    const ogImage = `https://weazesocial.lovable.app/api/public/og/${params.companySlug}`;
+    const pageUrl = `https://weazesocial.lovable.app/c/${params.companySlug}`;
 
     return {
       meta: [
@@ -35,21 +39,28 @@ export const Route = createFileRoute("/c/$companySlug/")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
+        { property: "og:url", content: pageUrl },
         { property: "og:site_name", content: name },
-        { name: "twitter:card", content: isAbsolute ? "summary_large_image" : "summary" },
-        ...(isAbsolute
+        { name: "twitter:card", content: hasLogo ? "summary_large_image" : "summary" },
+        ...(hasLogo
           ? [
-              { property: "og:image", content: image as string },
+              { property: "og:image", content: ogImage },
+              { property: "og:image:secure_url", content: ogImage },
+              { property: "og:image:type", content: "image/png" },
+              { property: "og:image:width", content: "1200" },
+              { property: "og:image:height", content: "630" },
               { property: "og:image:alt", content: `Logotipo de ${name}` },
-              { name: "twitter:image", content: image as string },
+              { name: "twitter:image", content: ogImage },
             ]
           : []),
       ],
-      links: isAbsolute
-        ? [{ rel: "icon", href: image as string }]
-        : [],
+      links: [
+        { rel: "canonical", href: pageUrl },
+        ...(hasLogo ? [{ rel: "icon", href: logo as string }] : []),
+      ],
     };
   },
+
   component: CheckinPage,
 });
 
