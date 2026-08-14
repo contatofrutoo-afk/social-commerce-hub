@@ -9,8 +9,50 @@ import { ConsentScreen } from "@/components/consent-screen";
 import { Store } from "lucide-react";
 
 export const Route = createFileRoute("/c/$companySlug/")({
+  // Carregado no servidor para que o preview do link (WhatsApp, Instagram, etc.)
+  // mostre o logotipo e o nome do estabelecimento.
+  loader: async ({ params }) => {
+    try {
+      return await companyRepository.findBySlug(params.companySlug);
+    } catch {
+      return null;
+    }
+  },
+  head: ({ loaderData }) => {
+    const company = loaderData ?? null;
+    const name = company?.name ?? "Cardápio digital";
+    const title = `${name} — Peça pelo celular`;
+    const description =
+      company?.welcomeMessage ??
+      `Acesse o catálogo de ${name}, faça seu pedido pelo celular e acompanhe tudo em tempo real.`;
+    const image = company?.logoUrl;
+    const isAbsolute = typeof image === "string" && image.startsWith("https://");
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: name },
+        { name: "twitter:card", content: isAbsolute ? "summary_large_image" : "summary" },
+        ...(isAbsolute
+          ? [
+              { property: "og:image", content: image as string },
+              { property: "og:image:alt", content: `Logotipo de ${name}` },
+              { name: "twitter:image", content: image as string },
+            ]
+          : []),
+      ],
+      links: isAbsolute
+        ? [{ rel: "icon", href: image as string }]
+        : [],
+    };
+  },
   component: CheckinPage,
 });
+
 
 function CheckinPage() {
   const { companySlug } = Route.useParams();
